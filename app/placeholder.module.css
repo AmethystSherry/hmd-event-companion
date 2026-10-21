@@ -1,0 +1,87 @@
+/* Gaya sementara untuk halaman placeholder Phase 0; diganti komponen Clean di Phase 1. */
+.screen {
+  max-width: 390px;
+  margin: 0 auto;
+  padding: calc(env(safe-area-inset-top) + 24px) 16px calc(env(safe-area-inset-bottom) + 24px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 13px;
+  color: var(--label-2);
+}
+
+.title {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.body {
+  margin: 0;
+  font-size: 17px;
+  line-height: 22px;
+  color: var(--label-2);
+}
+
+.links {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.links a {
+  color: var(--label);
+  font-weight: 600;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.card {
+  background: var(--card);
+  border-radius: 24px;
+  padding: 20px;
+  display: grid;
+  gap: 12px;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 15px;
+}
+
+.row dt {
+  color: var(--label-2);
+}
+
+.row dd {
+  margin: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.ok {
+  color: #1a7f45;
+}
+
+.bad {
+  color: #c42b30;
+}
+
+@media (prefers-color-scheme: dark) {
+  .ok {
+    color: #4cd08a;
+  }
+  .bad {
+    color: #ff6b6f;
+  }
+}
