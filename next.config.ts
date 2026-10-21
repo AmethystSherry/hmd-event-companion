@@ -17,6 +17,8 @@ function buildSha(): string {
 const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
+  // Dev: izinkan HP di Wi-Fi yang sama (IP jaringan lokal) memuat aset dev & hot reload.
+  allowedDevOrigins: ["192.168.*.*", "10.*.*.*", "172.*.*.*"],
   env: {
     NEXT_PUBLIC_APP_VERSION: pkg.version,
     NEXT_PUBLIC_BUILD_SHA: buildSha(),

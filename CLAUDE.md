@@ -90,7 +90,7 @@ data/                 CSV dummy (fiktif)
 ```bash
 npm install
 npm run dev          # http://localhost:3000
-npm run dev -- -H 0.0.0.0   # buka dari HP di Wi-Fi yang sama: http://<IP-laptop>:3000
+npm run dev          # HP di Wi-Fi yang sama: http://<IP-laptop>:3000 (lihat baris "Network")
 npm test             # vitest
 npm run lint && npm run typecheck && npm run format:check
 npm run build
