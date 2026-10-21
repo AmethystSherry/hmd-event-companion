@@ -1,0 +1,78 @@
+.toast {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  min-height: 40px;
+  padding: 11px 18px 11px 14px;
+  border-radius: var(--radius-pill);
+  background: var(--label);
+  color: var(--on-cta);
+  box-shadow: var(--shadow-glass);
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+  animation: toast-in 350ms var(--ease-spring);
+}
+
+.icon {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.text {
+  min-width: 0;
+}
+
+.undo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  margin: -12px -8px -12px 4px;
+  padding: 0 8px;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ring {
+  width: 18px;
+  height: 18px;
+  transform: rotate(-90deg);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-dasharray: 50.27; /* 2πr, r=8 */
+  stroke-dashoffset: 0;
+  animation-name: ring;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@keyframes ring {
+  to {
+    stroke-dashoffset: 50.27;
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    animation: none;
+  }
+}

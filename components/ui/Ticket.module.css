@@ -1,0 +1,238 @@
+/* Tiket = kertas: kartu card radius 24 tanpa shadow. Lekukan/gerigi diisi warna bg. */
+.ticket {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: var(--content-width);
+  border-radius: var(--radius-card);
+  background: var(--card);
+  overflow: hidden;
+}
+
+.torn {
+  border-radius: var(--radius-card) var(--radius-card) 0 0;
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 20px 24px 12px;
+  text-align: center;
+}
+
+.keyIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 22px;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+
+/* Perforasi: tinggi 28, garis putus 1,5px (separator, dash 5,88) + lekukan 28 kiri-kanan. */
+.perforation {
+  position: relative;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.dashes {
+  position: absolute;
+  top: 50%;
+  left: 32px;
+  right: 32px;
+  height: 1.5px;
+  transform: translateY(-50%);
+  background: repeating-linear-gradient(
+    90deg,
+    var(--separator) 0 5.88px,
+    transparent 5.88px 11.76px
+  );
+  background-position: -2.94px 0;
+}
+
+.notchLeft,
+.notchRight {
+  position: absolute;
+  top: 50%;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--bg);
+  transform: translateY(-50%);
+}
+
+.notchLeft {
+  left: -14px;
+}
+
+.notchRight {
+  right: -14px;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 0;
+  padding: 8px 24px 18px;
+}
+
+.pair {
+  display: flex;
+  gap: 16px;
+}
+
+.pair > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.pair dd {
+  margin: 0;
+}
+
+.end {
+  align-items: flex-end;
+  text-align: right;
+}
+
+.follow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: var(--radius-inner);
+  background: var(--card-2);
+}
+
+.potongan {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 24px 34px;
+}
+
+.qrBox {
+  padding: 10px;
+  border-radius: var(--radius-inner);
+  background: var(--qr-bg);
+  color: var(--qr-ink);
+  line-height: 0;
+}
+
+.qrBox > * {
+  width: 140px;
+  height: 140px;
+}
+
+.qrPlaceholder {
+  background: repeating-conic-gradient(var(--qr-ink) 0 25%, var(--qr-bg) 0 50%) 0 0 / 20px 20px;
+  opacity: 0.12;
+}
+
+.code {
+  color: var(--label);
+}
+
+/* 7 gerigi diameter 28 menggantung setengah di bawah tepi (posisi persis Figma). */
+.scallops {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -14px;
+  height: 28px;
+  pointer-events: none;
+}
+
+.scallops span {
+  position: absolute;
+  top: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--bg);
+}
+
+.scallops span:nth-child(1) {
+  left: 3.23%;
+}
+.scallops span:nth-child(2) {
+  left: 17.52%;
+}
+.scallops span:nth-child(3) {
+  left: 31.8%;
+}
+.scallops span:nth-child(4) {
+  left: calc(50% - 14px);
+}
+.scallops span:nth-child(5) {
+  left: 60.38%;
+}
+.scallops span:nth-child(6) {
+  left: 74.66%;
+}
+.scallops span:nth-child(7) {
+  left: 88.95%;
+}
+
+/* Sobek */
+.tornSpacer {
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.tear {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 12px;
+  fill: var(--bg);
+}
+
+.tearBottom {
+  bottom: 2px;
+}
+
+.tearTop {
+  top: 2px;
+}
+
+.stamp {
+  position: absolute;
+  top: 26px;
+  right: 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 12px;
+  border: 2px solid var(--success-text);
+  border-radius: 12px;
+  background: var(--success-soft);
+  color: var(--success-text);
+  white-space: nowrap;
+  transform: rotate(10deg);
+}
+
+/* Potongan terlepas */
+.stub {
+  position: relative;
+  width: 100%;
+  max-width: var(--content-width);
+  border-radius: 0 0 var(--radius-card) var(--radius-card);
+  background: var(--card);
+  overflow: hidden;
+}
+
+.stubTopSpacer {
+  height: 14px;
+}

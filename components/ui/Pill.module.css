@@ -1,0 +1,67 @@
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 7px 12px 7px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--card-2);
+  color: var(--label);
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.icon {
+  display: inline-flex;
+  color: var(--label-2);
+}
+
+.icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--card-2);
+  color: var(--label);
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition:
+    background-color 150ms ease-out,
+    color 150ms ease-out,
+    transform var(--press-ms) ease-out;
+}
+
+.chip:active {
+  transform: scale(var(--press-scale));
+}
+
+/* Area sentuh ≥44 tanpa membesarkan chip. */
+.chip {
+  position: relative;
+}
+.chip::after {
+  content: "";
+  position: absolute;
+  inset: -5px 0;
+}
+
+.selected-ink {
+  background: var(--cta);
+  color: var(--on-cta);
+}
+
+.selected-accent {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}

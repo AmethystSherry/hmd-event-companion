@@ -1,0 +1,60 @@
+.button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  color: var(--label);
+  transition: transform var(--press-ms) ease-out;
+}
+
+.button:active {
+  transform: scale(var(--press-scale));
+}
+
+.layer {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.icon {
+  position: relative;
+  display: inline-flex;
+}
+
+.icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.default {
+  background: var(--secondary-fill);
+  box-shadow: var(--shadow-secondary);
+}
+
+.default .layer {
+  border: 2.5px solid var(--secondary-highlight);
+}
+
+.default .layer::after {
+  content: "";
+  position: absolute;
+  inset: -2.5px;
+  border-radius: inherit;
+  border: 1px solid var(--secondary-stroke);
+}
+
+/* Kamera: kaca di atas viewfinder gelap. */
+.glass {
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+}

@@ -1,0 +1,41 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  padding: var(--pad-card);
+  border-radius: var(--radius-card);
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+}
+
+.inset {
+  padding: 4px 0;
+  gap: 0;
+}
+
+.labelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: var(--radius-inner);
+  background: var(--card-2);
+}
+
+.innerIcon {
+  display: inline-flex;
+  color: var(--label);
+}
+
+.innerIcon svg {
+  width: 18px;
+  height: 18px;
+}

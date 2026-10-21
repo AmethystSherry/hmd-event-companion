@@ -1,0 +1,100 @@
+.button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: var(--control-h);
+  padding: 0 24px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  font-size: 17px;
+  line-height: 22px;
+  letter-spacing: -0.005em;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    transform var(--press-ms) ease-out,
+    opacity var(--press-ms) ease-out;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.button:active:not(:disabled) {
+  transform: scale(var(--press-scale));
+}
+
+.button:disabled,
+.button[aria-disabled="true"] {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Lapisan border/rim/highlight (stroke inside di Figma). */
+.layer {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.icon,
+.label {
+  position: relative;
+  display: inline-flex;
+}
+
+.icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Primary — "Think" glossy, warna tetap. */
+.primary {
+  background: var(--primary-fill);
+  color: var(--primary-label);
+  font-weight: 500;
+  filter: drop-shadow(var(--primary-shadow));
+}
+
+/* Rim: gradient stroke inside 3,5px (#5E5E5E atas → #242424 sisi → #525252 bawah). */
+.primary .layer {
+  padding: 3.5px;
+  background: linear-gradient(180deg, var(--primary-rim) 0%, #242424 50%, #525252 100%);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+}
+
+.primary .layer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1.75px solid var(--primary-border);
+}
+
+/* Secondary — fill + Border 1px + Highlight 2,5px di bawah border. */
+.secondary {
+  background: var(--secondary-fill);
+  color: var(--label);
+  font-weight: 600;
+  box-shadow: var(--shadow-secondary);
+}
+
+.secondary .layer {
+  border: 2.5px solid var(--secondary-highlight);
+}
+
+.secondary .layer::after {
+  content: "";
+  position: absolute;
+  inset: -2.5px;
+  border-radius: inherit;
+  border: 1px solid var(--secondary-stroke);
+}

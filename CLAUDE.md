@@ -37,10 +37,26 @@ app/
   (tamu)/t/[token]/   halaman tamu via link unik bertoken (T01…T15, BT*)
   panitia/            ruang panitia (P*, BP*)
   dev/status/         versi build + status sumber data
+  dev/ui/             preview design system (light & dark)
   fonts/              Switzer
 components/ui/        komponen design system Clean v0.5 (Phase 1)
 lib/data/             tipe domain + DataStore (mock sekarang, DB nanti)
 ```
+
+## Design system (Clean v0.5)
+- Token: `app/tokens.css` — warna semantik light (utama) + dark (`prefers-color-scheme`, atau paksa
+  dengan `html[data-theme="light|dark"]`), radius, spacing, shadow, motion, kelas tipografi `t-*`
+  (Clean/* dari Figma; tracking Figma dalam persen → `em`).
+- Komponen: `components/ui/*` (satu `.tsx` + `.module.css`), ekspor lewat `@/components/ui`.
+  Button, IconButton, DestructiveButton, Toggle, Segmented, Badge, Pill/Chip, Card/CardLabel/InnerBox,
+  StatTile, ListRow/Avatar, Banner/TextAction, HeroState, Field, Toast (undo ring), Sheet, TabBar,
+  Ticket/TicketStub, LogoMark, Screen/ScreenHeader/Skeleton.
+- Ikon: hanya lewat `@/components/icons` (Phosphor `/ssr`, ukuran via prop `size`, warna `currentColor`).
+- Aset Figma statis di `public/figma/` (logo, ember, knob toggle). Bentuk yang ikut tema (lekukan,
+  gerigi, tepi sobek tiket) digambar CSS/SVG inline dengan `var(--bg)`.
+- Jangan pakai warna hex di komponen; pakai token. Pengecualian yang memang tetap di kedua mode:
+  Button Primary, tab bar panitia, tombol destruktif, QR.
+- Preview semua komponen & tema: `/dev/ui`.
 
 ## Cara run
 ```bash
@@ -64,4 +80,5 @@ Env: salin `.env.example` → `.env.local`. Phase 0 belum butuh variabel.
 
 ## Status phase
 - [x] Phase 0 — fondasi (tanpa DB & offline, ditunda)
-- [ ] Phase 1 — design system
+- [x] Phase 1 — design system (`/dev/ui`)
+- [ ] Phase 2 — data, akses, seed dummy (DB asli ditunda; pakai mock)

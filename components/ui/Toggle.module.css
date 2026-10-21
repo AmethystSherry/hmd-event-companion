@@ -1,0 +1,43 @@
+/* Area sentuh 51×44 (target ≥44) dengan track visual 51×31. */
+.track {
+  position: relative;
+  flex-shrink: 0;
+  width: 51px;
+  height: 31px;
+  margin: 6.5px 0;
+  padding: 0;
+  border: 0;
+  border-radius: 15.5px;
+  background: var(--toggle-track);
+  box-shadow:
+    inset 0 0.8px 2px rgba(0, 0, 0, 0.28),
+    inset 0 0 1.4px rgba(0, 0, 0, 0.1),
+    0 0 0 0.35px rgba(255, 255, 255, 0.7);
+  transition: background-color 200ms ease-out;
+}
+
+.track::before {
+  content: "";
+  position: absolute;
+  inset: -6.5px 0;
+}
+
+.on {
+  background: var(--accent);
+}
+
+/* SVG knob 36,5 berisi knob 26,5 + ruang shadow (offset 5,1.5 seperti Figma). */
+.knob {
+  position: absolute;
+  top: calc(2.25px - 1.5px);
+  left: calc(2.25px - 5px);
+  width: 36.5px;
+  height: 36.5px;
+  max-width: none;
+  pointer-events: none;
+  transition: transform 250ms var(--ease-spring);
+}
+
+.on .knob {
+  transform: translateX(20px);
+}

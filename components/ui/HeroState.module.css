@@ -1,0 +1,57 @@
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 32px 8px;
+  text-align: center;
+}
+
+.circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 88px;
+  height: 88px;
+  margin-bottom: 4px;
+  border-radius: 50%;
+}
+
+.circle svg {
+  width: 36px;
+  height: 36px;
+}
+
+.neutral {
+  background: var(--card-2);
+  color: var(--label-2);
+}
+.accent {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+.warning {
+  background: var(--warning-soft);
+  color: var(--warning-text);
+}
+.danger {
+  background: var(--danger-soft);
+  color: var(--danger-text);
+}
+.success {
+  background: var(--success-soft);
+  color: var(--success-text);
+}
+
+.title {
+  max-width: 320px;
+}
+
+.body {
+  max-width: 300px;
+}
+
+.action {
+  width: 100%;
+  margin-top: 8px;
+}

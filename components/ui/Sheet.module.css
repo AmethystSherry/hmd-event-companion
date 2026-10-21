@@ -1,0 +1,58 @@
+.root {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.scrim {
+  position: absolute;
+  inset: 0;
+  background: var(--scrim);
+  animation: fade-in 250ms ease-out;
+}
+
+.panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  max-width: var(--screen-width);
+  max-height: 92dvh;
+  overflow-y: auto;
+  padding: 10px 20px calc(env(safe-area-inset-bottom) + 24px);
+  border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
+  background: var(--card);
+  outline: none;
+  animation: sheet-in 420ms var(--ease-spring);
+}
+
+.grabber {
+  flex-shrink: 0;
+  width: 36px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--label-3);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes sheet-in {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel {
+    animation: fade-in 150ms ease-out;
+  }
+}

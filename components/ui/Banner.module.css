@@ -1,0 +1,77 @@
+.banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 16px 14px 14px;
+  border-radius: var(--radius-banner);
+}
+
+.icon {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.danger {
+  background: var(--danger-soft);
+}
+.danger .icon,
+.danger .title {
+  color: var(--danger-text);
+}
+
+.warning {
+  background: var(--warning-soft);
+}
+.warning .icon,
+.warning .title {
+  color: var(--warning-text);
+}
+
+.success {
+  background: var(--success-soft);
+}
+.success .icon,
+.success .title {
+  color: var(--success-text);
+}
+
+/* Neutral: kartu putih, semua teks label-2 (Figma "Banner · neutral"). */
+.neutral {
+  background: var(--card);
+  color: var(--label-2);
+}
+.neutral .icon,
+.neutral .title {
+  color: var(--label-2);
+}
+
+.action {
+  margin-top: 6px;
+}
+
+.textAction {
+  min-height: 32px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--label);
+  font-size: 15px;
+  line-height: 22px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
