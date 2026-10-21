@@ -38,9 +38,14 @@ app/
   panitia/            ruang panitia (P*, BP*)
   dev/status/         versi build + status sumber data
   dev/ui/             preview design system (light & dark)
+  dev/guests/         tamu dummy + link /t/{token}
+  api/panitia/        login PIN, logout, cek sesi
   fonts/              Switzer
 components/ui/        komponen design system Clean v0.5 (Phase 1)
 lib/data/             tipe domain + DataStore (mock sekarang, DB nanti)
+lib/server/           secrets, HMAC (token/tiket/sesi), PIN gate, guard akses
+lib/csv.ts, event.ts  import CSV tamu; fakta acara + rundown default
+data/                 CSV dummy (fiktif)
 ```
 
 ## Design system (Clean v0.5)
@@ -58,6 +63,29 @@ lib/data/             tipe domain + DataStore (mock sekarang, DB nanti)
   Button Primary, tab bar panitia, tombol destruktif, QR.
 - Preview semua komponen & tema: `/dev/ui`.
 
+## Data & akses (Phase 2)
+- Model: `lib/data/types.ts` (Guest, Ticket, ProfileCard, Session, EventState, Question, Photo,
+  Feedback, Script). Interface `DataStore` di `lib/data/store.ts`; implementasi mock di
+  `lib/data/mock.ts`. Selalu akses lewat `await getStore()` (sudah memanggil `connection()`).
+- Seed: `data/dummy-guests.csv` (20 tamu FIKTIF) + `DEFAULT_RUNDOWN` di `lib/event.ts`. Seed jalan
+  otomatis saat store dibuat, idempoten (upsert by IG). Status seed: 15 undangan terkirim,
+  17 hadir (punya tiket), 1 tidak hadir, 2 belum jawab.
+- Import CSV (P04 & seed): `lib/csv.ts` — kolom `nama, ig, wa`; error baris kosong, IG dobel,
+  format WA; ringkasan "20 baris · 0 error · 3 tanpa nomor WA".
+- Tamu: `/t/{token}`, token = HMAC(GUEST_TOKEN_SECRET, guestId) 22 karakter → stabil, tak
+  tertebak. Guard `guestFromToken()` di `lib/server/access.ts`; token salah → T01e.
+- Tiket: QR = `ticketId.sig` (HMAC TICKET_HMAC_SECRET), tanpa data pribadi; `verifyTicket()`.
+  Kode pendek `HMD-014-XXXX`. Check-in idempoten: scan kedua → `used`, hitungan tetap.
+- Panitia: `POST /api/panitia/login {pin}` → cookie httpOnly `hmd_crew` (stateless, HMAC
+  SESSION_SECRET, 24 jam). 5× salah per IP → 429 terkunci 5 menit (`lib/server/pinGate.ts`).
+  `GET /api/panitia/session`, `POST /api/panitia/logout`. Guard `isCrew()`.
+- Hapus otomatis 8 Des 2026 (`EVENT.purgeAt`): dicek tiap akses store (tanpa cron); data per
+  orang dihapus, rekap agregat tanpa identitas tetap (`aggregates()`). Saat pindah ke DB asli:
+  jalankan hal yang sama via cron gratis (mis. Vercel Cron / Supabase pg_cron).
+- Dev: `/dev/guests` daftar tamu dummy + link tamu (production: hanya panitia).
+- Secret: `.env.local` (tidak di-commit). `EVENT_PIN` diisi sendiri oleh tim, jangan ditulis di
+  chat/kode. Rate-limit & sesi in-memory → per instance server (cukup untuk 1 server).
+
 ## Cara run
 ```bash
 npm install
@@ -67,7 +95,7 @@ npm test             # vitest
 npm run lint && npm run typecheck && npm run format:check
 npm run build
 ```
-Env: salin `.env.example` → `.env.local`. Phase 0 belum butuh variabel.
+Env: salin `.env.example` → `.env.local`, isi 3 secret acak + `EVENT_PIN` (6 digit, pilih sendiri).
 
 ## Konvensi
 - Copy UI Bahasa Indonesia santai, persis Figma/design.md §7. Jam 24 jam pakai titik (13.00).
@@ -81,4 +109,5 @@ Env: salin `.env.example` → `.env.local`. Phase 0 belum butuh variabel.
 ## Status phase
 - [x] Phase 0 — fondasi (tanpa DB & offline, ditunda)
 - [x] Phase 1 — design system (`/dev/ui`)
-- [ ] Phase 2 — data, akses, seed dummy (DB asli ditunda; pakai mock)
+- [x] Phase 2 — data mock, akses token & PIN, seed dummy, tiket HMAC, purge
+- [ ] Phase 3 — F1 undangan & konfirmasi

@@ -21,6 +21,7 @@ export {
   Image,
   Key,
   Lightning,
+  LinkBreak,
   ListBullets,
   LockKey,
   LockSimple,

@@ -14,7 +14,14 @@
 
 /* Separator inset antar baris di dalam Card inset. */
 .row + .row {
-  box-shadow: inset 0 0.5px 0 var(--separator);
+  border-top: 1px solid var(--separator);
+}
+
+/* Layar retina: garis rambut 0,5px seperti Figma (di DPR 1 dibulatkan tidak konsisten). */
+@media (min-resolution: 2dppx) {
+  .row + .row {
+    border-top-width: 0.5px;
+  }
 }
 
 .interactive {
