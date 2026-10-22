@@ -10,11 +10,12 @@ import { secrets } from "@/lib/server/config";
 import { signTicket } from "@/lib/server/crypto";
 import styles from "./guest.module.css";
 import { GuestSkeleton, InvalidLink } from "./InvalidLink";
-import { DoorScreen, UsedScreen } from "./TicketScreens";
+import { EventLoader } from "./acara/EventLoader";
+import { DoorScreen } from "./TicketScreens";
 
 // /t/{token}: layar tamu sesuai status jawaban.
 // belum → T01 Undangan · tidak → T02b Nggak bisa datang · hadir → T03 Tiket,
-// hari-H → T05 Tiket hari-H (animasi sobek saat discan) · sudah masuk → T03b.
+// hari-H → T05 Tiket hari-H (animasi sobek saat discan) · sudah masuk → layar acara (Jeda/Sesi).
 // Token tidak pernah ditampilkan atau di-log; tamu hanya melihat datanya sendiri.
 export default function GuestPage({ params }: PageProps<"/t/[token]">) {
   return (
@@ -30,7 +31,7 @@ async function Router({ params }: { params: PageProps<"/t/[token]">["params"] })
   if (!guest) return <InvalidLink />;
   if (guest.rsvp === "hadir") {
     const ticket = await (await getStore()).getTicketForGuest(guest.id);
-    if (ticket?.status === "dipakai") return <UsedScreen guest={guest} token={token} />;
+    if (ticket?.status === "dipakai") return <EventLoader guest={guest} token={token} />;
     if (isEventDay(new Date())) return <DoorScreen guest={guest} token={token} />;
     return <TicketScreen guest={guest} token={token} />;
   }

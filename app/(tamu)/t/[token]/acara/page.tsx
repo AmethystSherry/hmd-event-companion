@@ -1,11 +1,12 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { Coffee } from "@/components/icons";
-import { HeroState, Screen } from "@/components/ui";
 import { guestFromToken } from "@/lib/server/access";
 import { GuestSkeleton, InvalidLink } from "../InvalidLink";
+import { EventLoader } from "./EventLoader";
 
-// Layar acara JEDA ⇄ SESI (BT03/BT08…) dibangun di Phase 5. Sementara: penanda setelah BT02.
+export const metadata = { title: "Acara · House Moving Day" };
+
+// Layar acara tamu: JEDA ⇄ SESI mengikuti panitia (BT03/BT10/BT08/BT11, BT04, S01).
 export default function AcaraPage({ params }: PageProps<"/t/[token]/acara">) {
   return (
     <Suspense fallback={<GuestSkeleton />}>
@@ -19,11 +20,5 @@ async function Content({ params }: { params: PageProps<"/t/[token]/acara">["para
   const guest = await guestFromToken(token);
   if (!guest) return <InvalidLink />;
   if (guest.rsvp !== "hadir") redirect(`/t/${token}`);
-  return (
-    <Screen>
-      <HeroState icon={<Coffee />} title="Layar acara menyusul">
-        Jeda & sesi live dibangun di tahap berikutnya.
-      </HeroState>
-    </Screen>
-  );
+  return <EventLoader guest={guest} token={token} />;
 }

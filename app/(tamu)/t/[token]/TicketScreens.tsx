@@ -58,7 +58,7 @@ export async function UsedScreen({ guest, token }: { guest: Guest; token: string
           <p className={`t-label c-label-2 ${styles.caption}`}>
             QR udah nggak aktif. Tiket ini jadi bukti kamu hadir.
           </p>
-          <Button href={`/t/${token}/acara`}>Kembali ke acara</Button>
+          <Button href={`/t/${token}`}>Kembali ke acara</Button>
         </>
       }
     >
