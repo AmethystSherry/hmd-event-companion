@@ -10,7 +10,7 @@
 .scrim {
   position: absolute;
   inset: 0;
-  background: var(--scrim);
+  background: rgba(0, 0, 0, 0.32);
   animation: fade-in 250ms ease-out;
 }
 
@@ -55,4 +55,19 @@
   .panel {
     animation: fade-in 150ms ease-out;
   }
+}
+
+/* P06: sheet mengambang inset 8, radius 40, dim 35%. */
+.floating {
+  padding: 0 8px calc(env(safe-area-inset-bottom) + 8px);
+}
+
+.floating .scrim {
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.floating .panel {
+  max-width: calc(var(--screen-width) - 16px);
+  padding-bottom: 24px;
+  border-radius: 40px;
 }

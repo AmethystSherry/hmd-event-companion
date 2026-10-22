@@ -5,7 +5,8 @@ import { createPortal } from "react-dom";
 import { cx } from "@/lib/cx";
 import styles from "./Sheet.module.css";
 
-// Bottom sheet (Figma "Sheet · …"): dim 45% + kartu dari bawah radius 32, grabber 36×5.
+// Bottom sheet (Figma "Sheet · …"): dim + kartu dari bawah radius 32, grabber 36×5.
+// `floating` (P06 hasil scan): inset 8 dari tepi, radius 40 di semua sudut, dim 35%.
 // Dipakai untuk konfirmasi & aksi cepat (BP03, BP04b, P06, P07c, T15c).
 export function Sheet({
   open,
@@ -13,6 +14,7 @@ export function Sheet({
   title,
   children,
   dismissible = true,
+  floating,
   className,
 }: {
   open: boolean;
@@ -20,6 +22,7 @@ export function Sheet({
   title: string;
   children: ReactNode;
   dismissible?: boolean;
+  floating?: boolean;
   className?: string;
 }) {
   const titleId = useId();
@@ -44,7 +47,7 @@ export function Sheet({
 
   if (!open || typeof document === "undefined") return null;
   return createPortal(
-    <div className={styles.root}>
+    <div className={cx(styles.root, floating && styles.floating)}>
       <div aria-hidden className={styles.scrim} onClick={dismissible ? onClose : undefined} />
       <div
         ref={panel}

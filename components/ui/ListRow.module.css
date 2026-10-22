@@ -78,3 +78,8 @@
 .avatar[data-size="52"] {
   font-size: 17px;
 }
+
+.avatar[data-size="56"] {
+  font-size: 15px;
+  line-height: 22px;
+}

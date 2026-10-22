@@ -29,15 +29,16 @@ export function Ticket({
   state,
   qr,
   stamp,
+  torn = state === "sobek",
   className,
 }: {
   data: TicketData;
   state: TicketState;
-  qr?: ReactNode; // QR 140 (Phase 4); tidak dirender saat sobek
-  stamp?: { time: string; guestNo: number; total: number };
+  qr?: ReactNode; // QR 140; tidak dirender saat sobek
+  stamp?: { time: string; guestNo: number | null; total: number };
+  torn?: boolean; // T05a: badge "Valid" tapi tiket sudah sobek (potongan dirender terpisah)
   className?: string;
 }) {
-  const torn = state === "sobek";
   return (
     <article
       aria-label={`Tiket ${data.name}, nomor kunci ${data.keyNo}`}
@@ -87,7 +88,7 @@ export function Ticket({
           <TearEdge position="bottom" />
           {stamp && (
             <div
-              className={styles.stamp}
+              className={cx(styles.stamp, "stamp")}
               aria-label={`Masuk ${stamp.time}, tamu ke-${stamp.guestNo}`}
             >
               <span className="t-label-emph">MASUK {stamp.time}</span>
