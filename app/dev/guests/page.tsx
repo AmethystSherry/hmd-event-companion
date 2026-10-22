@@ -42,7 +42,7 @@ async function GuestList() {
     <Screen>
       <ScreenHeader eyebrow="Dev · data dummy" title="Tamu dummy" />
       <p className="t-label c-label-2">
-        {guests.length} tamu fiktif dari data/dummy-guests.csv. Tap untuk membuka link tamu.
+        {guests.length} tamu fiktif dari data/tamu-hmd-dummy.csv. Tap untuk membuka link tamu.
       </p>
       <Card inset>
         {guests.map((g, i) => (
