@@ -15,9 +15,14 @@
     calc(env(safe-area-inset-bottom) + 24px);
 }
 
-/* Ruang untuk aksi bawah (54) + jarak + home indicator. */
+/* Ruang untuk aksi bawah: tinggi area aksi (--bottom-h) + jarak + home indicator. */
 .withBottom {
-  padding-bottom: calc(env(safe-area-inset-bottom) + 112px);
+  padding-bottom: calc(env(safe-area-inset-bottom) + var(--bottom-h, 54px) + 58px);
+}
+
+/* Layar dengan tombol back (Figma: konten mulai 8 di bawah status bar). */
+.back {
+  padding-top: calc(env(safe-area-inset-top) + 8px);
 }
 
 .bottom {
@@ -33,9 +38,8 @@
 
 .fade {
   position: absolute;
-  inset: auto 0 0 0;
-  height: 112px;
-  background: linear-gradient(to bottom, transparent 0%, var(--bg) 55%);
+  inset: -28px 0 0 0;
+  background: linear-gradient(to bottom, transparent 0, var(--bg) 40px, var(--bg) 100%);
 }
 
 .bottomInner {

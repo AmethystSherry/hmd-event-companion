@@ -1,0 +1,45 @@
+.field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 44px;
+  padding: 0 16px;
+  border-radius: var(--radius-pill);
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+}
+
+.field:focus-within {
+  box-shadow:
+    var(--shadow-card),
+    inset 0 0 0 1.5px var(--accent);
+}
+
+.icon {
+  flex-shrink: 0;
+  color: var(--label-2);
+}
+
+.input {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--label);
+  font-size: 16px; /* ≥16 supaya Safari iOS tidak auto-zoom */
+  line-height: 22px;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.input::placeholder {
+  color: var(--label-3);
+}
+
+.input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+}

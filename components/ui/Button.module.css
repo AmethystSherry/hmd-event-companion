@@ -27,7 +27,7 @@
 
 .button:disabled,
 .button[aria-disabled="true"] {
-  opacity: 0.4;
+  opacity: 0.35;
   cursor: not-allowed;
 }
 

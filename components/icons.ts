@@ -3,6 +3,7 @@
 export {
   ArrowClockwise,
   ArrowCounterClockwise,
+  Backspace,
   BookOpen,
   CalendarBlank,
   Camera,
@@ -19,6 +20,7 @@ export {
   FileText,
   HandWaving,
   Image,
+  Info,
   Key,
   Lightning,
   LinkBreak,
@@ -29,6 +31,7 @@ export {
   MapPin,
   MapTrifold,
   PaperPlaneTilt,
+  Plus,
   Play,
   QrCode,
   Scroll,

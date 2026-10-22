@@ -105,6 +105,11 @@
   text-align: right;
 }
 
+.follow svg {
+  flex-shrink: 0;
+  color: var(--success-text);
+}
+
 .follow {
   display: flex;
   align-items: center;

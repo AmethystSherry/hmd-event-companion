@@ -8,15 +8,26 @@ import styles from "./Screen.module.css";
 export function Screen({
   children,
   bottom,
+  bottomHeight = 54,
+  withBack,
   className,
 }: {
   children: ReactNode;
   bottom?: ReactNode;
+  bottomHeight?: number; // tinggi isi area aksi bawah (1 tombol 54, 2 tombol 118, +caption 28)
+  withBack?: boolean;
   className?: string;
 }) {
   return (
-    <div className={styles.screen}>
-      <main className={cx(styles.content, bottom ? styles.withBottom : undefined, className)}>
+    <div className={styles.screen} style={{ ["--bottom-h" as string]: `${bottomHeight}px` }}>
+      <main
+        className={cx(
+          styles.content,
+          bottom ? styles.withBottom : undefined,
+          withBack && styles.back,
+          className,
+        )}
+      >
         {children}
       </main>
       {bottom && (
