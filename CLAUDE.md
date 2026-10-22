@@ -55,7 +55,9 @@ data/                 CSV dummy (fiktif)
 - Komponen: `components/ui/*` (satu `.tsx` + `.module.css`), ekspor lewat `@/components/ui`.
   Button, IconButton, DestructiveButton, Toggle, Segmented, Badge, Pill/Chip, Card/CardLabel/InnerBox,
   StatTile, ListRow/Avatar, Banner/TextAction, HeroState, Field, Toast (undo ring), Sheet, TabBar,
-  Ticket/TicketStub, LogoMark, Screen/ScreenHeader/Skeleton.
+  Ticket/TicketStub, LogoMark, Screen/ScreenHeader/Skeleton, SearchField, AddChip.
+- `Screen`: `withBack` (konten mulai 8px, layar dengan tombol back), `bottom` + `bottomHeight`
+  (1 tombol 54, 2 tombol 118, +caption 28) → fade scroll-edge otomatis di atas aksi bawah.
 - Ikon: hanya lewat `@/components/icons` (Phosphor `/ssr`, ukuran via prop `size`, warna `currentColor`).
 - Aset Figma statis di `public/figma/` (logo, ember, knob toggle). Bentuk yang ikut tema (lekukan,
   gerigi, tepi sobek tiket) digambar CSS/SVG inline dengan `var(--bg)`.
@@ -67,11 +69,11 @@ data/                 CSV dummy (fiktif)
 - Model: `lib/data/types.ts` (Guest, Ticket, ProfileCard, Session, EventState, Question, Photo,
   Feedback, Script). Interface `DataStore` di `lib/data/store.ts`; implementasi mock di
   `lib/data/mock.ts`. Selalu akses lewat `await getStore()` (sudah memanggil `connection()`).
-- Seed: `data/dummy-guests.csv` (20 tamu FIKTIF) + `DEFAULT_RUNDOWN` di `lib/event.ts`. Seed jalan
+- Seed: `data/tamu-hmd-dummy.csv` (20 tamu FIKTIF) + `DEFAULT_RUNDOWN` di `lib/event.ts`. Seed jalan
   otomatis saat store dibuat, idempoten (upsert by IG). Status seed: 15 undangan terkirim,
   17 hadir (punya tiket), 1 tidak hadir, 2 belum jawab.
 - Import CSV (P04 & seed): `lib/csv.ts` — kolom `nama, ig, wa`; error baris kosong, IG dobel,
-  format WA; ringkasan "20 baris · 0 error · 3 tanpa nomor WA".
+  format WA; ringkasan "20 baris · 0 error · 3 tanpa WA".
 - Tamu: `/t/{token}`, token = HMAC(GUEST_TOKEN_SECRET, guestId) 22 karakter → stabil, tak
   tertebak. Guard `guestFromToken()` di `lib/server/access.ts`; token salah → T01e.
 - Tiket: QR = `ticketId.sig` (HMAC TICKET_HMAC_SECRET), tanpa data pribadi; `verifyTicket()`.
@@ -85,6 +87,24 @@ data/                 CSV dummy (fiktif)
 - Dev: `/dev/guests` daftar tamu dummy + link tamu (production: hanya panitia).
 - Secret: `.env.local` (tidak di-commit). `EVENT_PIN` diisi sendiri oleh tim, jangan ditulis di
   chat/kode. Rate-limit & sesi in-memory → per instance server (cukup untuk 1 server).
+
+## Alur F1 (Phase 3)
+Tamu (`app/(tamu)/t/[token]/`):
+- `/t/{token}` merutekan sesuai jawaban: belum → T01 Undangan · hadir → T03 Tiket (QR asli dari
+  `components/TicketQr.tsx`) · tidak → T02b "Nggak bisa datang". Token salah → T01e.
+- `/konfirmasi` T02 (+T02c belum lengkap: tombol aria-disabled, tap → error per field; T02d gagal
+  kirim: banner + "Coba lagi", isian tetap). Server action `submitRsvp` di `actions.ts`.
+- `/kenalan` T02b chip skill/asbun maks. 3 (+ "Tambah" sendiri) → `saveIntro`.
+- `/besok` T04 countdown H-1 · `/kalender` file .ics (`lib/ics.ts`).
+Panitia (`app/panitia/`):
+- `/panitia` P01 PIN (keypad, kirim otomatis 6 digit; P01b sisa percobaan; P01c countdown kunci).
+  Sudah masuk → placeholder Kontrol (BP01 di Phase 5). Halaman panitia lain pakai `requireCrew()`.
+- `/panitia/tamu` P03 (stat Diundang/Konfirmasi/Hadir, cari, refresh tiap 5 dtk sbg pengganti realtime).
+- `/panitia/undangan` P04 (+`?mode=pengingat` P04b, P04c saat CSV error): unggah CSV (server
+  action, baris valid langsung masuk), Kirim WA (wa.me) / Salin link → otomatis ditandai Terkirim.
+- Template pesan persis Figma di `lib/invite.ts`. Salin teks pakai `lib/clipboard.ts` (fallback http LAN).
+- Catatan uji: kalau panel Browser Claude tersembunyi, rAF terblokir dan konten Suspense tidak
+  tampil di sana — bukan bug; cek lewat HTML/curl atau HP.
 
 ## Cara run
 ```bash
@@ -110,4 +130,5 @@ Env: salin `.env.example` → `.env.local`, isi 3 secret acak + `EVENT_PIN` (6 d
 - [x] Phase 0 — fondasi (tanpa DB & offline, ditunda)
 - [x] Phase 1 — design system (`/dev/ui`)
 - [x] Phase 2 — data mock, akses token & PIN, seed dummy, tiket HMAC, purge
-- [ ] Phase 3 — F1 undangan & konfirmasi
+- [x] Phase 3 — F1 undangan & konfirmasi (tamu T01–T04 + state, panitia P01/P03/P04)
+- [ ] Phase 4 — F2 check-in tiket QR
