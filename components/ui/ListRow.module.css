@@ -83,3 +83,10 @@
   font-size: 15px;
   line-height: 22px;
 }
+
+.avatar[data-size="24"],
+.avatar[data-size="30"] {
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.005em;
+}

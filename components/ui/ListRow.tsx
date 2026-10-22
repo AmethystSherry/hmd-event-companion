@@ -5,7 +5,13 @@ import { cx } from "@/lib/cx";
 import styles from "./ListRow.module.css";
 
 // Avatar: lingkaran card-2 + inisial label-2 (tanpa warna-warni).
-export function Avatar({ name, size = 36 }: { name: string; size?: 20 | 34 | 36 | 44 | 52 | 56 }) {
+export function Avatar({
+  name,
+  size = 36,
+}: {
+  name: string;
+  size?: 20 | 24 | 30 | 34 | 36 | 44 | 52 | 56;
+}) {
   const initials = name
     .split(/\s+/)
     .filter(Boolean)
