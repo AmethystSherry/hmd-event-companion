@@ -3,16 +3,18 @@ import { ArrowCounterClockwise, CalendarBlank, Check, Clock, MapPin } from "@/co
 import { Button, Card, CardLabel, Pill, Screen, ScreenHeader, Ticket } from "@/components/ui";
 import { TicketQr } from "@/components/TicketQr";
 import { getStore, type Guest } from "@/lib/data";
-import { EVENT, keyLabel } from "@/lib/event";
+import { EVENT, isEventDay, keyLabel } from "@/lib/event";
 import { firstName } from "@/lib/invite";
 import { guestFromToken } from "@/lib/server/access";
 import { secrets } from "@/lib/server/config";
 import { signTicket } from "@/lib/server/crypto";
 import styles from "./guest.module.css";
 import { GuestSkeleton, InvalidLink } from "./InvalidLink";
+import { DoorScreen, UsedScreen } from "./TicketScreens";
 
 // /t/{token}: layar tamu sesuai status jawaban.
-// belum → T01 Undangan · hadir → T03 Tiket · tidak → T02b Nggak bisa datang.
+// belum → T01 Undangan · tidak → T02b Nggak bisa datang · hadir → T03 Tiket,
+// hari-H → T05 Tiket hari-H (animasi sobek saat discan) · sudah masuk → T03b.
 // Token tidak pernah ditampilkan atau di-log; tamu hanya melihat datanya sendiri.
 export default function GuestPage({ params }: PageProps<"/t/[token]">) {
   return (
@@ -26,7 +28,12 @@ async function Router({ params }: { params: PageProps<"/t/[token]">["params"] })
   const { token } = await params;
   const guest = await guestFromToken(token);
   if (!guest) return <InvalidLink />;
-  if (guest.rsvp === "hadir") return <TicketScreen guest={guest} token={token} />;
+  if (guest.rsvp === "hadir") {
+    const ticket = await (await getStore()).getTicketForGuest(guest.id);
+    if (ticket?.status === "dipakai") return <UsedScreen guest={guest} token={token} />;
+    if (isEventDay(new Date())) return <DoorScreen guest={guest} token={token} />;
+    return <TicketScreen guest={guest} token={token} />;
+  }
   if (guest.rsvp === "tidak") return <Declined guest={guest} token={token} />;
   return <Invitation guest={guest} token={token} />;
 }

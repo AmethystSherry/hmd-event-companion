@@ -206,3 +206,30 @@
 .waitCard {
   gap: 6px;
 }
+
+/* T03b: kartu "QR nonaktif". */
+.qrOff {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px 14px 14px;
+  border-radius: 20px;
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+}
+
+.qrOff .stack {
+  flex: 1 1 0;
+}
+
+.qrOffIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--card-2);
+  color: var(--label-3);
+}
