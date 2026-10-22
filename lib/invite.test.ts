@@ -39,3 +39,11 @@ describe(".ics (T03)", () => {
     expect(ics.endsWith("END:VCALENDAR\r\n")).toBe(true);
   });
 });
+
+describe("hari-H (WIB)", () => {
+  it("8 Nov WIB termasuk dini hari UTC 7 Nov", async () => {
+    const { isEventDay } = await import("./event");
+    expect(isEventDay(new Date("2026-11-07T18:00:00Z"))).toBe(true); // 01.00 WIB 8 Nov
+    expect(isEventDay(new Date("2026-11-07T16:00:00Z"))).toBe(false); // 23.00 WIB 7 Nov
+  });
+});

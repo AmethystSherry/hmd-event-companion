@@ -57,6 +57,9 @@ export interface DataStore {
     method: CheckInMethod,
   ): Promise<CheckInResult>;
 
+  // Penghitung pintu: "9/20 masuk" (total = semua tamu terundang).
+  checkInCount(): Promise<{ checkedIn: number; total: number }>;
+
   // Kartu tetangga (N3)
   getProfile(guestId: string): Promise<ProfileCard | null>;
   saveProfile(card: ProfileCard): Promise<ProfileCard>;

@@ -280,6 +280,14 @@ export function createMockStore(deps: MockDeps, initial?: State): DataStore {
       return { kind: "valid", guest: clone(g), ticket: clone(t) };
     },
 
+    async checkInCount() {
+      maybePurge();
+      return {
+        checkedIn: [...s.tickets.values()].filter((x) => x.status === "dipakai").length,
+        total: s.guests.size,
+      };
+    },
+
     async getProfile(guestId) {
       const p = s.profiles.get(guestId);
       return p ? clone(p) : null;

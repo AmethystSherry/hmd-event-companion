@@ -78,3 +78,9 @@ export const DEFAULT_RUNDOWN: ReadonlyArray<Omit<Session, "status" | "startedAt"
 export function keyLabel(keyNo: number): string {
   return `#${String(keyNo).padStart(3, "0")}`;
 }
+
+// Hari-H (WIB): link tamu yang sudah konfirmasi menampilkan T05 Tiket hari-H, bukan T03.
+export function isEventDay(now: Date): boolean {
+  const wibDate = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jakarta" }).format(now);
+  return wibDate === EVENT.startsAt.slice(0, 10);
+}
