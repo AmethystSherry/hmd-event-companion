@@ -1,0 +1,107 @@
+/* P07 banner offline kecil. */
+.offline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px 10px 12px;
+  border-radius: 16px;
+  background: var(--warning-soft);
+  color: var(--label);
+}
+
+.offline svg {
+  flex-shrink: 0;
+  color: var(--warning-text);
+}
+
+.list {
+  gap: 0;
+  padding: 4px 16px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+}
+
+.row + .row {
+  border-top: 1px solid var(--separator);
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.stack > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.checkin {
+  flex-shrink: 0;
+  min-height: 34px;
+  padding: 8px 14px 8px 12px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--cta);
+  color: var(--on-cta);
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+  transition: transform var(--press-ms) ease-out;
+}
+
+.checkin:active {
+  transform: scale(var(--press-scale));
+}
+
+/* P07c: kartu "nggak ada di daftar" (tap → sheet tambah tamu cepat). */
+.notFound {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  padding: 16px;
+  border: 0;
+  border-radius: 20px;
+  background: var(--card);
+  color: var(--label);
+  text-align: center;
+}
+
+.sheetHead {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+}
+
+.info {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+}
+
+.info svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.toastWrap {
+  position: fixed;
+  top: calc(env(safe-area-inset-top) + 12px);
+  left: 50%;
+  z-index: 60;
+  width: max-content;
+  max-width: calc(100% - 32px);
+  transform: translateX(-50%);
+}

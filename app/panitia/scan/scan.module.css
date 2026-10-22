@@ -1,0 +1,162 @@
+/* P05 viewfinder: hitam tetap (#121212, sama di kedua mode), radius 28, tinggi 430. */
+.camera {
+  position: relative;
+  width: 100%;
+  height: 430px;
+  border-radius: 28px;
+  background: #121212;
+  overflow: hidden;
+}
+
+.video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 300ms ease-out;
+}
+
+.videoOn {
+  opacity: 1;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  pointer-events: none;
+}
+
+.frame {
+  width: 200px;
+  height: 200px;
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+
+.hint {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.shortcuts {
+  display: flex;
+  gap: 8px;
+}
+
+.shortcut {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 12px 14px 12px 12px;
+  border-radius: 20px;
+  background: var(--card);
+  color: var(--label);
+  text-decoration: none;
+  box-shadow: var(--shadow-card);
+  transition: transform var(--press-ms) ease-out;
+}
+
+.shortcut:active {
+  transform: scale(var(--press-scale));
+}
+
+.shortcutIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 18px;
+  background: var(--card-2);
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* Sheet hasil (P06/P06b/P06c) */
+.person {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+}
+
+.okCircle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
+  background: var(--success-soft);
+  color: var(--success-text);
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.statusCircle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 28px;
+}
+
+.warn {
+  background: var(--warning-soft);
+  color: var(--warning-text);
+}
+
+.danger {
+  background: var(--danger-soft);
+  color: var(--danger-text);
+}
+
+.center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  max-width: 320px;
+  text-align: center;
+}
+
+.toastWrap {
+  position: fixed;
+  top: calc(env(safe-area-inset-top) + 12px);
+  left: 50%;
+  z-index: 40;
+  width: max-content;
+  max-width: calc(100% - 32px);
+  transform: translateX(-50%);
+}
