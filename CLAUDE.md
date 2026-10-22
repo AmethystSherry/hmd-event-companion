@@ -106,6 +106,22 @@ Panitia (`app/panitia/`):
 - Catatan uji: kalau panel Browser Claude tersembunyi, rAF terblokir dan konten Suspense tidak
   tampil di sana — bukan bug; cek lewat HTML/curl atau HP.
 
+## Alur F2 (Phase 4) — check-in tiket QR
+Tamu:
+- `/t/{token}`: sudah masuk → T03b (tiket bukti, QR nonaktif); hari-H (WIB, `isEventDay`) → T05.
+  `/t/{token}/pintu` = T05 kapan saja (uji/demo). T05 (`pintu/DoorTicket.tsx`) poll
+  `/t/{token}/status` tiap 2 dtk → animasi sobek T05a → BT02 (±900 ms, reduce motion = fade)
+  → otomatis 3 dtk ke `/t/{token}/acara` (placeholder sampai Phase 5). Wake Lock saat tiket tampil.
+Panitia:
+- `/panitia/scan` P05: `qr-scanner` (MIT), kamera tetap nyala; sheet mengambang P06 Valid (tutup
+  2 dtk) / P06b Sudah dipakai / P06c Tidak dikenal. Kamera ditolak/error → `/panitia/cari?kamera=error`.
+- `/panitia/cari` P07 cari nama/IG/kode → Check-in manual; P07b banner kamera; P07c walk-in (tap kartu
+  "nggak ada di daftar" → sheet). Check-in manual yang gagal karena offline diantre di HP & dikirim ulang.
+- `/panitia/cari/manual` P07d pratinjau + `/api/panitia/daftar-manual` PDF (jspdf).
+- API: `POST /api/panitia/checkin {qr}|{guestId}` (header `x-device`), `POST /api/panitia/walkin`.
+  Logika di `lib/server/checkin.ts`; QR diverifikasi HMAC di server; 2 HP scan tiket sama → kedua "used".
+- Validasi offline di HP panitia (tanpa server) ikut ditunda bersama offline/service worker.
+
 ## Cara run
 ```bash
 npm install
@@ -131,4 +147,5 @@ Env: salin `.env.example` → `.env.local`, isi 3 secret acak + `EVENT_PIN` (6 d
 - [x] Phase 1 — design system (`/dev/ui`)
 - [x] Phase 2 — data mock, akses token & PIN, seed dummy, tiket HMAC, purge
 - [x] Phase 3 — F1 undangan & konfirmasi (tamu T01–T04 + state, panitia P01/P03/P04)
-- [ ] Phase 4 — F2 check-in tiket QR
+- [x] Phase 4 — F2 check-in tiket QR (T05→BT02, T03b, P05–P07d)
+- [ ] Phase 5 — F3+F4 mode acara realtime
