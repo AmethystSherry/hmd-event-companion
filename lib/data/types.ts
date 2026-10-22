@@ -58,6 +58,7 @@ export interface Session {
   id: string; // "s01"
   order: number;
   title: string;
+  tagline: string; // baris kecil di undangan T01, mis. "Keliling rumah baru"
   room: string;
   type: SessionType;
   startsAt: string; // "13.00" (WIB, hari acara)

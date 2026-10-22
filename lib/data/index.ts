@@ -14,7 +14,7 @@ async function build(): Promise<DataStore> {
   const store = createMockStore({
     tokenFor: (id) => guestToken(sec.guestTokenSecret, id),
     ticketCode: (ticketId, keyNo) => shortCode(sec.ticketSecret, ticketId, keyNo),
-    seedCsv: () => readFileSync(join(process.cwd(), "data", "dummy-guests.csv"), "utf8"),
+    seedCsv: () => readFileSync(join(process.cwd(), "data", "tamu-hmd-dummy.csv"), "utf8"),
   });
   await store.seed(); // data dummy sampai Test Day (prd.md §8)
   return store;

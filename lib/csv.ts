@@ -2,7 +2,15 @@
 // Dipakai seed dummy dan upload CSV panitia — satu aturan validasi untuk keduanya.
 
 export type GuestRow = { line: number; name: string; ig: string; wa: string | null };
-export type RowError = { line: number; message: string };
+// kind + detail mengikuti kartu "Ringkasan error CSV" di P04c, mis. "IG dobel" / "@x dipakai di baris 4 & 12".
+export type RowError = { line: number; kind: string; detail: string; message: string };
+
+const err = (line: number, kind: string, detail: string): RowError => ({
+  line,
+  kind,
+  detail,
+  message: `${kind}: ${detail}`,
+});
 export type ImportResult = {
   rows: GuestRow[]; // hanya baris valid
   errors: RowError[];
@@ -80,7 +88,7 @@ export function importGuests(text: string): ImportResult {
   if (col("name") < 0 || col("ig") < 0) {
     return {
       rows: [],
-      errors: [{ line: 1, message: "Header harus ada kolom nama dan ig" }],
+      errors: [err(1, "Header salah", "Header harus ada kolom nama dan ig")],
       total: 0,
       noWa: 0,
     };
@@ -99,13 +107,22 @@ export function importGuests(text: string): ImportResult {
     const waRaw = col("wa") >= 0 ? (cells[col("wa")] ?? "") : "";
     const wa = normalizeWa(waRaw);
 
-    if (!name) return void errors.push({ line, message: "Nama kosong" });
-    if (!ig) return void errors.push({ line, message: "IG kosong" });
-    if (!IG_RE.test(ig)) return void errors.push({ line, message: `IG @${ig} nggak valid` });
+    if (!name) return void errors.push(err(line, "Kosong", "Nama belum diisi"));
+    if (!ig) return void errors.push(err(line, "Kosong", "IG belum diisi"));
+    if (!IG_RE.test(ig)) return void errors.push(err(line, "IG nggak valid", `@${ig}`));
     if (seenIg.has(ig)) {
-      return void errors.push({ line, message: `IG @${ig} dobel (baris ${seenIg.get(ig)})` });
+      return void errors.push(
+        err(line, "IG dobel", `@${ig} dipakai di baris ${seenIg.get(ig)} & ${line}`),
+      );
     }
-    if (wa && !WA_RE.test(wa)) return void errors.push({ line, message: "Format WA salah" });
+    if (wa && !WA_RE.test(wa)) {
+      const reason = /D/.test(wa)
+        ? "ada huruf"
+        : wa.length < 10
+          ? "kurang digit"
+          : "kebanyakan digit";
+      return void errors.push(err(line, "Format WA salah", `${waRaw.trim()} — ${reason}`));
+    }
 
     seenIg.set(ig, line);
     if (!wa) noWa++;
@@ -114,7 +131,8 @@ export function importGuests(text: string): ImportResult {
   return { rows, errors, total, noWa };
 }
 
-// "20 baris · 0 error · 3 tanpa nomor WA" (prd.md F1).
+// P04: "20 baris · 0 error · 3 tanpa WA". P04c (ada error): "23 baris · 3 perlu dicek".
 export function importSummary(r: ImportResult): string {
-  return `${r.total} baris · ${r.errors.length} error · ${r.noWa} tanpa nomor WA`;
+  if (r.errors.length) return `${r.total} baris · ${r.errors.length} perlu dicek`;
+  return `${r.total} baris · 0 error · ${r.noWa} tanpa WA`;
 }

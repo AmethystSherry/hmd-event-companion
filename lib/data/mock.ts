@@ -17,7 +17,7 @@ import type {
 export type MockDeps = {
   tokenFor(guestId: string): string;
   ticketCode(ticketId: string, keyNo: number): string;
-  seedCsv(): string; // isi data/dummy-guests.csv
+  seedCsv(): string; // isi data/tamu-hmd-dummy.csv
   now?: () => Date;
 };
 

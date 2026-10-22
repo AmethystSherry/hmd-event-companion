@@ -5,11 +5,11 @@ import { importGuests, importSummary, normalizeWa, parseCsv } from "./csv";
 
 describe("CSV import (P04)", () => {
   it("CSV dummy 20 baris ter-import tanpa error", () => {
-    const text = readFileSync(join(process.cwd(), "data/dummy-guests.csv"), "utf8");
+    const text = readFileSync(join(process.cwd(), "data/tamu-hmd-dummy.csv"), "utf8");
     const r = importGuests(text);
     expect(r.errors).toEqual([]);
     expect(r.rows).toHaveLength(20);
-    expect(importSummary(r)).toBe("20 baris · 0 error · 3 tanpa nomor WA");
+    expect(importSummary(r)).toBe("20 baris · 0 error · 3 tanpa WA");
   });
 
   it("menandai baris kosong, IG dobel, dan format WA salah", () => {
@@ -44,5 +44,21 @@ describe("CSV import (P04)", () => {
       ["nama", "ig"],
       ["Putri, S.", "@putri"],
     ]);
+  });
+});
+
+describe("ringkasan error CSV (P04c)", () => {
+  it("jenis + detail per baris dan ringkasan 'perlu dicek'", () => {
+    const r = importGuests(
+      ["nama,ig,wa", "Bima,@bimanug,", ",@x,", "Bima Lagi,@bimanug,", "Sari,@sari,8123-45"].join(
+        "\n",
+      ),
+    );
+    expect(r.errors.map((e) => [e.line, e.kind, e.detail])).toEqual([
+      [3, "Kosong", "Nama belum diisi"],
+      [4, "IG dobel", "@bimanug dipakai di baris 2 & 4"],
+      [5, "Format WA salah", "8123-45 — kurang digit"],
+    ]);
+    expect(importSummary(r)).toBe("4 baris · 3 perlu dicek");
   });
 });

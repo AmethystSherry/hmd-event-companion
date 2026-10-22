@@ -12,7 +12,7 @@ function makeStore(): DataStore {
   return createMockStore({
     tokenFor: (id) => guestToken(S, id),
     ticketCode: (t, k) => shortCode(S, t, k),
-    seedCsv: () => readFileSync(join(process.cwd(), "data/dummy-guests.csv"), "utf8"),
+    seedCsv: () => readFileSync(join(process.cwd(), "data/tamu-hmd-dummy.csv"), "utf8"),
     now: () => clock,
   });
 }
@@ -39,7 +39,7 @@ describe("seed dummy", () => {
   it("idempoten: seed ulang & import CSV yang sama tidak menduplikasi", async () => {
     await store.seed();
     const { importGuests } = await import("../csv");
-    const csv = readFileSync(join(process.cwd(), "data/dummy-guests.csv"), "utf8");
+    const csv = readFileSync(join(process.cwd(), "data/tamu-hmd-dummy.csv"), "utf8");
     const res = await store.importGuests(importGuests(csv).rows);
     expect(res).toEqual({ added: 0, updated: 20 });
     expect(await store.listGuests()).toHaveLength(20);
