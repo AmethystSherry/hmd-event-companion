@@ -122,6 +122,25 @@ Panitia:
   Logika di `lib/server/checkin.ts`; QR diverifikasi HMAC di server; 2 HP scan tiket sama → kedua "used".
 - Validasi offline di HP panitia (tanpa server) ikut ditunda bersama offline/service worker.
 
+## Mode acara realtime (Phase 5) — F3 + F4
+- State: `EventState` (mode pre/jeda/sesi/closed, activeSession, nextSession, rev, by) + sesi di
+  store mock. Aksi: `startSession`, `undoStart` (≤ `UNDO_MS`), `finishSession({startNext})`,
+  `closeEvent`, `updateRundown`. Aksi basi dari HP lain = no-op. Tes: `lib/data/event-control.test.ts`.
+- Realtime: SSE `GET /api/acara/stream` (panitia cookie / tamu `?t=token` yang hadir) + cadangan
+  polling `GET /api/acara` 5 dtk. Hook klien `lib/useEventSnapshot.ts` (`stale` → banner S01).
+  Terukur ±290 ms ke 5 HP. Aksi panitia: `POST /api/panitia/acara` (header `x-device`).
+- Panitia `/panitia` (`Control.tsx`): BP01 Mulai {sesi} → toast glass "Batalkan · N" 5 dtk → BP02
+  timer (amber; lewat durasi merah = BP02c) → BP03 sheet mengambang → BP04 → BP04b sheet tutup.
+  BP02b toast "Diubah oleh panitia lain" kalau `event.by` bukan HP ini. Tap baris rundown = edit
+  (nama, jam, durasi, PIC, ruang, tipe, urutan). `/panitia/tanya` & `/panitia/naskah` = penanda (N1/N2).
+- Tamu: `/t/{token}` untuk tamu yang sudah check-in (dan `/t/{token}/acara`) = `acara/EventScreen.tsx`:
+  Jeda BT03/BT10 (+BT03b "Sebentar lagi mulai"), Sesi BT08 (kolom tanya → `askQuestion`) / BT11
+  (titik tur bergeser sesuai waktu), BT04 rundown (tap tile), S01 banner sinyal lemah, closed →
+  penanda BT12 (Phase 6). T03b pindah ke `/t/{token}/tiket`.
+- Data sesi (`lib/event.ts`): title, tagline (T01), teaser (Jeda), topic + speakers + hosts (Sesi), points.
+- Dev: store di globalThis dibuat ulang otomatis kalau daftar fungsinya berubah (versi = nama fungsi,
+  bukan isi kode — isi kode beda antar bundle halaman/API dan memicu reset terus-menerus).
+
 ## Cara run
 ```bash
 npm install
@@ -148,4 +167,5 @@ Env: salin `.env.example` → `.env.local`, isi 3 secret acak + `EVENT_PIN` (6 d
 - [x] Phase 2 — data mock, akses token & PIN, seed dummy, tiket HMAC, purge
 - [x] Phase 3 — F1 undangan & konfirmasi (tamu T01–T04 + state, panitia P01/P03/P04)
 - [x] Phase 4 — F2 check-in tiket QR (T05→BT02, T03b, P05–P07d)
-- [ ] Phase 5 — F3+F4 mode acara realtime
+- [x] Phase 5 — F3+F4 mode acara realtime (SSE, BP01–BP04b, BT03–BT11, S01, edit rundown)
+- [ ] Phase 6 — F5 buku tamu & kolase
