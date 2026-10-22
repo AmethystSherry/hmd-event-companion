@@ -48,13 +48,25 @@ next.config.ts        header X-Robots-Tag noindex, allowedDevOrigins (HP di LAN)
 
 ## Design system (Clean v0.5)
 - Token: `app/tokens.css` — warna semantik light (utama) + dark (`prefers-color-scheme`, atau paksa
-  dengan `html[data-theme="light|dark"]`), radius, spacing, shadow, motion, kelas tipografi `t-*`
-  (Clean/* dari Figma; tracking Figma dalam persen → `em`).
+  dengan `data-theme="light|dark"` di `html` atau elemen mana pun), radius, spacing, shadow, motion,
+  kelas tipografi `t-*` (Clean/* dari Figma; tracking Figma dalam persen → `em`).
 - Komponen: `components/ui/*` (satu `.tsx` + `.module.css`), ekspor lewat `@/components/ui`.
-  Button, IconButton, DestructiveButton, Toggle, Segmented, Badge, Pill/Chip/AddChip,
+  Button, IconButton, Toggle, Segmented, Badge, Pill/Chip/AddChip,
   Card/CardLabel/InnerBox, StatTile, ListRow/Avatar, Banner/TextAction, HeroState, Field, Toast
   (undo ring), Sheet (bawah / `floating`), TabBar, Ticket (+`torn`)/TicketStub, LogoMark,
   Screen/ScreenHeader/Skeleton, SearchField.
+- **Button** (`Clean/Button` 4587:316, 12 varian): `size` `lg` (54, lebar penuh) | `sm` (36, lebar
+  hug, area tap 44) × `variant` `primary` | `secondary` | `destructive` × `iconOnly` (+ `label` wajib
+  untuk aria-label). Aturan pakai:
+  - `lg` = CTA di bawah layar & tombol di sheet. `sm` = aksi di header, kartu, baris list
+    (Keluar, Edit, Buka, Unggah CSV, Tambah, Kirim WA…).
+  - `destructive` = aksi hapus (Hapus sesi, Hapus tamu, hapus foto icon-only).
+  - `sm iconOnly` untuk tombol ikon di baris: ✎ `PencilSimple` secondary, ✈ `PaperPlaneTilt`
+    primary, ↻ secondary.
+  - Jangan override fill/stroke/efek/warna/radius lewat `className` atau `style`; ubah lewat
+    `size`/`variant`, lebar boleh diatur. Ikon selalu ikut warna label (CSS memaksa `currentColor`).
+  - Disabled sementara opacity 0,4 (Figma belum punya State=Disabled).
+- `IconButton` = khusus tombol back/close 44 di toolbar (gaya secondary, varian `glass` di kamera).
 - `Screen`: `withBack` (konten mulai 8px), `bottom` + `bottomHeight` (1 tombol 54, 2 tombol 118,
   +caption 28) → fade scroll-edge otomatis di atas aksi bawah.
 - Catatan: `TabBar` masih menautkan ke `/panitia/*` (rute diarsipkan → 404 kalau diklik);

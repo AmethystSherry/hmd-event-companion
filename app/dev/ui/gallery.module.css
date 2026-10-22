@@ -105,3 +105,41 @@
   flex-direction: column;
   gap: 16px;
 }
+
+.rowTight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Panel bertema sendiri (data-theme) — light & dark berdampingan. */
+.themePanel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border-radius: var(--radius-card);
+  background: var(--bg);
+  color: var(--label);
+  box-shadow: inset 0 0 0 1px var(--separator);
+}
+
+.matrixRow {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Simulasi state pressed (sama dengan :active). */
+.pressed {
+  display: inline-flex;
+}
+
+.pressedBlock {
+  display: flex;
+}
+
+.pressed > *,
+.pressedBlock > * {
+  transform: scale(var(--press-scale));
+}

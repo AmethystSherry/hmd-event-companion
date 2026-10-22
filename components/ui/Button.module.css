@@ -3,15 +3,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  width: 100%;
-  height: var(--control-h);
-  padding: 0 24px;
   border: 0;
   border-radius: var(--radius-pill);
-  font-size: 17px;
-  line-height: 22px;
-  letter-spacing: -0.005em;
   text-decoration: none;
   white-space: nowrap;
   transition:
@@ -21,13 +14,14 @@
   user-select: none;
 }
 
-.button:active:not(:disabled) {
+.button:active:not(:disabled):not([aria-disabled="true"]) {
   transform: scale(var(--press-scale));
 }
 
+/* Belum ada State=Disabled di Figma — sementara opacity 40%. */
 .button:disabled,
 .button[aria-disabled="true"] {
-  opacity: 0.35;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
@@ -45,7 +39,72 @@
   display: inline-flex;
 }
 
+/* Ikon tidak pernah punya warna sendiri: fill CSS mengalahkan atribut/prop `color` Phosphor. */
 .icon svg {
+  fill: currentColor;
+}
+
+/* Size=Large — 54, padding 24, gap 8, Clean/Headline. Text = lebar penuh. */
+.lg {
+  gap: 8px;
+  width: 100%;
+  height: var(--control-h);
+  padding: 0 24px;
+  font-size: 17px;
+  line-height: 22px;
+  letter-spacing: -0.005em;
+}
+
+.lg .icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Size=Small — 36, padding 14, gap 6, Clean/Label Emph, lebar hug. */
+.sm {
+  display: inline-flex;
+  flex-shrink: 0;
+  gap: 6px;
+  width: auto;
+  height: var(--control-h-sm);
+  padding: 0 14px;
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+}
+
+.sm .icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Area tap tak terlihat supaya target sentuh ≥ 44. */
+.sm::before {
+  content: "";
+  position: absolute;
+  inset: calc((var(--control-h-sm) - var(--touch)) / 2);
+}
+
+/* Content=Icon only — lingkaran 54 / 36. */
+.iconOnly {
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.lg.iconOnly {
+  width: var(--control-h);
+}
+
+.sm.iconOnly {
+  width: var(--control-h-sm);
+}
+
+.lg.iconOnly .icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.sm.iconOnly .icon svg {
   width: 18px;
   height: 18px;
 }
@@ -58,7 +117,7 @@
   filter: drop-shadow(var(--primary-shadow));
 }
 
-/* Rim: gradient stroke inside 3,5px (#5E5E5E atas → #242424 sisi → #525252 bawah). */
+/* Rim: gradient stroke inside 3,5px (Small 2,5) #5E5E5E atas → #242424 sisi → #525252 bawah. */
 .primary .layer {
   padding: 3.5px;
   background: linear-gradient(180deg, var(--primary-rim) 0%, #242424 50%, #525252 100%);
@@ -79,12 +138,24 @@
   border: 1.75px solid var(--primary-border);
 }
 
-/* Secondary — fill + Border 1px + Highlight 2,5px di bawah border. */
+.sm.primary .layer {
+  padding: 2.5px;
+}
+
+.sm.primary .layer::after {
+  border-width: 1.25px;
+}
+
+/* Secondary — fill + Border 1px + Highlight 2,5px (Small 1,5) di bawah border. */
 .secondary {
   background: var(--secondary-fill);
   color: var(--label);
   font-weight: 600;
   box-shadow: var(--shadow-secondary);
+}
+
+.sm.secondary {
+  font-weight: 500;
 }
 
 .secondary .layer {
@@ -97,4 +168,24 @@
   inset: -2.5px;
   border-radius: inherit;
   border: 1px solid var(--secondary-stroke);
+}
+
+.sm.secondary .layer {
+  border-width: 1.5px;
+}
+
+.sm.secondary .layer::after {
+  inset: -1.5px;
+}
+
+/* Destructive — merah + inner highlight + glow, warna tetap. */
+.destructive {
+  background: var(--danger-fill);
+  color: var(--danger-label);
+  font-weight: 500;
+  filter: drop-shadow(var(--danger-glow));
+}
+
+.destructive .layer {
+  box-shadow: var(--danger-inset);
 }

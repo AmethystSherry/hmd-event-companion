@@ -14,8 +14,11 @@ import {
   LockKey,
   MagnifyingGlass,
   PaperPlaneTilt,
+  PencilSimple,
   Play,
+  Trash,
   Users,
+  WhatsappLogo,
   WifiSlash,
   X,
 } from "@/components/icons";
@@ -27,7 +30,6 @@ import {
   Card,
   CardLabel,
   Chip,
-  DestructiveButton,
   Field,
   HeroState,
   IconButton,
@@ -152,21 +154,63 @@ export function Gallery() {
         </div>
       </Section>
 
-      <Section title="Button">
-        <Button icon={<Camera />}>Foto buat kolase</Button>
-        <Button variant="secondary" icon={<Camera />}>
-          Foto buat kolase
-        </Button>
+      <Section title="Button · 2 size × 3 style × Text / Icon only">
+        <ButtonMatrix theme="light" />
+        <ButtonMatrix theme="dark" />
+      </Section>
+
+      <Section title="Button · contoh F1">
         <Button icon={<Play weight="fill" />}>Mulai Talkshow</Button>
-        <Button variant="secondary">Belum, kembali</Button>
-        <Button disabled>Konfirmasi kehadiran</Button>
+        <Button variant="destructive" icon={<Trash />}>
+          Hapus sesi
+        </Button>
+        <div className={styles.between}>
+          <div>
+            <p className="t-body-emph">Tamu &amp; undangan</p>
+            <p className="t-label c-label-2">13/20 diundang</p>
+          </div>
+          <Button size="sm" variant="secondary">
+            Buka
+          </Button>
+        </div>
+        <Card inset>
+          <ListRow
+            leading={<Avatar name="Rara Wening" />}
+            title="Rara Wening"
+            subtitle="@rarawening"
+            trailing={
+              <div className={styles.rowTight}>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  iconOnly
+                  label="Ubah tamu"
+                  icon={<PencilSimple />}
+                />
+                <Button size="sm" iconOnly label="Undang via DM IG" icon={<PaperPlaneTilt />} />
+              </div>
+            }
+          />
+          <ListRow
+            leading={<Avatar name="Bima Sakti" />}
+            title="Bima Sakti"
+            subtitle="@bimasakti"
+            trailing={
+              <Button size="sm" icon={<WhatsappLogo />}>
+                Kirim WA
+              </Button>
+            }
+          />
+        </Card>
+      </Section>
+
+      <Section title="IconButton toolbar 44">
         <div className={styles.row}>
           <IconButton label="Kembali" icon={<CaretLeft />} />
           <IconButton label="Muat ulang" icon={<ArrowClockwise />} />
           <div className={styles.cameraBg}>
             <IconButton variant="glass" label="Tutup kamera" icon={<X />} />
           </div>
-          <DestructiveButton label="Hapus foto" />
         </div>
       </Section>
 
@@ -389,6 +433,9 @@ export function Gallery() {
       <Section title="Ikon (Phosphor)">
         <div className={styles.wrap}>
           <PaperPlaneTilt size={20} />
+          <PencilSimple size={20} />
+          <WhatsappLogo size={20} />
+          <Trash size={20} />
           <Camera size={20} />
           <Users size={20} />
           <ChatCircle size={20} />
@@ -396,6 +443,62 @@ export function Gallery() {
           <WifiSlash size={20} />
         </div>
       </Section>
+    </div>
+  );
+}
+
+const VARIANTS = ["primary", "secondary", "destructive"] as const;
+
+// Matriks Clean/Button (4587:316) di panel bertema sendiri, supaya light & dark terlihat sekaligus.
+function ButtonMatrix({ theme }: { theme: "light" | "dark" }) {
+  return (
+    <div data-theme={theme} className={styles.themePanel}>
+      <p className="t-label-emph c-label-2">{theme === "light" ? "Light" : "Dark"}</p>
+      <p className="t-label c-label-2">Large · 54</p>
+      {VARIANTS.map((v) => (
+        <div key={v} className={styles.matrixRow}>
+          <Button variant={v}>Foto buat kolase</Button>
+          <Button variant={v} icon={<Camera />}>
+            Foto buat kolase
+          </Button>
+          <div className={styles.rowTight}>
+            <Button variant={v} iconOnly label="Kamera" icon={<Camera />} />
+            <Button variant={v} disabled iconOnly label="Kamera (nonaktif)" icon={<Camera />} />
+            <span className={styles.pressed}>
+              <Button variant={v} iconOnly label="Kamera (ditekan)" icon={<Camera />} />
+            </span>
+          </div>
+        </div>
+      ))}
+      <Button disabled>Saya hadir · disabled</Button>
+      <span className={styles.pressedBlock}>
+        <Button variant="secondary">Belum, kembali · pressed</Button>
+      </span>
+
+      <p className="t-label c-label-2">Small · 36</p>
+      {VARIANTS.map((v) => (
+        <div key={v} className={styles.wrap}>
+          <Button size="sm" variant={v}>
+            Tambah
+          </Button>
+          <Button size="sm" variant={v} icon={<Camera />}>
+            Kamera
+          </Button>
+          <Button size="sm" variant={v} iconOnly label="Kamera" icon={<Camera />} />
+          <Button
+            size="sm"
+            variant={v}
+            disabled
+            iconOnly
+            label="Kamera (nonaktif)"
+            icon={<Camera />}
+          />
+          <span className={styles.pressed}>
+            <Button size="sm" variant={v} iconOnly label="Kamera (ditekan)" icon={<Camera />} />
+          </span>
+        </div>
+      ))}
+      <p className="t-caption c-label-3">Ikon ke-2 dari kanan: disabled · paling kanan: pressed</p>
     </div>
   );
 }

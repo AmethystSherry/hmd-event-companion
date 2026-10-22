@@ -2,7 +2,6 @@ export { Badge, type BadgeTone } from "./Badge";
 export { Banner, TextAction } from "./Banner";
 export { Button } from "./Button";
 export { Card, CardLabel, InnerBox } from "./Card";
-export { DestructiveButton } from "./DestructiveButton";
 export { Field } from "./Field";
 export { HeroState } from "./HeroState";
 export { IconButton } from "./IconButton";
