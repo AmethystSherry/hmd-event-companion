@@ -36,6 +36,7 @@
   --secondary-stroke: #c8c8c8;
   --secondary-highlight: #ffffff;
   --toggle-track: #d8dbe3;
+  --dash: #c9c4bc;
   --segment-track: #f1f1f3;
   --segment-stroke: #e2e2e4;
   --segment-active: #232325;
@@ -127,6 +128,8 @@
     --secondary-stroke: #4a4a4d;
     --secondary-highlight: #3c3c3f;
     --toggle-track: #3a3a3c;
+    --dash: rgba(245, 241, 234, 0.22);
+    --dash: rgba(245, 241, 234, 0.22);
     --segment-track: #1c1c1e;
     --segment-stroke: #2c2c2e;
     --segment-active: #3a3a3c;
@@ -165,6 +168,7 @@
   --secondary-stroke: #4a4a4d;
   --secondary-highlight: #3c3c3f;
   --toggle-track: #3a3a3c;
+  --dash: rgba(245, 241, 234, 0.22);
   --segment-track: #1c1c1e;
   --segment-stroke: #2c2c2e;
   --segment-active: #3a3a3c;

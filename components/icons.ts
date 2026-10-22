@@ -15,6 +15,7 @@ export {
   Check,
   CheckCircle,
   Clock,
+  CloudArrowUp,
   Coffee,
   Copy,
   DownloadSimple,

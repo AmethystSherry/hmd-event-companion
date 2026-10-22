@@ -10,6 +10,8 @@ import {
   ChatCircle,
   CheckCircle,
   Clock,
+  CloudArrowUp,
+  UploadSimple,
   Image as ImageIcon,
   LockKey,
   MagnifyingGlass,
@@ -30,13 +32,17 @@ import {
   Card,
   CardLabel,
   Chip,
+  Countdown,
+  Dropzone,
   Field,
   HeroState,
   IconButton,
   InnerBox,
   ListRow,
+  NumberedRow,
   LogoMark,
   Pill,
+  PinPad,
   Segmented,
   Sheet,
   Skeleton,
@@ -91,6 +97,7 @@ export function Gallery() {
   const [sheet, setSheet] = useState(false);
   const [toastKey, setToastKey] = useState(0);
   const [undone, setUndone] = useState<string | null>(null);
+  const [pin, setPin] = useState("12");
 
   useEffect(() => {
     const root = document.documentElement;
@@ -413,6 +420,37 @@ export function Gallery() {
           <Skeleton height={110} radius={22} />
           <Skeleton height={110} radius={22} />
         </div>
+      </Section>
+
+      <Section title="F1 · Countdown, NumberedRow, Dropzone, PinPad">
+        <Countdown
+          label="Pintu dibuka dalam"
+          value="17 hari 4 jam"
+          caption="Minggu, 8 Nov · 13.00 WIB"
+        />
+        <Card inset>
+          <NumberedRow number={1} title="Open space" subtitle="Keliling rumah baru" />
+          <NumberedRow
+            number="02"
+            title="Talkshow"
+            subtitle="14.00 · 45 mnt"
+            meta="PIC Tim Acara"
+            chevron
+            onClick={() => {}}
+          />
+        </Card>
+        <Dropzone
+          icon={<CloudArrowUp />}
+          title="Belum ada daftar tamu"
+          action={
+            <Button size="sm" icon={<UploadSimple />}>
+              Pilih file CSV
+            </Button>
+          }
+        >
+          Unggah CSV sekali di awal. Setelah itu tamu ditambah atau diedit manual.
+        </Dropzone>
+        <PinPad value={pin} onChange={setPin} state={pin.length === 6 ? "error" : "idle"} />
       </Section>
 
       <Section title="Tiket">

@@ -1,0 +1,81 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.boxes {
+  display: flex;
+  gap: 10px;
+}
+
+.box {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 56px;
+  border-radius: var(--radius-inner);
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+}
+
+.active {
+  box-shadow:
+    inset 0 0 0 1.5px var(--accent),
+    var(--shadow-card);
+}
+
+.error {
+  box-shadow:
+    inset 0 0 0 1.5px var(--danger-text),
+    var(--shadow-card);
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--label);
+}
+
+.keypad {
+  display: grid;
+  grid-template-columns: repeat(3, 78px);
+  justify-content: center;
+  gap: 14px 28px;
+}
+
+.key {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 78px;
+  height: 78px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+  color: var(--label);
+  font-size: 28px;
+  line-height: 32px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  font-variant-numeric: tabular-nums;
+  transition: transform var(--press-ms) ease-out;
+}
+
+.key:active:not(:disabled) {
+  transform: scale(var(--press-scale));
+  background: var(--card-2);
+}
+
+.key:disabled {
+  opacity: 0.4;
+}
+
+.del {
+  background: transparent;
+  box-shadow: none;
+}

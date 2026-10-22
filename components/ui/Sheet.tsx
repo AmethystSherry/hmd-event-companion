@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useId, useRef, type ReactNode } from "react";
-import { createPortal } from "react-dom";
 import { cx } from "@/lib/cx";
 import styles from "./Sheet.module.css";
 
 // Bottom sheet (Figma "Sheet · …"): dim + kartu dari bawah radius 32, grabber 36×5.
 // `floating` (P06 hasil scan): inset 8 dari tepi, radius 40 di semua sudut, dim 35%.
+// Dirender di tempat (position fixed, tanpa portal) supaya sheet yang terbuka sejak render pertama
+// tetap cocok saat hidrasi.
 // Dipakai untuk konfirmasi & aksi cepat (BP03, BP04b, P06, P07c, T15c).
 export function Sheet({
   open,
@@ -45,8 +46,8 @@ export function Sheet({
     };
   }, [open, dismissible, onClose]);
 
-  if (!open || typeof document === "undefined") return null;
-  return createPortal(
+  if (!open) return null;
+  return (
     <div className={cx(styles.root, floating && styles.floating)}>
       <div aria-hidden className={styles.scrim} onClick={dismissible ? onClose : undefined} />
       <div
@@ -63,7 +64,6 @@ export function Sheet({
         </h2>
         {children}
       </div>
-    </div>,
-    document.body,
+    </div>
   );
 }

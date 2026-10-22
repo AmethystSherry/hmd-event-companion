@@ -18,10 +18,10 @@
   transform: scale(var(--press-scale));
 }
 
-/* Belum ada State=Disabled di Figma — sementara opacity 40%. */
+/* Belum ada State=Disabled di Figma — sementara opacity 35% (T02c, PE03). */
 .button:disabled,
 .button[aria-disabled="true"] {
-  opacity: 0.4;
+  opacity: 0.35;
   cursor: not-allowed;
 }
 
