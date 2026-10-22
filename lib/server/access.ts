@@ -1,4 +1,5 @@
 import { cookies, headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { getStore, type Guest } from "../data";
 import { secrets } from "./config";
 import { signSession, verifySession } from "./crypto";
@@ -34,6 +35,17 @@ export async function endCrewSession(): Promise<void> {
 export async function isCrew(): Promise<boolean> {
   const value = (await cookies()).get(CREW_COOKIE)?.value;
   return verifySession(secrets().sessionSecret, value, Date.now());
+}
+
+// Guard halaman panitia: belum masuk → P01 dengan `next` kembali ke halaman ini.
+export async function requireCrew(path: string): Promise<void> {
+  if (!(await isCrew())) redirect(`/panitia?next=${encodeURIComponent(path)}`);
+}
+
+// Hanya izinkan kembali ke halaman panitia (cegah open redirect).
+export function safeNext(next: string | string[] | undefined, fallback = "/panitia/tamu"): string {
+  const v = Array.isArray(next) ? next[0] : next;
+  return v && /^\/panitia(\/[\w\-/]*)?(\?[\w=&-]*)?$/.test(v) ? v : fallback;
 }
 
 // Guard tamu: hanya data milik pemilik token. Null → layar T01e "Link tidak valid".
