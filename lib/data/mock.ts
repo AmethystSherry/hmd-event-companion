@@ -1,8 +1,9 @@
 import { importGuests as parseGuests, normalizeIg, type GuestRow } from "../csv";
 import { DEFAULT_RUNDOWN, EVENT } from "../event";
-import type { Aggregates, DataStore } from "./store";
+import { UNDO_MS, type Aggregates, type DataStore } from "./store";
 import type {
   CheckInResult,
+  EventSnapshot,
   EventState,
   Feedback,
   Guest,
@@ -10,6 +11,7 @@ import type {
   ProfileCard,
   Question,
   Session,
+  SessionEdit,
   Ticket,
 } from "./types";
 
@@ -32,17 +34,27 @@ type State = {
   feedback: Feedback[];
   purged: Aggregates | null; // terisi setelah hapus otomatis; rekap tanpa identitas
   seeded: boolean;
+  // Snapshot sebelum "Mulai" terakhir, untuk tombol Batalkan (BP02, ≤ UNDO_MS).
+  undo: { sessionId: string; by: string; at: number; rev: number; prev: EventSnapshot } | null;
 };
 
 function freshState(now: Date): State {
   return {
-    event: { mode: "pre", activeSession: null, nextSession: "s01", updatedAt: now.toISOString() },
+    event: {
+      mode: "pre",
+      activeSession: null,
+      nextSession: "s01",
+      updatedAt: now.toISOString(),
+      rev: 0,
+      by: null,
+    },
     guests: new Map(),
     tickets: new Map(),
     profiles: new Map(),
     sessions: DEFAULT_RUNDOWN.map((s, i) => ({
       ...s,
       points: [...s.points],
+      hosts: [...s.hosts],
       status: i === 0 ? "berikutnya" : "nanti",
       startedAt: null,
       endedAt: null,
@@ -52,6 +64,7 @@ function freshState(now: Date): State {
     feedback: [],
     purged: null,
     seeded: false,
+    undo: null,
   };
 }
 
@@ -64,6 +77,32 @@ export function createMockStore(deps: MockDeps, initial?: State): DataStore {
   let tokenIndex: Map<string, string> | null = null; // token → guestId
 
   const clone = <T>(v: T): T => structuredClone(v);
+  const listeners = new Set<(snap: EventSnapshot) => void>();
+
+  const snapshot = (): EventSnapshot => clone({ event: s.event, sessions: s.sessions });
+
+  // Hitung ulang status sesi & sesi berikutnya dari mode + sesi aktif, lalu siarkan.
+  function commit(by: string) {
+    const ordered = [...s.sessions].sort((a, b) => a.order - b.order);
+    const next = ordered.find((x) => x.status !== "selesai" && x.id !== s.event.activeSession);
+    for (const x of s.sessions) {
+      if (x.status === "selesai") continue;
+      x.status =
+        x.id === s.event.activeSession ? "berlangsung" : x.id === next?.id ? "berikutnya" : "nanti";
+    }
+    s.event.nextSession = next?.id ?? null;
+    s.event.updatedAt = now().toISOString();
+    s.event.rev += 1;
+    s.event.by = by;
+    const snap = snapshot();
+    for (const fn of listeners) {
+      try {
+        fn(snap);
+      } catch {
+        // listener rusak (koneksi SSE putus) tidak boleh mengganggu yang lain
+      }
+    }
+  }
 
   function indexTokens() {
     tokenIndex = new Map([...s.guests.keys()].map((id) => [deps.tokenFor(id), id]));
@@ -183,7 +222,100 @@ export function createMockStore(deps: MockDeps, initial?: State): DataStore {
     },
 
     async listSessions() {
-      return clone(s.sessions);
+      return clone([...s.sessions].sort((a, b) => a.order - b.order));
+    },
+
+    async getSnapshot() {
+      return snapshot();
+    },
+
+    // Mulai sesi N (BP01): mode=sesi, N berlangsung. Sesi lain yang masih jalan diselesaikan dulu.
+    async startSession(sessionId, by) {
+      const target = s.sessions.find((x) => x.id === sessionId);
+      if (!target || target.status === "selesai" || s.event.mode === "closed") return snapshot();
+      if (s.event.activeSession === sessionId) return snapshot(); // sudah dimulai HP lain
+      const prev = snapshot();
+      const t = now().toISOString();
+      const running = s.sessions.find((x) => x.id === s.event.activeSession);
+      if (running) {
+        running.status = "selesai";
+        running.endedAt = t;
+      }
+      target.startedAt = t;
+      target.endedAt = null;
+      s.event.mode = "sesi";
+      s.event.activeSession = sessionId;
+      commit(by);
+      s.undo = { sessionId, by, at: now().getTime(), rev: s.event.rev, prev };
+      return snapshot();
+    },
+
+    // Batalkan Mulai (toast 5 dtk): kembali persis ke state sebelumnya, kalau belum ada perubahan lain.
+    async undoStart(sessionId, by) {
+      const u = s.undo;
+      if (!u || u.sessionId !== sessionId || u.rev !== s.event.rev) return snapshot();
+      if (now().getTime() - u.at > UNDO_MS) return snapshot();
+      s.sessions = clone(u.prev.sessions);
+      s.event = { ...clone(u.prev.event), rev: s.event.rev };
+      s.undo = null;
+      commit(by);
+      return snapshot();
+    },
+
+    // Selesaikan sesi (BP03): "Selesai & mulai {berikutnya}" atau "Selesai aja" → Jeda.
+    async finishSession(sessionId, by, { startNext }) {
+      if (s.event.activeSession !== sessionId) return snapshot(); // basi
+      const cur = s.sessions.find((x) => x.id === sessionId)!;
+      cur.status = "selesai";
+      cur.endedAt = now().toISOString();
+      s.event.activeSession = null;
+      s.event.mode = "jeda";
+      s.undo = null;
+      commit(by);
+      const nextId = s.event.nextSession;
+      if (startNext && nextId) return store.startSession(nextId, by);
+      return snapshot();
+    },
+
+    // Tutup acara (BP04b): semua HP tamu ke buku tamu.
+    async closeEvent(by) {
+      if (s.event.mode === "closed") return snapshot();
+      const running = s.sessions.find((x) => x.id === s.event.activeSession);
+      if (running) {
+        running.status = "selesai";
+        running.endedAt = now().toISOString();
+      }
+      s.event.mode = "closed";
+      s.event.activeSession = null;
+      s.undo = null;
+      commit(by);
+      return snapshot();
+    },
+
+    // Edit rundown: judul, ruang, tipe, jam, durasi, PIC, urutan. Sesi selesai tetap boleh dikoreksi.
+    async updateRundown(edits: SessionEdit[], by) {
+      for (const e of edits) {
+        const x = s.sessions.find((y) => y.id === e.id);
+        if (!x) continue;
+        if (e.title !== undefined) x.title = e.title.trim().slice(0, 40) || x.title;
+        if (e.room !== undefined) x.room = e.room.trim().slice(0, 30);
+        if (e.type !== undefined) x.type = e.type === "talkshow" ? "talkshow" : "info";
+        if (e.startsAt !== undefined && /^\d{2}\.\d{2}$/.test(e.startsAt)) x.startsAt = e.startsAt;
+        if (e.durationMin !== undefined)
+          x.durationMin = Math.max(5, Math.min(240, Math.round(e.durationMin)));
+        if (e.pic !== undefined) x.pic = e.pic.trim().slice(0, 30);
+        if (e.speakers !== undefined) x.speakers = e.speakers.trim().slice(0, 80);
+        if (e.teaser !== undefined) x.teaser = e.teaser.trim().slice(0, 160);
+        if (e.order !== undefined) x.order = e.order;
+      }
+      [...s.sessions].sort((a, b) => a.order - b.order).forEach((x, i) => (x.order = i + 1));
+      commit(by);
+      return snapshot();
+    },
+
+    subscribe(listener) {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
     },
 
     async listGuests() {
@@ -288,6 +420,42 @@ export function createMockStore(deps: MockDeps, initial?: State): DataStore {
       };
     },
 
+    async eventStats() {
+      maybePurge();
+      const used = [...s.tickets.values()]
+        .filter((x) => x.status === "dipakai" && x.checkedInAt)
+        .sort((a, b) => (b.checkedInAt! > a.checkedInAt! ? 1 : -1));
+      const questionsBySession: Record<string, number> = {};
+      for (const q of s.questions)
+        questionsBySession[q.sessionId] = (questionsBySession[q.sessionId] ?? 0) + 1;
+      return {
+        checkedIn: used.length,
+        total: s.guests.size,
+        photos: s.photos.filter((x) => !x.deleted).length,
+        questions: s.questions.length,
+        questionsBySession,
+        recentNames: used.slice(0, 3).map((x) => s.guests.get(x.guestId)?.name ?? ""),
+      };
+    },
+
+    async addQuestion({ guestId, sessionId, text, anonymous }) {
+      requireGuest(guestId);
+      const clean = text.trim().slice(0, 280);
+      if (!clean) throw new Error("Pertanyaan kosong");
+      const q: Question = {
+        id: `q${s.questions.length + 1}`,
+        guestId,
+        sessionId,
+        text: clean,
+        anonymous,
+        clusterId: null,
+        answered: false,
+        createdAt: now().toISOString(),
+      };
+      s.questions.push(q);
+      return clone(q);
+    },
+
     async getProfile(guestId) {
       const p = s.profiles.get(guestId);
       return p ? clone(p) : null;
@@ -345,6 +513,7 @@ export function createMockStore(deps: MockDeps, initial?: State): DataStore {
 
     async reset() {
       Object.assign(s, freshState(now()));
+      listeners.clear();
       tokenIndex = null;
     },
   };

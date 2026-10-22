@@ -9,7 +9,32 @@ export interface EventState {
   activeSession: string | null;
   nextSession: string | null;
   updatedAt: string; // ISO
+  rev: number; // naik tiap perubahan (deteksi konflik antar-HP panitia)
+  by: string | null; // id HP panitia yang terakhir mengubah
 }
+
+// State acara + rundown yang dikirim ke semua HP (SSE / polling).
+export interface EventSnapshot {
+  event: EventState;
+  sessions: Session[];
+}
+
+// Edit rundown oleh panitia (urutan, jam, tipe, PIC, …).
+export type SessionEdit = Pick<Session, "id"> &
+  Partial<
+    Pick<
+      Session,
+      | "title"
+      | "room"
+      | "type"
+      | "startsAt"
+      | "durationMin"
+      | "pic"
+      | "speakers"
+      | "teaser"
+      | "order"
+    >
+  >;
 
 export type Rsvp = "belum" | "hadir" | "tidak";
 export type InviteStatus = "belum" | "terkirim";
@@ -59,12 +84,15 @@ export interface Session {
   order: number;
   title: string;
   tagline: string; // baris kecil di undangan T01, mis. "Keliling rumah baru"
+  teaser: string; // deskripsi kartu "Selanjutnya" di Jeda (BT03/BT10)
+  topic: string; // judul kartu sesi di layar Sesi (BT08/BT11)
   room: string;
   type: SessionType;
   startsAt: string; // "13.00" (WIB, hari acara)
   durationMin: number;
   description: string;
-  speakers: string;
+  speakers: string; // baris pembawa, mis. "Guest star (menyusul) · Moderator Tim Potara"
+  hosts: string[]; // nama untuk inisial avatar, mis. ["Guest star", "Tim Potara"]
   pic: string;
   status: SessionStatus;
   startedAt: string | null;
