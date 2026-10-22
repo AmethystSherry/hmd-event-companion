@@ -1,0 +1,173 @@
+/* Pola tata letak bersama layar F1 (bukan komponen design system). */
+
+/* Baris paling atas: tombol back / logo di kiri, satu aksi Small di kanan. */
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 44px;
+}
+
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.caption {
+  text-align: center;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.stack12 {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.rowTight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.privacy {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 0 4px;
+  color: var(--label-2);
+}
+
+.privacy svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* Kotak ikon 40 di kiri judul kartu (PE03). */
+.iconBox {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--card-2);
+  color: var(--label);
+}
+
+.iconBoxInk {
+  background: var(--label);
+  color: var(--card);
+}
+
+.green {
+  color: var(--success-text);
+}
+
+.danger {
+  color: var(--danger-text);
+}
+
+/* Template pesan (P04, P04a, P04b). */
+.template {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.chips {
+  display: flex;
+  gap: 8px;
+  margin: 0 calc(var(--margin) * -1);
+  padding: 2px var(--margin);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.chips::-webkit-scrollbar {
+  display: none;
+}
+
+.chips > * {
+  flex-shrink: 0;
+}
+
+/* Baris ringkasan 4 angka (P04 "12/20 Diundang · 7 Hadir …"). */
+.statRow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  text-align: center;
+}
+
+.statRow > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.toastDock {
+  position: fixed;
+  left: 50%;
+  bottom: max(calc(env(safe-area-inset-bottom) + 12px), 24px);
+  z-index: 30;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  max-width: var(--screen-width);
+  padding: 0 var(--margin);
+  transform: translateX(-50%);
+}
+
+.sheetBody {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.sheetHead {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sheetActions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.twoCol {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.hiddenInput {
+  display: none;
+}

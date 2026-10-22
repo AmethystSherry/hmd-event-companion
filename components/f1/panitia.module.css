@@ -1,0 +1,212 @@
+/* Gaya khusus layar panitia F1. */
+
+.cardLink {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  border-radius: var(--radius-card);
+  transition: transform var(--press-ms) ease-out;
+}
+
+.cardLink:active {
+  transform: scale(0.99);
+}
+
+.eventCard {
+  gap: 10px;
+}
+
+/* PE03: kartu dengan ikon 40 + judul + aksi Small di kanan. */
+.homeHead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.homeHead > .grow {
+  flex: 1;
+  min-width: 0;
+}
+
+.grow {
+  flex: 1;
+  min-width: 0;
+}
+
+.miniRundown {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.miniRundown > p {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: 8px;
+}
+
+.note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: var(--radius-inner);
+  box-shadow: inset 0 0 0 1px var(--separator);
+  color: var(--label-2);
+}
+
+.checkList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.checkList > p {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.checkList svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--success-text);
+}
+
+/* P04k: daftar kolom CSV. */
+.colRow {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.code {
+  padding: 3px 8px;
+  border-radius: 8px;
+  background: var(--card-2);
+  font-family: var(--font-mono), monospace;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.textLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  color: var(--label);
+  text-decoration: none;
+}
+
+/* P04a: file + status kolom. */
+.fileRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.checkCircle {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--success-soft);
+  color: var(--success-text);
+}
+
+.warnCircle {
+  background: var(--warning-soft);
+  color: var(--warning-text);
+}
+
+.colStatus {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.issueRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.lineTag {
+  flex-shrink: 0;
+  min-width: 64px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: var(--card-2);
+  text-align: center;
+}
+
+/* P04: baris tamu — 2 tombol ikon 36 sama besar. */
+.guestRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+}
+
+.guestRow + .guestRow {
+  box-shadow: inset 0 1px 0 var(--separator);
+}
+
+.guestMain {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.guestName {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+
+.guestName > :first-child {
+  white-space: nowrap;
+}
+
+.guestName > :last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.statusBox {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  border-radius: var(--radius-inner);
+  background: var(--card-2);
+}
+
+.waNote {
+  text-align: center;
+}
+
+.amber {
+  color: var(--warning-text);
+}
+
+.toastSub {
+  opacity: 0.7;
+  font-weight: 400;
+}
