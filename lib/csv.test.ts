@@ -62,3 +62,11 @@ describe("ringkasan error CSV (P04c)", () => {
     expect(importSummary(r)).toBe("4 baris · 3 perlu dicek");
   });
 });
+
+describe("alasan format WA salah", () => {
+  it("nomor berisi huruf → 'ada huruf'", () => {
+    expect(importGuests("nama,ig,wa\nBima,@bima,0812abc").errors[0].detail).toBe(
+      "0812abc — ada huruf",
+    );
+  });
+});

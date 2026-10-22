@@ -116,7 +116,7 @@ export function importGuests(text: string): ImportResult {
       );
     }
     if (wa && !WA_RE.test(wa)) {
-      const reason = /D/.test(wa)
+      const reason = /\D/.test(wa)
         ? "ada huruf"
         : wa.length < 10
           ? "kurang digit"
