@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { ArrowCounterClockwise, CaretRight, Clock, Users } from "@/components/icons";
+import { ArrowCounterClockwise, CaretRight, Clock, Play, Stop, Users } from "@/components/icons";
 import { Badge, Button, Card, CardLabel, Screen, ScreenHeader } from "@/components/ui";
 import { getStore } from "@/lib/data";
 import { HMD_ID } from "@/lib/data/seed";
@@ -8,7 +8,13 @@ import { dateLong, timeWib, wibDate } from "@/lib/format";
 import { isEventDay, serverNow } from "@/lib/server/clock";
 import { appOrigin } from "@/lib/server/url";
 import styles from "../f1/states.module.css";
-import { resetCheckIns, seedF2, setFakeNow } from "./actions";
+import {
+  devFinishActiveSession,
+  devStartFirstSession,
+  resetCheckIns,
+  seedF2,
+  setFakeNow,
+} from "./actions";
 import { SCREENS } from "./screens";
 
 export const metadata = { title: "F2 states · dev" };
@@ -56,6 +62,10 @@ async function DevTools() {
   const event = store.getEvent(HMD_ID)!;
   const day = isEventDay(event.date, now);
   const stats = store.doorStats(HMD_ID);
+  const active = store.listSessions(HMD_ID).find((x) => x.status === "berlangsung");
+  const session = active
+    ? `${active.title} lagi jalan`
+    : `mode ${event.mode ?? "pre"} · belum ada yang jalan`;
   const tickets = new Map(store.listTickets(HMD_ID).map((t) => [t.guestId, t]));
   const guests = store.listGuests(HMD_ID).filter((g) => tickets.has(g.id));
   return (
@@ -103,6 +113,17 @@ async function DevTools() {
               Reset semua check-in
             </Button>
           </form>
+          <form action={devStartFirstSession}>
+            <Button size="sm" type="submit" icon={<Play />}>
+              Mulai sesi 1
+            </Button>
+          </form>
+          <form action={devFinishActiveSession}>
+            <Button size="sm" variant="secondary" type="submit" icon={<Stop />}>
+              Selesaikan sesi
+            </Button>
+          </form>
+          <p className="t-label c-label-2">Sesi: {session}</p>
           <Link className={`t-label-emph ${styles.link}`} href={`/panitia/event/${HMD_ID}`}>
             Buka Home event panitia →
           </Link>

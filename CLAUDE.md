@@ -16,6 +16,10 @@ Web app mobile untuk House Moving Day Potara Studio (Minggu 8 Nov 2026, 13.00–
 - **F2 · Check-in di pintu sudah dibangun** (22 Okt malam; Figma band `4667:4654`,
   `F2-deliverables.md`). 12 keputusan terbuka di deliverables dijawab pakai default — lihat
   "Aturan F2 di kode". F3–F5 & N1–N4 belum; kerjakan lewat `HANDOFF-CLAUDE-CODE.md`.
+- **F2 v2 (23 Okt, Prompt E)**: Button primary oranye; BP00 dirombak (carousel kartu sesi +
+  stopwatch + Mulai/Selesaikan lewat Dialog BP00a/BP00b, state acara prd §6 di store); layar scan
+  tanpa TabBar ("Lihat daftar tamu"); P06 baru; P07 tanpa badge "Belum masuk" + P07d Profil tamu.
+  Layar tamu Sesi/Jeda & Foto/Tanya panitia masih placeholder (F3/F4).
 - Branch & tag arsip baru ada di lokal (repo belum punya remote); push setelah remote ditambahkan.
 
 ## Sumber kebenaran
@@ -41,10 +45,12 @@ Web app mobile untuk House Moving Day Potara Studio (Minggu 8 Nov 2026, 13.00–
 ```
 app/
   layout.tsx · page.tsx   root layout (font, noindex) · beranda sementara
-  (tamu)/t/[token]/       T01/T01e/T02b/T03/T03h · konfirmasi/ (T02/T02c/T02d) · kalender/ (.ics)
+  (tamu)/t/[token]/       T01/T01e/T02b/T03/T03h · konfirmasi/ (T02/T02c/T02d) · kalender/ (.ics) ·
+                          acara/ (layar Sesi/Jeda, placeholder F3/F4)
   panitia/                P01 + PE01/PE02 · actions.ts (semua server action panitia)
     event/[id]/           PE03/PE03b (+ sheet PE03e/PE03h) · rundown/ (PE04k/PE04/PE04a) ·
-                          tamu/ (P04k/P04a/P04c/P04/P04b/d/e/f) · kontrol/ (BP00) ·
+                          tamu/ (P04k/P04a/P04c/P04/P04b/d/e/f) · kontrol/ (BP00/BP00a/BP00b) ·
+                          foto/ · tanya/ (placeholder F3/F4) ·
                           scan/ (P05/P05b/P06/P06b/P06c) · scan/cari/ (P07/P07b/P07c)
   api/live/               SSE: kirim `rev` store tiap ada perubahan (tanpa data tamu)
   api/panitia/            event/[id]/manifest (GET daftar pintu) · checkin (POST antrean op)
@@ -54,15 +60,17 @@ app/
   tokens.css · globals.css · fonts/
 components/ui/            komponen design system Clean v0.5
 components/f1/            layar F1 presentasional (dipakai route asli & /dev/states/f1)
-components/f2/            tamu.tsx (T05/T05a/BT02/T03b) · Kontrol (BP00) · DoorApp (P05–P07) ·
-                          useDoor (manifest + antrean) · Viewfinder (kamera) · DoorPage (guard route)
+components/f2/            tamu.tsx (T05/T05a/BT02/T03b) · Kontrol (BP00 + dialog) · DoorApp (P05–P07d) ·
+                          useDoor (manifest + antrean) · Viewfinder (kamera) · DoorPage (guard route) ·
+                          Placeholder (Foto/Tanya)
 components/               LiveRefresh (SSE → router.refresh) · RefreshAt · TicketQr · RegisterOffline
 components/icons.ts       ekspor ikon Phosphor (/ssr)
 lib/data/                 tipe, store (logika murni + tes), seed, getStore() (file .data/)
 lib/server/               env, HMAC (QR & cookie sesi), rate-limit PIN, akses crew/tamu, origin,
                           clock (hari-H + jam palsu dev), door (manifest & terapkan op check-in)
 lib/                      csv · format · invite · confirm · ics · view · fixtures · clipboard · cx ·
-                          door (logika pintu tanpa secret, jalan di HP) · offline/doorDb (IndexedDB)
+                          door (logika pintu tanpa secret, jalan di HP) · offline/doorDb (IndexedDB) ·
+                          rundown (status sesi + stopwatch dari state acara)
 public/                   figma/ · sw.js (tiket & layar pintu offline) · contoh-tamu.csv · dev/*.csv
 next.config.ts            header X-Robots-Tag noindex, allowedDevOrigins (HP di LAN)
 ```
@@ -95,9 +103,22 @@ Keputusan default 22 Okt (jawaban "Keputusan & asumsi" di F2-deliverables; prd.m
    sinkron. (Hash nggak dipakai: `crypto.subtle` nggak ada di http LAN.) Sesi 401 → data dihapus.
 10. Valid = getar (Android) + bunyi pendek WebAudio (iPhone juga); gagal = bunyi rendah.
 11. Copy ikut Figma sekarang (usulan copy di deliverables belum diterapkan).
-12. Card Pintu masuk 4 varian (`doorCardCopy`; "sesi jalan" ditebak dari jam sesi ke-2 sampai F3).
-    Stat tile Check-in tetap, tap → P07. BT02 "Masuk sekarang"/auto 3 dtk → T03b (F3/F4 belum ada);
-    "Kembali ke acara" di T03b nonaktif. `checkedInBy` = label HP ("HP 7K2Q"), bukan nama orang.
+12. (v2 23 Okt) Card Pintu masuk dihapus. Stat tile: Check-in → P07, Foto → `foto/`, Pertanyaan →
+    `tanya/` (placeholder). BT02 "Masuk sekarang"/auto 3 dtk → `/t/[token]/acara`; "Kembali ke
+    acara" di T03b ke sana juga. `checkedInBy` = label HP ("HP 7K2Q"), bukan nama orang.
+- **State acara (prd §6)**: `Event.mode/activeSessionId/nextSessionId` + `Session.status/startedAt/
+  endedAt` (opsional, store lama tetap terbaca). `startSession` (sesi lain yang jalan ikut selesai)
+  dan `finishSession` (mode jeda, berikutnya = sesi sesudahnya yang belum selesai) idempoten:
+  dobel tap / dua HP → `false`, `rev` tetap. Server action `startSession`/`finishSession` pakai
+  `serverNow()`. Status per sesi & stopwatch diturunkan di `lib/rundown.ts`; stopwatch = jam server
+  − `startedAt` (HP cuma memutar detiknya). Sesi yang sudah selesai bisa dimulai lagi (BP00b).
+- BP00: carousel scroll-snap dibuka di sesi yang jalan (atau berikutnya); "Scan tiket" = tombol
+  bawah, tanpa TabBar. Konfirmasi pakai `Dialog` (tengah layar), bukan Sheet.
+- Scan (P05–P06c): back → BP00, tombol bawah "Lihat daftar tamu" → P07, tanpa TabBar. P05b = Toast
+  di bawah baris back (ikut alur, nggak nutupin back/judul). Nomor "tamu ke-n dari N" di P06,
+  header, dan BT02 dari sumber sama (hasil server + pembagi RSVP hadir setelah check-in ini).
+- P07: baris = tombol (→ P07d) + ✓ / Badge "Udah masuk" bersebelahan (bukan tombol bersarang).
+  P07d pakai `waMasked` dari manifest (disamarkan di server); "Buka Instagram" → profil IG.
 - Check-in = op `{opId, kind: scan|manual|walkin|undo}` dari HP → `POST /api/panitia/checkin`,
   idempoten per opId (kirim ulang aman); yang sampai server duluan menang (HP kedua → P06b).
   Online: hasil server ditunggu ≤ 3 dtk untuk sheet P06; offline: hasil lokal + antre (P05b),
@@ -108,7 +129,7 @@ Keputusan default 22 Okt (jawaban "Keputusan & asumsi" di F2-deliverables; prd.m
   → T05a (sobek ±900 ms) → BT02 (3 dtk, sekali per tiket via localStorage) → T03b. HP tamu offline →
   refresh saat `online`/tab terlihat lagi. Dibuka > 10 menit setelah masuk → langsung T03b.
 - Kamera butuh HTTPS di HP (`npx next dev --experimental-https`); gagal/ditolak → P07b.
-- Store dev ada di `globalThis.__hmdStoreF2`: naikkan kuncinya tiap method store bertambah (server
+- Store dev ada di `globalThis.__hmdStoreF3`: naikkan kuncinya tiap method store bertambah (server
   dev yang sedang jalan nggak membuat ulang instance lama saat HMR).
 
 ## Design system (Clean v0.5)
@@ -120,7 +141,7 @@ Keputusan default 22 Okt (jawaban "Keputusan & asumsi" di F2-deliverables; prd.m
   Toggle, Segmented, Badge, Pill/Chip/AddChip,
   Card/CardLabel/InnerBox, StatTile, ListRow/Avatar, Banner/TextAction, HeroState, Field, Toast
   (undo ring), Sheet (bawah / `floating`), TabBar, Ticket (+`torn`)/TicketStub, LogoMark,
-  Screen/ScreenHeader/Skeleton, SearchField.
+  Screen/ScreenHeader/Skeleton, SearchField, Dialog (konfirmasi tengah layar, BP00a/BP00b).
 - **Button** (`Clean/Button` 4587:316, 12 varian): `size` `lg` (54, lebar penuh) | `sm` (36, lebar
   hug, area tap 44) × `variant` `primary` | `secondary` | `destructive` × `iconOnly` (+ `label` wajib
   untuk aria-label). Aturan pakai:
@@ -154,6 +175,7 @@ npm run build
 Butuh `.env.local` (salin `.env.example`): `EVENT_PIN`, `TICKET_HMAC_SECRET`, `SESSION_SECRET`.
 Uji alur: `/dev/states/f1` (pratinjau 27 layar + link tamu + CSV dummy + "Reset data ke awal").
 F2: `/dev/states/f2` → "Siapkan data uji" → "Pura-pura hari-H" → buka link tamu + /panitia → Scan.
+Sesi: tombol "Mulai sesi 1" / "Selesaikan sesi" di halaman yang sama, atau lewat BP00.
 
 ## Konvensi
 - Copy UI Bahasa Indonesia santai, persis Figma/design.md §7. Jam 24 jam pakai titik (13.00).
@@ -168,4 +190,5 @@ F2: `/dev/states/f2` → "Siapkan data uji" → "Pura-pura hari-H" → buka link
 - [x] Phase 1 — design system (`/dev/ui`)
 - [x] F1 — undangan & konfirmasi (27 layar, store lokal, realtime SSE) — menunggu review
 - [x] F2 — check-in di pintu (13 layar, scan QR, antrean offline, tiket sobek realtime) — menunggu review
+- [x] F2 v2 (23 Okt) — BP00 kartu sesi + Mulai/Selesaikan, scan/P06/P07/P07d baru — menunggu review
 - [ ] F3–F5, N1–N4 — berikutnya (versi lama: tag `archive-pre-revisi`)

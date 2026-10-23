@@ -3,8 +3,10 @@ import { DoorApp, type ScanSheet } from "@/components/f2/DoorApp";
 import { KontrolScreen } from "@/components/f2/Kontrol";
 import { DayTicketScreen, type DayPhase } from "@/components/f2/tamu";
 import { TicketQr } from "@/components/TicketQr";
-import { doorCardCopy, doorCounts, type DoorGuest } from "@/lib/door";
+import type { Event, Session } from "@/lib/data/types";
+import { doorCounts, type DoorGuest } from "@/lib/door";
 import { demoEvent, demoSessions, NAMES } from "@/lib/fixtures";
+import { rundownView } from "@/lib/rundown";
 
 // Registri layar F2 (F2-deliverables.md "Daftar layar", Figma band 4667:4654) untuk
 // /dev/states/f2/[code]. Komponen layar sama dengan route asli, data contoh, tanpa server.
@@ -17,7 +19,6 @@ export type ScreenDef = {
   render: () => ReactNode | Promise<ReactNode>;
 };
 
-const DEMO_DAY_NOW = new Date("2026-11-08T13:30:00+07:00");
 const IN_AT = "2026-11-08T13:04:00+07:00";
 
 // 20 tamu, 9 udah masuk (Rara tamu ke-9, 13.04), Bima RSVP "Nggak bisa" (persis contoh Figma P07).
@@ -48,10 +49,47 @@ const demoGuests: DoorGuest[] = NAMES.map(([name, ig], i) => {
     guestNo: ig === "rarawening" ? 9 : inside ? 1 : null,
     method: inside ? "scan" : null,
     opId: null,
+    waMasked: `0857-xxxx-${String(2210 + i)}`,
+    inviteStatus: "diundang",
+    invitedAt: "2026-11-02T10:00:00+07:00",
+    respondedAt: "2026-11-03T10:00:00+07:00",
   };
 });
 const rara = demoGuests.find((g) => g.ig === "rarawening")!;
+const laras = demoGuests.find((g) => g.ig === "laraspt")!;
 const counts = doorCounts(demoGuests);
+
+// BP00: sesi 1 (Open space) lagi jalan sejak 13.00, sekarang 13.12.34 → stopwatch 00:12:34.
+const runningSessions: Session[] = demoSessions.map((x, i) =>
+  i === 0 ? { ...x, status: "berlangsung", startedAt: "2026-11-08T13:00:00+07:00" } : x,
+);
+const runningEvent: Event = {
+  ...demoEvent,
+  mode: "sesi",
+  activeSessionId: runningSessions[0].id,
+  nextSessionId: runningSessions[1].id,
+};
+const running = rundownView(runningEvent, runningSessions);
+
+const kontrol = (opts: { running?: boolean; confirm?: "finish" | "start" } = {}) => (
+  <KontrolScreen
+    event={demoEvent}
+    rundown={opts.running ? running : rundownView(demoEvent, demoSessions)}
+    checkIn={counts}
+    eventDay
+    phaseLabel="Hari-H · Live"
+    backHref="/dev/states/f2"
+    serverNow={opts.running ? "2026-11-08T13:12:34+07:00" : "2026-11-08T12:55:00+07:00"}
+    frozen
+    initialConfirm={
+      opts.confirm === "finish"
+        ? { kind: "finish", session: running.sessions[0] }
+        : opts.confirm === "start"
+          ? { kind: "start", session: running.sessions[1] }
+          : undefined
+    }
+  />
+);
 
 const qr = () => <TicketQr payload="demo-ticket.0000000000000000" label="QR tiket contoh" />;
 const ticket = (phase: DayPhase) => (
@@ -62,7 +100,7 @@ const ticket = (phase: DayPhase) => (
     keyNo="#014"
     code="HMD-014-7F3K"
     qr={qr()}
-    stamp={phase === "t05" ? null : { time: "13.04", guestNo: 9, total: 20 }}
+    stamp={phase === "t05" ? null : { time: "13.04", guestNo: 9, total: counts.expected }}
   />
 );
 
@@ -113,27 +151,31 @@ export const SCREENS: ScreenDef[] = [
   },
   {
     code: "BP00",
-    name: "Kontrol acara · card Pintu masuk",
+    name: "Kontrol acara · sesi 1 lagi jalan",
     lane: "Panitia",
     kind: "Utama",
-    render: () => (
-      <KontrolScreen
-        event={demoEvent}
-        sessions={demoSessions}
-        checkIn={counts}
-        eventDay
-        phaseLabel="Hari-H · Live"
-        backHref="/dev/states/f2"
-        door={doorCardCopy({
-          ...counts,
-          date: demoEvent.date,
-          startsAt: demoEvent.startsAt,
-          secondSessionAt: demoSessions[1].startsAt,
-          now: DEMO_DAY_NOW,
-          eventDay: true,
-        })}
-      />
-    ),
+    render: () => kontrol({ running: true }),
+  },
+  {
+    code: "BP00-pre",
+    name: "Kontrol acara · belum ada sesi jalan",
+    lane: "Panitia",
+    kind: "Kasus lain",
+    render: () => kontrol(),
+  },
+  {
+    code: "BP00a",
+    name: "Konfirmasi selesaikan sesi",
+    lane: "Panitia",
+    kind: "Kasus lain",
+    render: () => kontrol({ running: true, confirm: "finish" }),
+  },
+  {
+    code: "BP00b",
+    name: "Konfirmasi mulai sesi (sesi lain jalan)",
+    lane: "Panitia",
+    kind: "Kasus lain",
+    render: () => kontrol({ running: true, confirm: "start" }),
   },
   { code: "P05", name: "Scan tiket", lane: "Panitia", kind: "Utama", render: () => door("scan") },
   {
@@ -148,7 +190,15 @@ export const SCREENS: ScreenDef[] = [
     name: "Hasil · Valid",
     lane: "Panitia",
     kind: "Utama",
-    render: () => sheet({ kind: "valid", guest: rara, guestNo: 9, at: IN_AT, queued: false }),
+    render: () =>
+      sheet({
+        kind: "valid",
+        guest: { ...rara, status: "aktif" },
+        guestNo: counts.checkedIn,
+        total: counts.expected,
+        at: IN_AT,
+        queued: false,
+      }),
   },
   {
     code: "P06b",
@@ -184,5 +234,12 @@ export const SCREENS: ScreenDef[] = [
     lane: "Panitia",
     kind: "Kasus lain",
     render: () => door("cari", { query: "budi", walkIn: true }),
+  },
+  {
+    code: "P07d",
+    name: "Profil tamu",
+    lane: "Panitia",
+    kind: "Kasus lain",
+    render: () => door("cari", { profile: laras.id }),
   },
 ];

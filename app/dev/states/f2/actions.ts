@@ -7,7 +7,7 @@ import { cookies } from "next/headers";
 import { parseGuestCsv } from "@/lib/csv";
 import { getStore } from "@/lib/data";
 import { HMD_ID } from "@/lib/data/seed";
-import { encodeFakeNow, FAKE_NOW_COOKIE } from "@/lib/server/clock";
+import { encodeFakeNow, FAKE_NOW_COOKIE, serverNow } from "@/lib/server/clock";
 
 // Dev saja: alat uji alur F2 di store lokal. Tidak tersedia di production.
 function devOnly() {
@@ -51,5 +51,22 @@ export async function resetCheckIns(): Promise<void> {
   devOnly();
   const store = await getStore();
   for (const t of store.listTickets(HMD_ID)) if (t.opId) store.undoCheckIn(t.opId);
+  refresh();
+}
+
+// Simulasi BP00 dari halaman dev: mulai sesi pertama / selesaikan sesi yang lagi jalan.
+export async function devStartFirstSession(): Promise<void> {
+  devOnly();
+  const store = await getStore();
+  const first = store.listSessions(HMD_ID)[0];
+  if (first) store.startSession(HMD_ID, first.id, (await serverNow()).toISOString());
+  refresh();
+}
+
+export async function devFinishActiveSession(): Promise<void> {
+  devOnly();
+  const store = await getStore();
+  const active = store.listSessions(HMD_ID).find((s) => s.status === "berlangsung");
+  if (active) store.finishSession(HMD_ID, active.id, (await serverNow()).toISOString());
   refresh();
 }
