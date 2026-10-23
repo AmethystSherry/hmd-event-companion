@@ -66,6 +66,7 @@ async function Router({
         <>
           <GuestDayTicket
             ticketKey={ticket.ticketId}
+            eventHref={`/t/${token}/acara`}
             status={ticket.status}
             justCheckedIn={!!inAt && now.getTime() - new Date(inAt).getTime() < JUST_IN_MS}
             guestName={guest.name}

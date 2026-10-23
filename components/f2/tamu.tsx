@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import { QrCode, Sun } from "@/components/icons";
 import { Badge, Button, Card, Screen, ScreenHeader, Ticket, TicketStub } from "@/components/ui";
@@ -10,7 +11,7 @@ import f1 from "../f1/f1.module.css";
 import s from "./f2.module.css";
 
 // Layar tamu F2 (hari-H) di /t/[token]: T05 tiket + QR → T05a discan, tiket sobek →
-// BT02 selamat datang (sekali, 3 dtk) → T03b tiket dibuka lagi (QR nonaktif).
+// BT02 selamat datang (sekali, 3 dtk) → layar acara /t/[token]/acara · tiket dibuka lagi → T03b (QR nonaktif).
 
 export type DayPhase = "t05" | "t05a" | "bt02" | "t03b";
 
@@ -39,12 +40,14 @@ export function DayTicketScreen({
   stamp,
   countdown = WELCOME_SEC,
   onEnter,
+  eventHref,
   brightness,
   onBrightness,
 }: TicketProps & {
   phase: DayPhase;
   countdown?: number;
   onEnter?: () => void;
+  eventHref?: string; // layar acara (Sesi/Jeda); kosong = pratinjau
   brightness?: boolean; // T05 · mode QR layar penuh
   onBrightness?: (open: boolean) => void;
 }) {
@@ -115,7 +118,7 @@ export function DayTicketScreen({
         bottom={
           <>
             <p className={`t-label c-label-2 ${f1.caption}`} aria-live="polite">
-              Otomatis lanjut ke layar Jeda dalam {countdown} detik
+              Otomatis lanjut ke acara dalam {countdown} detik
             </p>
             <Button onClick={onEnter}>Masuk sekarang</Button>
           </>
@@ -139,10 +142,13 @@ export function DayTicketScreen({
           <p className={`t-label c-label-2 ${f1.caption}`}>
             QR udah nggak aktif. Tiket ini jadi bukti kamu hadir.
           </p>
-          {/* Layar acara (F3/F4) belum dibangun → tombol nonaktif dulu. */}
-          <Button aria-disabled="true" onClick={(e) => e.preventDefault()}>
-            Kembali ke acara
-          </Button>
+          {eventHref ? (
+            <Button href={eventHref}>Kembali ke acara</Button>
+          ) : (
+            <Button aria-disabled="true" onClick={(e) => e.preventDefault()}>
+              Kembali ke acara
+            </Button>
+          )}
         </>
       }
     >
@@ -228,9 +234,11 @@ export function GuestDayTicket({
   ticketKey,
   status,
   justCheckedIn,
+  eventHref,
   ...ticket
 }: TicketProps & {
   ticketKey: string;
+  eventHref: string; // BT02 selesai → layar acara (mode Sesi/Jeda yang aktif)
   status: "aktif" | "dipakai";
   justCheckedIn: boolean; // check-in < 10 menit lalu (dari server) → tampilkan BT02 sekali
 }) {
@@ -271,10 +279,13 @@ export function GuestDayTicket({
     return () => clearTimeout(t);
   }, [phase, ticketKey]);
 
+  const router = useRouter();
+  // BT02 selesai (3 dtk / "Masuk sekarang") → layar acara; tiket ini dibuka lagi nanti → T03b.
   const finishWelcome = useCallback(() => {
     markSeen(ticketKey);
     setPhase("t03b");
-  }, [ticketKey]);
+    router.push(eventHref);
+  }, [ticketKey, eventHref, router]);
 
   useEffect(() => {
     if (phase !== "bt02") return;
@@ -295,6 +306,7 @@ export function GuestDayTicket({
       phase={shown}
       countdown={countdown}
       onEnter={finishWelcome}
+      eventHref={eventHref}
       brightness={bright}
       onBrightness={setBright}
     />
