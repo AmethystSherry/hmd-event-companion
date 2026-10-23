@@ -3,9 +3,9 @@ import { Check } from "@/components/icons";
 import { cx } from "@/lib/cx";
 import styles from "./Badge.module.css";
 
-// Clean/Badge (4587:307): Live = oranye (tamu), Crew = amber (panitia), Success, Neutral,
-// plus Warning/Danger untuk status (G10: token terpisah dari amber panitia).
-export type BadgeTone = "live" | "crew" | "success" | "neutral" | "warning" | "danger";
+// Clean/Badge (4587:307): Live = oranye (tamu, Talkshow), Crew = amber (panitia, Belum jawab, Wajib),
+// Success (ikon check), Neutral, Danger (Nggak bisa, baris error CSV). Tinggi 30, titik 6, teks 13 Medium.
+export type BadgeTone = "live" | "crew" | "success" | "neutral" | "danger";
 
 export function Badge({
   tone = "neutral",

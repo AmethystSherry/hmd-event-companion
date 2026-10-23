@@ -47,14 +47,12 @@
   background: var(--label-3);
 }
 
-.warning {
-  background: var(--warning-soft);
-  color: var(--warning-text);
-}
-
 .danger {
   background: var(--danger-soft);
   color: var(--danger-text);
+}
+.danger .dot {
+  background: var(--danger-text);
 }
 
 .pulse {

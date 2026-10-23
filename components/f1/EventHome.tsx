@@ -167,7 +167,7 @@ export function EventHome({
           <div className={styles.badges}>
             <Badge tone="success">{stats.hadir} hadir</Badge>
             <Badge tone="danger">{stats.nggak} nggak bisa</Badge>
-            <Badge tone="warning">{stats.belumJawab} belum jawab</Badge>
+            <Badge tone="crew">{stats.belumJawab} belum jawab</Badge>
             <Badge tone="neutral">{stats.notInvited} belum diundang</Badge>
           </div>
         ) : (

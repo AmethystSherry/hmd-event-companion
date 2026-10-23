@@ -9,7 +9,8 @@
   white-space: nowrap;
   transition:
     transform var(--press-ms) ease-out,
-    opacity var(--press-ms) ease-out;
+    opacity var(--press-ms) ease-out,
+    filter var(--press-ms) ease-out;
   -webkit-user-select: none;
   user-select: none;
 }
@@ -109,41 +110,35 @@
   height: 18px;
 }
 
-/* Primary — "Think" glossy, warna tetap. */
+/* Primary — oranye full rounded (Figma 4587:316, 23 Okt), warna tetap di light & dark.
+   Border inside 1,25 (Small 1) + highlight atas = inset shadow di layer; glow di tombol. */
 .primary {
   background: var(--primary-fill);
   color: var(--primary-label);
-  font-weight: 500;
-  filter: drop-shadow(var(--primary-shadow));
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  box-shadow: var(--primary-shadow);
 }
 
-/* Rim: gradient stroke inside 3,5px (Small 2,5) #5E5E5E atas → #242424 sisi → #525252 bawah. */
 .primary .layer {
-  padding: 3.5px;
-  background: linear-gradient(180deg, var(--primary-rim) 0%, #242424 50%, #525252 100%);
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask:
-    linear-gradient(#000 0 0) content-box exclude,
-    linear-gradient(#000 0 0);
+  box-shadow:
+    inset 0 0 0 1.25px var(--primary-border),
+    var(--primary-highlight);
 }
 
-.primary .layer::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  border: 1.75px solid var(--primary-border);
+.sm.primary {
+  font-weight: 600;
+  box-shadow: var(--primary-shadow-sm);
 }
 
 .sm.primary .layer {
-  padding: 2.5px;
+  box-shadow:
+    inset 0 0 0 1px var(--primary-border),
+    var(--primary-highlight-sm);
 }
 
-.sm.primary .layer::after {
-  border-width: 1.25px;
+.primary:active:not(:disabled):not([aria-disabled="true"]) {
+  filter: brightness(0.96);
 }
 
 /* Secondary — fill + Border 1px + Highlight 2,5px (Small 1,5) di bawah border. */

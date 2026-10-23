@@ -127,7 +127,7 @@ export function GuestImport({
               <span className={styles.code}>{c.code}</span>
               <span className="t-label">{c.desc}</span>
               {c.required ? (
-                <Badge tone="warning">Wajib</Badge>
+                <Badge tone="crew">Wajib</Badge>
               ) : (
                 <Badge tone="neutral">Opsional</Badge>
               )}

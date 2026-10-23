@@ -4,7 +4,6 @@ import { useEffect, useState, type ReactNode } from "react";
 import {
   ArrowClockwise,
   BookOpen,
-  CalendarBlank,
   Camera,
   CaretLeft,
   ChatCircle,
@@ -13,6 +12,7 @@ import {
   CloudArrowUp,
   UploadSimple,
   Image as ImageIcon,
+  ListBullets,
   LockKey,
   MagnifyingGlass,
   PaperPlaneTilt,
@@ -278,21 +278,26 @@ export function Gallery() {
         </Card>
       </Section>
 
-      <Section title="Badge & Pill">
-        <div className={styles.wrap}>
-          <Badge tone="live" pulse>
-            Live
-          </Badge>
-          <Badge tone="crew">Panitia</Badge>
-          <Badge tone="success">Terkonfirmasi</Badge>
-          <Badge tone="neutral">Mode jeda</Badge>
-          <Badge tone="warning">Sudah dipakai</Badge>
-          <Badge tone="danger">Tidak dikenal</Badge>
-        </div>
-        <div className={styles.wrap}>
-          <Pill icon={<Clock />}>Mulai 14.00</Pill>
-          <Pill icon={<CalendarBlank />}>Min, 8 Nov</Pill>
-        </div>
+      <Section title="Badge · 5 tipe & Pill">
+        {(["light", "dark"] as const).map((t) => (
+          <div key={t} data-theme={t} className={styles.themePanel}>
+            <p className="t-label-emph c-label-2">{t === "light" ? "Light" : "Dark"}</p>
+            <div className={styles.wrap}>
+              <Badge tone="live" pulse>
+                Talkshow
+              </Badge>
+              <Badge tone="crew">Belum jawab</Badge>
+              <Badge tone="success">Hadir</Badge>
+              <Badge tone="neutral">Belum diundang</Badge>
+              <Badge tone="danger">Nggak bisa</Badge>
+            </div>
+            <div className={styles.wrap}>
+              <Pill icon={<Users />}>20 tamu</Pill>
+              <Pill icon={<ListBullets />}>Rundown 4 sesi</Pill>
+              <Pill icon={<Clock />}>13.00–17.00</Pill>
+            </div>
+          </div>
+        ))}
       </Section>
 
       <Section title="Stat & list">

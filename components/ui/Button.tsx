@@ -5,7 +5,7 @@ import styles from "./Button.module.css";
 
 // Clean/Button (Figma 4587:316): Size × Style × Content = 12 varian.
 // - size "lg" 54 (CTA bawah & sheet, lebar penuh) · "sm" 36 (aksi header/kartu/baris, lebar hug).
-// - variant primary = Ink glossy, destructive = merah (keduanya warna tetap di light & dark),
+// - variant primary = oranye full rounded, destructive = merah (keduanya warna tetap di light & dark),
 //   secondary = abu-abu dengan border + highlight (ikut tema).
 // - iconOnly → lingkaran 54/36, `label` jadi aria-label.
 // Ikon selalu ikut warna label (currentColor). Jangan override warna/efek di pemakaian.

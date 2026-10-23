@@ -385,7 +385,7 @@ export function GuestManager({
                   {g.rsvp === "hadir" && <Badge tone="success">Hadir</Badge>}
                   {g.rsvp === "nggak" && <Badge tone="danger">Nggak bisa</Badge>}
                   {g.inviteStatus === "diundang" && g.rsvp === "belum" && (
-                    <Badge tone="warning">Belum jawab</Badge>
+                    <Badge tone="crew">Belum jawab</Badge>
                   )}
                 </div>
               </div>
