@@ -145,6 +145,25 @@ export function createStore(
     };
   }
 
+  function sessionsOf(eventId: string): Session[] {
+    return data.sessions
+      .filter((s) => s.eventId === eventId)
+      .sort((a, b) => toMinutes(a.startsAt) - toMinutes(b.startsAt));
+  }
+
+  function sessionOf(eventId: string, id: string): Session {
+    const s = data.sessions.find((x) => x.id === id && x.eventId === eventId);
+    if (!s) throw new StoreError("sesi-tidak-ada", "Sesi nggak ketemu");
+    return s;
+  }
+
+  // Sesi sesudah `id` (urut jam) yang belum selesai; null kalau sudah yang terakhir.
+  function nextAfter(eventId: string, id: string): string | null {
+    const list = sessionsOf(eventId);
+    const i = list.findIndex((s) => s.id === id);
+    return list.slice(i + 1).find((s) => s.status !== "selesai")?.id ?? null;
+  }
+
   function ensureTicket(g: Guest): Ticket {
     const existing = data.tickets.find((t) => t.guestId === g.id);
     if (existing) return existing;
@@ -252,9 +271,7 @@ export function createStore(
 
     // ---- Rundown (PE04k/PE04/PE04a) — urutan selalu ikut jam mulai ----
     listSessions(eventId: string): Session[] {
-      return data.sessions
-        .filter((s) => s.eventId === eventId)
-        .sort((a, b) => toMinutes(a.startsAt) - toMinutes(b.startsAt));
+      return sessionsOf(eventId);
     },
     addSession(eventId: string, input: SessionInput): Session {
       event(eventId);
@@ -276,6 +293,51 @@ export function createStore(
       if (data.sessions.length === before)
         throw new StoreError("sesi-tidak-ada", "Sesi nggak ketemu");
       commit();
+    },
+
+    // ---- Kontrol acara hari-H (BP00 / BP00a / BP00b, prd.md §6) ----
+    // Mulai sesi N: mode=sesi, N berlangsung (startedAt). Sesi lain yang masih jalan ikut selesai.
+    // Mulai sesi yang sudah jalan = tidak berubah (dobel tap / dua HP panitia) → false, rev tetap.
+    startSession(eventId: string, sessionId: string, at: string): boolean {
+      const e = event(eventId);
+      const s = sessionOf(eventId, sessionId);
+      if (s.status === "berlangsung") return false;
+      for (const x of data.sessions) {
+        if (x.eventId === eventId && x.status === "berlangsung") {
+          x.status = "selesai";
+          x.endedAt = at;
+        }
+      }
+      Object.assign(s, {
+        status: "berlangsung",
+        startedAt: at,
+        endedAt: null,
+      } satisfies Partial<Session>);
+      Object.assign(e, {
+        mode: "sesi",
+        activeSessionId: s.id,
+        nextSessionId: nextAfter(eventId, s.id),
+        stateUpdatedAt: at,
+      } satisfies Partial<Event>);
+      commit();
+      return true;
+    },
+    // Selesaikan sesi N: N selesai (endedAt), mode=jeda, berikutnya = sesi sesudah N yang belum selesai.
+    // Sesi yang nggak lagi jalan → false (idempoten).
+    finishSession(eventId: string, sessionId: string, at: string): boolean {
+      const e = event(eventId);
+      const s = sessionOf(eventId, sessionId);
+      if (s.status !== "berlangsung") return false;
+      s.status = "selesai";
+      s.endedAt = at;
+      Object.assign(e, {
+        mode: "jeda",
+        activeSessionId: null,
+        nextSessionId: nextAfter(eventId, s.id),
+        stateUpdatedAt: at,
+      } satisfies Partial<Event>);
+      commit();
+      return true;
     },
 
     // ---- Tamu & undangan (P04*) ----

@@ -16,7 +16,15 @@ export type Event = {
   csvFileName: string | null;
   dmTemplate: string; // template DM undangan (kolom "pesan" CSV, kosong → default)
   createdAt: string;
+  // State acara hari-H (prd.md §6). Opsional: .data/store.json lama tetap terbaca (kosong = "pre").
+  mode?: EventMode;
+  activeSessionId?: string | null;
+  nextSessionId?: string | null;
+  stateUpdatedAt?: string | null;
 };
+
+export type EventMode = "pre" | "jeda" | "sesi" | "closed";
+export type SessionStatus = "nanti" | "berlangsung" | "selesai";
 
 export type Guest = {
   id: string;
@@ -46,6 +54,9 @@ export type Session = {
   durationMin: number;
   type: SessionType;
   pic: string;
+  status?: SessionStatus; // kosong = "nanti"; "berikutnya" diturunkan dari Event.nextSessionId
+  startedAt?: string | null;
+  endedAt?: string | null;
 };
 
 export type Ticket = {

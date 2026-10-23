@@ -238,3 +238,57 @@ describe("check-in di pintu (F2)", () => {
     expect(() => store.addWalkIn(HMD_ID, { name: "X", ig: taken }, op("w2"))).toThrow(StoreError);
   });
 });
+
+describe("kontrol acara: mulai & selesaikan sesi (BP00a/BP00b, prd §6)", () => {
+  const t = (hhmm: string) => `2026-11-08T${hhmm}:00+07:00`;
+
+  it("mulai sesi 1 → mode sesi, berikutnya sesi 2; dobel tap idempoten (rev tetap)", () => {
+    const { store } = fresh();
+    expect(store.startSession(HMD_ID, "s01", t("13:00"))).toBe(true);
+    const rev = store.rev;
+    expect(store.startSession(HMD_ID, "s01", t("13:00"))).toBe(false);
+    expect(store.rev).toBe(rev);
+    expect(store.getEvent(HMD_ID)).toMatchObject({
+      mode: "sesi",
+      activeSessionId: "s01",
+      nextSessionId: "s02",
+    });
+    expect(store.listSessions(HMD_ID)[0]).toMatchObject({
+      status: "berlangsung",
+      startedAt: t("13:00"),
+    });
+  });
+
+  it("selesaikan → jeda, sesi selesai (endedAt); selesaikan lagi nggak mengubah apa-apa", () => {
+    const { store } = fresh();
+    store.startSession(HMD_ID, "s01", t("13:00"));
+    expect(store.finishSession(HMD_ID, "s01", t("13:58"))).toBe(true);
+    expect(store.finishSession(HMD_ID, "s01", t("14:05"))).toBe(false);
+    expect(store.getEvent(HMD_ID)).toMatchObject({
+      mode: "jeda",
+      activeSessionId: null,
+      nextSessionId: "s02",
+    });
+    expect(store.listSessions(HMD_ID)[0]).toMatchObject({ status: "selesai", endedAt: t("13:58") });
+  });
+
+  it("mulai sesi lain saat ada yang jalan → sesi lama ikut selesai", () => {
+    const { store } = fresh();
+    store.startSession(HMD_ID, "s01", t("13:00"));
+    store.startSession(HMD_ID, "s03", t("14:10"));
+    const [s1, s2, s3] = store.listSessions(HMD_ID);
+    expect(s1).toMatchObject({ status: "selesai", endedAt: t("14:10") });
+    expect(s2.status).toBeUndefined();
+    expect(s3).toMatchObject({ status: "berlangsung", startedAt: t("14:10") });
+    expect(store.getEvent(HMD_ID)).toMatchObject({ activeSessionId: "s03", nextSessionId: "s04" });
+    expect(store.listSessions(HMD_ID).filter((s) => s.status === "berlangsung")).toHaveLength(1);
+  });
+
+  it("sesi terakhir selesai → nggak ada berikutnya; sesi nggak dikenal ditolak", () => {
+    const { store } = fresh();
+    store.startSession(HMD_ID, "s04", t("15:30"));
+    store.finishSession(HMD_ID, "s04", t("17:00"));
+    expect(store.getEvent(HMD_ID)?.nextSessionId).toBeNull();
+    expect(() => store.startSession(HMD_ID, "nggak-ada", t("15:00"))).toThrow(StoreError);
+  });
+});

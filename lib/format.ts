@@ -115,6 +115,27 @@ export function mmss(totalSec: number): string {
   return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 }
 
+// Stopwatch sesi "00:12:34" (BP00) · "12:34" (rundown).
+export function hms(ms: number): string {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${p(Math.floor(s / 3600))}:${p(Math.floor((s % 3600) / 60))}:${p(s % 60)}`;
+}
+
+export function msLabel(ms: number): string {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  const m = Math.floor(s / 60);
+  return `${String(m).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+}
+
+// WA disamarkan untuk P07d: 6285712342210 → "0857-xxxx-2210". Nomor penuh nggak ke HP panitia.
+export function maskWa(wa: string | null): string | null {
+  if (!wa) return null;
+  const local = wa.startsWith("62") ? `0${wa.slice(2)}` : wa;
+  if (local.length < 8) return "xxxx";
+  return `${local.slice(0, 4)}-xxxx-${local.slice(-4)}`;
+}
+
 export function initials(name: string): string {
   return name
     .split(/\s+/)

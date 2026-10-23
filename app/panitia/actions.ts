@@ -21,6 +21,7 @@ import {
   requireCrew,
   startCrewSession,
 } from "@/lib/server/access";
+import { serverNow } from "@/lib/server/clock";
 import { secrets } from "@/lib/server/config";
 
 // Semua aksi panitia F1. Tiap aksi memeriksa sesi panitia (cookie httpOnly) di server.
@@ -237,4 +238,18 @@ export async function markReminderSent(guestId: string): Promise<void> {
   await requireCrew();
   (await getStore()).markReminderSent(guestId);
   refresh();
+}
+
+// BP00b · Mulai sesi (sesi lain yang masih jalan ikut selesai) · BP00a · Selesaikan sesi.
+// Jam dari server (stopwatch semua HP sama). Dobel tap / dua HP → idempoten di store.
+export async function startSession(eventId: string, sessionId: string): Promise<FormResult> {
+  await requireCrew();
+  const [store, now] = await Promise.all([getStore(), serverNow()]);
+  return guestOp(() => store.startSession(eventId, sessionId, now.toISOString()));
+}
+
+export async function finishSession(eventId: string, sessionId: string): Promise<FormResult> {
+  await requireCrew();
+  const [store, now] = await Promise.all([getStore(), serverNow()]);
+  return guestOp(() => store.finishSession(eventId, sessionId, now.toISOString()));
 }
