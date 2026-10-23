@@ -10,6 +10,7 @@
 [data-theme="light"] {
   /* Warna semantik — light */
   --bg: #f3f2f0;
+  --bg-tint: #f4e3d8; /* accent-soft di atas bg (T01a/T01 undangan) */
   --card: #ffffff;
   --card-2: #f3f2f0;
   --label: #101010;
@@ -102,6 +103,7 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #0b0b0b;
+    --bg-tint: #311809;
     --card: #171717;
     --card-2: #232323;
     --label: #f5f1ea;
@@ -125,7 +127,6 @@
     --secondary-highlight: #3c3c3f;
     --toggle-track: #3a3a3c;
     --dash: rgba(245, 241, 234, 0.22);
-    --dash: rgba(245, 241, 234, 0.22);
     --segment-track: #1c1c1e;
     --segment-stroke: #2c2c2e;
     --segment-active: #3a3a3c;
@@ -142,6 +143,7 @@
 :root[data-theme="dark"],
 [data-theme="dark"] {
   --bg: #0b0b0b;
+  --bg-tint: #311809;
   --card: #171717;
   --card-2: #232323;
   --label: #f5f1ea;

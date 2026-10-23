@@ -10,16 +10,21 @@ export function Screen({
   bottom,
   bottomHeight = 54,
   withBack,
+  tint,
   className,
 }: {
   children: ReactNode;
   bottom?: ReactNode;
   bottomHeight?: number; // tinggi isi area aksi bawah (1 tombol 54, 2 tombol 118, +caption 28)
   withBack?: boolean;
+  tint?: boolean; // latar oranye lembut (undangan T01a/T01)
   className?: string;
 }) {
   return (
-    <div className={styles.screen} style={{ ["--bottom-h" as string]: `${bottomHeight}px` }}>
+    <div
+      className={cx(styles.screen, tint && styles.tint)}
+      style={{ ["--bottom-h" as string]: `${bottomHeight}px` }}
+    >
       <main
         className={cx(
           styles.content,
