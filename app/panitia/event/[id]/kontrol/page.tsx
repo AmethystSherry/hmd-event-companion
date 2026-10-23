@@ -4,23 +4,24 @@ import { KontrolScreen } from "@/components/f2/Kontrol";
 import { LiveRefresh } from "@/components/LiveRefresh";
 import { Screen, Skeleton } from "@/components/ui";
 import { getStore } from "@/lib/data";
-import { doorCardCopy } from "@/lib/door";
 import { eventPhase } from "@/lib/format";
+import { rundownView } from "@/lib/rundown";
 import { requireCrew } from "@/lib/server/access";
 import { isEventDay, serverNow } from "@/lib/server/clock";
+import { finishSession, startSession } from "../../../actions";
 
 export const metadata = { title: "Kontrol acara · House Moving Day" };
 
-// BP00 Kontrol acara (F2: card Pintu masuk + Scan tiket; rundown penuh di F3).
+// BP00 Kontrol acara: kartu sesi (Mulai/Selesaikan → BP00b/BP00a), stat, rundown, Scan tiket.
 // Hanya bisa dibuka kalau tamu & rundown terisi; kalau belum, kembali ke Home event (PE03b).
-// Hari-H: Home event otomatis pindah ke sini.
+// Hari-H: Home event otomatis pindah ke sini. Realtime antar-HP panitia lewat SSE.
 export default function KontrolPage({ params }: PageProps<"/panitia/event/[id]/kontrol">) {
   return (
     <Suspense
       fallback={
         <Screen withBack>
           <Skeleton height={90} radius={12} />
-          <Skeleton height={190} />
+          <Skeleton height={230} />
           <Skeleton height={110} />
           <Skeleton height={240} />
         </Screen>
@@ -42,25 +43,18 @@ async function Kontrol({ params }: Pick<PageProps<"/panitia/event/[id]/kontrol">
 
   const now = await serverNow();
   const eventDay = isEventDay(event.date, now);
-  const stats = store.doorStats(id);
-  const phase = eventPhase(event.date, now);
   return (
     <>
       <KontrolScreen
         event={event}
-        sessions={sessions}
-        checkIn={stats}
+        rundown={rundownView(event, sessions)}
+        checkIn={store.doorStats(id)}
         eventDay={eventDay}
-        phaseLabel={eventDay ? "Hari-H · Live" : phase.label}
+        phaseLabel={eventDay ? "Hari-H · Live" : eventPhase(event.date, now).label}
         backHref={eventDay ? "/panitia" : `/panitia/event/${id}`}
-        door={doorCardCopy({
-          ...stats,
-          date: event.date,
-          startsAt: event.startsAt,
-          secondSessionAt: sessions[1]?.startsAt ?? null,
-          now,
-          eventDay,
-        })}
+        serverNow={now.toISOString()}
+        start={startSession}
+        finish={finishSession}
       />
       <LiveRefresh />
     </>
