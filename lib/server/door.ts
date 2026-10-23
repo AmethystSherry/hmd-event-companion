@@ -1,6 +1,7 @@
 import type { DataStore } from "../data";
 import type { DoorManifest, DoorOp, DoorOpResult } from "../door";
 import { cleanWalkIn } from "../door";
+import { maskWa } from "../format";
 import { StoreError } from "../data/store";
 import { secrets } from "./config";
 import { verifyTicket } from "./crypto";
@@ -28,6 +29,10 @@ export function toDoorManifest(store: DataStore, eventId: string): DoorManifest 
         guestNo: t?.guestNo ?? null,
         method: t?.method ?? null,
         opId: t?.opId ?? null,
+        waMasked: maskWa(g.wa),
+        inviteStatus: g.inviteStatus,
+        invitedAt: g.invitedAt,
+        respondedAt: g.respondedAt,
       };
     }),
   };

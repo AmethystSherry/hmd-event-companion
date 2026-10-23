@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   applyOps,
   cleanWalkIn,
-  doorCardCopy,
   doorCounts,
   searchGuests,
   ticketIdFromPayload,
@@ -100,29 +99,7 @@ describe("P07 cari & P07c walk-in", () => {
   });
 });
 
-describe("BP00 card Pintu masuk & hari-H", () => {
-  const base = { date: "2026-11-08", startsAt: "13.00", secondSessionAt: "14.00", eventDay: true };
-  const wib = (hhmm: string) => new Date(`2026-11-08T${hhmm}:00+07:00`);
-
-  it("copy ikut kondisi", () => {
-    expect(doorCardCopy({ ...base, checkedIn: 0, expected: 20, now: wib("12:35") })).toEqual({
-      eyebrow: "Pintu masuk",
-      title: "Buka 13.00",
-      sub: "25 menit lagi · 20 tamu terdaftar",
-    });
-    expect(doorCardCopy({ ...base, checkedIn: 9, expected: 20, now: wib("13:30") })).toEqual({
-      eyebrow: "Pintu masuk · buka sejak 13.00",
-      title: "9 tamu udah masuk",
-      sub: "11 lagi belum datang",
-    });
-    expect(doorCardCopy({ ...base, checkedIn: 15, expected: 20, now: wib("14:10") }).sub).toBe(
-      "Yang telat tetap bisa masuk",
-    );
-    expect(doorCardCopy({ ...base, checkedIn: 20, expected: 20, now: wib("14:10") }).title).toBe(
-      "Semua tamu udah masuk",
-    );
-  });
-
+describe("hari-H", () => {
   it("hari-H mulai 00.00 WIB; jam palsu dev tetap berjalan", () => {
     expect(isEventDay("2026-11-08", new Date("2026-11-07T16:59:00Z"))).toBe(false); // 23.59 WIB
     expect(isEventDay("2026-11-08", new Date("2026-11-07T17:00:00Z"))).toBe(true); // 00.00 WIB

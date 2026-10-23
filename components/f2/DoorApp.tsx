@@ -7,10 +7,10 @@ import {
   Check,
   Clock,
   Info,
-  MagnifyingGlass,
   QrCode,
   UserPlus,
-  WifiLow,
+  Users,
+  WifiSlash,
   X,
 } from "@/components/icons";
 import {
@@ -29,7 +29,6 @@ import {
   SearchField,
   Sheet,
   Skeleton,
-  TabBar,
   Toast,
 } from "@/components/ui";
 import type { CheckInMethod } from "@/lib/data/types";
@@ -43,7 +42,8 @@ import {
   type DoorOp,
   type DoorOpResult,
 } from "@/lib/door";
-import { keyLabel, timeWib } from "@/lib/format";
+import { dayMonth, timeWib } from "@/lib/format";
+import { igProfileUrl } from "@/lib/invite";
 import f1 from "../f1/f1.module.css";
 import s from "./f2.module.css";
 import { newOpId, useDoor } from "./useDoor";
@@ -56,7 +56,14 @@ import { Viewfinder } from "./Viewfinder";
 export type DoorView = "scan" | "cari";
 
 export type ScanSheet =
-  | { kind: "valid"; guest: DoorGuest; guestNo: number; at: string; queued: boolean }
+  | {
+      kind: "valid";
+      guest: DoorGuest; // keadaan sebelum check-in ini (RSVP asli untuk "RSVP Hadir")
+      guestNo: number;
+      total: number;
+      at: string;
+      queued: boolean;
+    }
   | { kind: "sudah-dipakai"; guest: DoorGuest; at: string; method: CheckInMethod }
   | { kind: "tidak-dikenal" };
 
@@ -83,6 +90,7 @@ export function DoorApp({
     pending?: number;
     query?: string;
     walkIn?: boolean;
+    profile?: string; // id tamu → P07d terbuka
   };
 }) {
   const base = `/panitia/event/${eventId}/scan`;
@@ -93,6 +101,7 @@ export function DoorApp({
   const [query, setQuery] = useState(preview?.query ?? "");
   const [filter, setFilter] = useState<DoorFilter>("semua");
   const [walkIn, setWalkIn] = useState(preview?.walkIn ?? false);
+  const [profileId, setProfileId] = useState<string | null>(preview?.profile ?? null);
   const lastScan = useRef({ text: "", at: 0 });
   const busy = useRef(false);
 
@@ -192,9 +201,16 @@ export function DoorApp({
         const guestOf = (id: string) => list.find((g) => g.id === id);
         if (result.kind === "valid") {
           const g = guestOf(result.guestId);
+          // "dari {total}" = pembagi setelah check-in ini (tamu RSVP non-hadir ikut jadi hadir),
+          // sama dengan header P05 & cap BT02 di HP tamu.
+          const before = doorCounts(list);
+          const total = Math.max(
+            before.expected + (g && g.rsvp !== "hadir" ? 1 : 0),
+            result.guestNo,
+          );
           setSheet(
             g
-              ? { kind: "valid", guest: g, guestNo: result.guestNo, at: result.at, queued }
+              ? { kind: "valid", guest: g, guestNo: result.guestNo, total, at: result.at, queued }
               : { kind: "tidak-dikenal" },
           );
           feedback(true);
@@ -266,24 +282,44 @@ export function DoorApp({
 
   if (view === "scan") {
     return (
-      <Screen bottomHeight={57} bottom={<TabBar active="scan" eventId={eventId} />}>
+      <Screen
+        withBack
+        bottom={
+          <Button icon={<Users />} onClick={() => go("cari")}>
+            Lihat daftar tamu
+          </Button>
+        }
+      >
         <ScreenHeader
-          eyebrow={`Pintu masuk · ${counts.checkedIn} dari ${counts.expected} sudah masuk`}
+          leading={
+            <div className={s.headerStack}>
+              <div className={s.toolbar}>
+                <IconButton
+                  href={`/panitia/event/${eventId}/kontrol`}
+                  label="Kembali ke Kontrol acara"
+                  icon={<CaretLeft />}
+                />
+                <Badge tone="crew" pulse>
+                  Hari-H · Live
+                </Badge>
+              </div>
+              {/* P05b: toast sinyal lemah di atas, di bawah baris tombol back (nggak nutupin back
+                  maupun judul). */}
+              {weak && (
+                <div className={s.topToast}>
+                  <Toast icon={<WifiSlash size={18} />}>
+                    {pendingCount > 0
+                      ? `Sinyal lemah · ${pendingCount} check-in nunggu, terkirim otomatis`
+                      : "Sinyal lemah · scan tetap jalan, terkirim otomatis"}
+                  </Toast>
+                </div>
+              )}
+            </div>
+          }
+          eyebrow={`Pintu masuk · ${counts.checkedIn} dari ${counts.expected} udah masuk`}
           title="Scan tiket"
-          trailing={<Badge tone="crew">Hari-H</Badge>}
         />
-        {weak && (
-          <p className={`t-label ${s.strip}`} role="status">
-            <WifiLow size={16} />
-            {pendingCount > 0
-              ? `Sinyal lemah · ${pendingCount} check-in nunggu, terkirim otomatis`
-              : "Sinyal lemah · scan tetap jalan, terkirim otomatis"}
-          </p>
-        )}
         <Viewfinder live={!preview} onScan={onScan} onError={onCameraError} />
-        <Button variant="secondary" icon={<MagnifyingGlass />} onClick={() => go("cari")}>
-          Cari nama
-        </Button>
         <Sheet open={!!sheet} onClose={() => setSheet(null)} title={sheetTitle(sheet)} floating>
           {sheet && (
             <ScanResult
@@ -352,7 +388,12 @@ export function DoorApp({
       ) : results.length ? (
         <Card inset>
           {results.map((g) => (
-            <GuestRow key={g.id} guest={g} onCheckIn={() => checkInManual(g)} />
+            <GuestRow
+              key={g.id}
+              guest={g}
+              onOpen={() => setProfileId(g.id)}
+              onCheckIn={() => checkInManual(g)}
+            />
           ))}
         </Card>
       ) : (
@@ -367,6 +408,14 @@ export function DoorApp({
           )}
         </Card>
       )}
+      <GuestProfileSheet
+        guest={list.find((g) => g.id === profileId) ?? null}
+        onClose={() => setProfileId(null)}
+        onCheckIn={(g) => {
+          setProfileId(null);
+          checkInManual(g);
+        }}
+      />
       <WalkInSheet
         open={walkIn}
         initialName={query.trim().startsWith("@") ? "" : query.trim()}
@@ -408,18 +457,23 @@ function ScanResult({
     const g = sheet.guest;
     return (
       <div className={s.result}>
+        <div className={s.resultHero}>
+          <span className={s.okHero}>
+            <Check size={30} weight="bold" />
+          </span>
+          <p className={`t-headline ${s.success}`}>Tiket valid, silakan masuk!</p>
+          <p className="t-label c-label-2">
+            Tamu ke-{sheet.guestNo} dari {sheet.total} · tiket di HP tamu ikut sobek
+          </p>
+        </div>
         <div className={s.resultGuest}>
           <Avatar name={g.name} size={44} />
           <div>
             <p className="t-headline">{g.name}</p>
             <p className="t-label c-label-2">
-              Kunci {keyLabel(g.keyNo)}
-              {g.ig ? ` · @${g.ig}` : ""}
+              {g.ig ? `@${g.ig} · ` : ""}RSVP {RSVP_LABEL[g.rsvp]}
             </p>
           </div>
-          <span className={s.okIcon}>
-            <Check size={20} />
-          </span>
         </div>
         <div className={s.badges}>
           <Badge tone="success">Valid · tamu ke-{sheet.guestNo}</Badge>
@@ -431,7 +485,7 @@ function ScanResult({
         <p className={`t-label c-label-2 ${f1.caption}`}>
           {sheet.queued
             ? "Sinyal lemah · check-in diantre, terkirim otomatis"
-            : "Tiket di HP tamu sobek otomatis · tutup dalam 2 detik"}
+            : "Tutup sendiri dalam 2 detik, kamera tetap nyala"}
         </p>
       </div>
     );
@@ -477,40 +531,117 @@ function ScanResult({
   );
 }
 
-// Baris P07: avatar, nama + @ig, status (+ "RSVP: Nggak bisa"), ✓ check-in.
-function GuestRow({ guest: g, onCheckIn }: { guest: DoorGuest; onCheckIn: () => void }) {
+const RSVP_LABEL = { hadir: "Hadir", nggak: "Nggak bisa", belum: "Belum jawab" } as const;
+
+// Baris P07: tap baris → P07d; yang udah masuk → Badge "Udah masuk", yang belum → ✓ saja.
+// Dua tombol bersebelahan (bukan bersarang), jadi baris bukan ListRow interaktif.
+function GuestRow({
+  guest: g,
+  onOpen,
+  onCheckIn,
+}: {
+  guest: DoorGuest;
+  onOpen: () => void;
+  onCheckIn: () => void;
+}) {
   const inside = g.status === "dipakai";
   return (
-    <ListRow
-      leading={<Avatar name={g.name} />}
-      title={
-        <span className={s.guestTitle}>
-          {g.name}
-          {g.ig && <span className="t-label c-label-2">@{g.ig}</span>}
+    <div className={s.guestRow}>
+      <button type="button" className={s.guestMain} onClick={onOpen}>
+        <Avatar name={g.name} />
+        <span className={s.guestText}>
+          <span className="t-body-emph">{g.name}</span>
+          <span className="t-label c-label-2">
+            {[g.ig && `@${g.ig}`, !inside && g.rsvp === "nggak" && "RSVP Nggak bisa"]
+              .filter(Boolean)
+              .join(" · ")}
+          </span>
         </span>
-      }
-      subtitle={
-        <span className={s.guestBadges}>
-          {inside ? (
-            <Badge tone="success">Udah masuk</Badge>
-          ) : (
-            <Badge tone="neutral">Belum masuk</Badge>
-          )}
-          {!inside && g.rsvp === "nggak" && <Badge tone="danger">RSVP: Nggak bisa</Badge>}
-        </span>
-      }
-      trailing={
-        inside ? undefined : (
-          <Button
-            size="sm"
-            iconOnly
-            label={`Check-in ${g.name}`}
-            icon={<Check />}
-            onClick={onCheckIn}
-          />
-        )
-      }
-    />
+      </button>
+      {inside ? (
+        <Badge tone="success">Udah masuk</Badge>
+      ) : (
+        <Button
+          size="sm"
+          iconOnly
+          label={`Check-in ${g.name}`}
+          icon={<Check />}
+          onClick={onCheckIn}
+        />
+      )}
+    </div>
+  );
+}
+
+// P07d · Profil tamu (sheet dari P07): status, WA disamarkan, undangan, konfirmasi.
+function GuestProfileSheet({
+  guest: g,
+  onClose,
+  onCheckIn,
+}: {
+  guest: DoorGuest | null;
+  onClose: () => void;
+  onCheckIn: (g: DoorGuest) => void;
+}) {
+  const inside = g?.status === "dipakai";
+  return (
+    <Sheet open={!!g} onClose={onClose} title={g ? `Profil ${g.name}` : "Profil tamu"}>
+      {g && (
+        <div className={s.profile}>
+          <div className={s.profileHead}>
+            <Avatar name={g.name} size={56} />
+            <div>
+              <p className="t-card-title">{g.name}</p>
+              {g.ig && <p className="t-label c-label-2">@{g.ig}</p>}
+            </div>
+          </div>
+          <div className={s.badges}>
+            {g.rsvp === "hadir" ? (
+              <Badge tone="success">RSVP Hadir</Badge>
+            ) : g.rsvp === "nggak" ? (
+              <Badge tone="danger">RSVP Nggak bisa</Badge>
+            ) : (
+              <Badge tone="neutral">RSVP Belum jawab</Badge>
+            )}
+            {inside ? (
+              <Badge tone="success">Udah masuk {g.checkedInAt ? timeWib(g.checkedInAt) : ""}</Badge>
+            ) : (
+              <Badge tone="neutral">Belum masuk</Badge>
+            )}
+          </div>
+          <div className={s.profileRows}>
+            <ListRow title="WhatsApp" subtitle={g.waMasked ?? "Belum diisi"} />
+            <ListRow
+              title="Undangan"
+              subtitle={g.inviteStatus === "diundang" ? "Dikirim lewat DM IG" : "Belum diundang"}
+              trailing={g.invitedAt ? dayMonth(g.invitedAt) : undefined}
+            />
+            <ListRow
+              title="Konfirmasi"
+              subtitle={g.rsvp === "belum" ? "Belum jawab" : RSVP_LABEL[g.rsvp]}
+              trailing={g.respondedAt ? dayMonth(g.respondedAt) : undefined}
+            />
+          </div>
+          <div className={s.actions}>
+            {!inside && (
+              <Button icon={<Check />} onClick={() => onCheckIn(g)}>
+                Check-in sekarang
+              </Button>
+            )}
+            {g.ig && (
+              <Button
+                variant="secondary"
+                href={igProfileUrl(g.ig)}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Buka Instagram
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+    </Sheet>
   );
 }
 

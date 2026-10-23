@@ -1,6 +1,5 @@
 import { isValidIg, normalizeIg } from "./csv";
 import type { CheckInMethod, CheckInResult, Rsvp } from "./data/types";
-import { countdownLabel, dateShort, eventStart } from "./format";
 
 // F2 · logika pintu yang jalan di HP panitia (tanpa secret, tanpa Next) supaya scan & Cari nama
 // tetap bisa dipakai offline. Server tetap memutuskan akhirnya (tanda tangan QR + siapa duluan).
@@ -25,6 +24,12 @@ export type DoorGuest = {
   method: CheckInMethod | null;
   opId: string | null; // op yang membuat check-in (untuk Batalkan)
   pending?: boolean; // masih di antrean HP ini, belum sampai server
+  // P07d Profil tamu (opsional: manifest lama di IndexedDB tetap terbaca). WA sudah disamarkan
+  // di server ("0857-xxxx-2210") — nomor penuh nggak pernah sampai ke HP panitia.
+  waMasked?: string | null;
+  inviteStatus?: "belum" | "diundang";
+  invitedAt?: string | null;
+  respondedAt?: string | null;
 };
 
 export type DoorManifest = { eventId: string; rev: number; guests: DoorGuest[] };
@@ -176,61 +181,4 @@ export function cleanWalkIn(
       error: "Username IG ini udah ada di daftar. Cari namanya aja.",
     };
   return { ok: true, name, ig };
-}
-
-export type DoorCard = { eyebrow: string; title: string; sub: string };
-
-// BP00 · card "Pintu masuk" — copy ikut kondisi (F2-deliverables "Update hari ini").
-// "Sesi udah jalan" sementara ditebak dari jam sesi ke-2 sampai state rundown F3 ada.
-export function doorCardCopy({
-  checkedIn,
-  expected,
-  date,
-  startsAt,
-  secondSessionAt,
-  now,
-  eventDay,
-}: {
-  checkedIn: number;
-  expected: number;
-  date: string;
-  startsAt: string;
-  secondSessionAt: string | null;
-  now: Date;
-  eventDay: boolean;
-}): DoorCard {
-  const open = eventStart(date, startsAt);
-  if (!eventDay) {
-    return {
-      eyebrow: "Pintu masuk",
-      title: `Buka ${dateShort(date)} · ${startsAt}`,
-      sub: `${expected} tamu terdaftar · scan aktif di hari-H`,
-    };
-  }
-  if (now < open && checkedIn === 0) {
-    return {
-      eyebrow: "Pintu masuk",
-      title: `Buka ${startsAt}`,
-      sub: `${countdownLabel(open, now)} lagi · ${expected} tamu terdaftar`,
-    };
-  }
-  if (expected > 0 && checkedIn >= expected) {
-    return {
-      eyebrow: "Pintu masuk",
-      title: "Semua tamu udah masuk",
-      sub: `${checkedIn} dari ${expected} · scan tetap bisa dipakai`,
-    };
-  }
-  if (secondSessionAt && now >= eventStart(date, secondSessionAt)) {
-    return {
-      eyebrow: "Pintu masuk · masih dibuka",
-      title: `${checkedIn} tamu udah masuk`,
-      sub: "Yang telat tetap bisa masuk",
-    };
-  }
-  return {
-    eyebrow: `Pintu masuk · buka sejak ${startsAt}`,
-    title: `${checkedIn} tamu udah masuk`,
-    sub: `${Math.max(0, expected - checkedIn)} lagi belum datang`,
-  };
 }

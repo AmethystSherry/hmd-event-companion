@@ -158,15 +158,89 @@
 
 /* ---- Panitia ---- */
 
-/* BP00 card Pintu masuk */
-.door {
+/* Baris atas: tombol back di kiri, badge / aksi Small di kanan (BP00, P05). */
+.toolbar {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 44px;
 }
 
-.door > :last-child {
-  margin-top: 12px;
+/* BP00 carousel kartu sesi: selebar layar (keluar dari margin 16), 1 kartu + intip berikutnya. */
+.carouselWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0 calc(-1 * var(--margin));
+}
+
+.carouselHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--margin);
+}
+
+.dots {
+  display: flex;
+  gap: 4px;
+}
+
+.dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--label-3);
+  transition: width var(--press-ms) ease-out;
+}
+
+.dots .dotOn {
+  width: 18px;
+  background: var(--label);
+}
+
+.carousel {
+  display: flex;
+  gap: 12px;
+  padding: 0 var(--margin) 4px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding: 0 var(--margin);
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+
+.carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.sessionCard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 0 0 calc(100% - 44px);
+  scroll-snap-align: start;
+}
+
+.sessionTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.stopwatch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  color: var(--label);
+}
+
+.stopwatchIdle {
+  color: var(--label-3);
 }
 
 .stats {
@@ -197,6 +271,10 @@
   background: var(--card-2);
 }
 
+.progress .past {
+  background: var(--accent-soft);
+}
+
 .progress .done {
   background: var(--accent);
 }
@@ -210,7 +288,7 @@
   justify-content: center;
   gap: 22px;
   width: 100%;
-  aspect-ratio: 358 / 380;
+  aspect-ratio: 358 / 500; /* P05 23 Okt: kamera lebih tinggi */
   border-radius: var(--radius-card);
   background: #101010;
   overflow: hidden;
@@ -273,22 +351,6 @@
   text-align: center;
 }
 
-/* P05b strip "Sinyal lemah" */
-.strip {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 10px 14px;
-  border-radius: var(--radius-pill);
-  background: var(--warning-soft);
-  color: var(--warning-text);
-}
-
-.strip svg {
-  flex-shrink: 0;
-}
-
 /* P06 sheet hasil */
 .result {
   display: flex;
@@ -306,17 +368,6 @@
 .resultGuest > :nth-child(2) {
   flex: 1;
   min-width: 0;
-}
-
-.okIcon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--success-soft);
-  color: var(--success-text);
 }
 
 .badges {
@@ -368,20 +419,6 @@
   scrollbar-width: none;
 }
 
-.guestTitle {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.guestBadges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 4px;
-}
-
 .empty {
   display: flex;
   flex-direction: column;
@@ -414,4 +451,106 @@
   transform: translateX(-50%);
   width: max-content;
   max-width: calc(100% - 32px);
+}
+
+/* Kolom header: baris toolbar + toast (P05b). */
+.headerStack {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+/* P05b: toast sinyal lemah di bawah baris tombol back, ikut alur halaman (nggak nutupin apa pun). */
+.topToast {
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
+  animation: toast-drop 260ms var(--ease-spring);
+}
+
+@keyframes toast-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+/* P06 header sukses */
+.okHero {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  margin-bottom: 4px;
+  background: var(--success-text);
+  color: var(--card);
+}
+
+/* P07 baris tamu: area tap baris (→ P07d) + status / ✓ di kanan. */
+.guestRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-right: 16px;
+}
+
+.guestRow + .guestRow {
+  border-top: 1px solid var(--separator);
+}
+
+@media (min-resolution: 2dppx) {
+  .guestRow + .guestRow {
+    border-top-width: 0.5px;
+  }
+}
+
+.guestMain {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+  min-height: 60px;
+  padding: 12px 0 12px 16px;
+  border: 0;
+  background: transparent;
+  color: var(--label);
+  text-align: left;
+}
+
+.guestMain:active {
+  opacity: 0.7;
+}
+
+.guestText {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.guestText > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* P07d Profil tamu */
+.profile {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+}
+
+.profileHead {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.profileRows {
+  margin: 0 -16px;
 }
