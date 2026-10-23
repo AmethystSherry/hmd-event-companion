@@ -43,6 +43,7 @@ export {
   Star,
   Sun,
   Stop,
+  Timer,
   Trash,
   UploadSimple,
   UserPlus,

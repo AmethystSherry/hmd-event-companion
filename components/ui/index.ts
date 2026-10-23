@@ -3,6 +3,7 @@ export { Banner, TextAction } from "./Banner";
 export { Button } from "./Button";
 export { Card, CardLabel, InnerBox } from "./Card";
 export { Countdown } from "./Countdown";
+export { Dialog } from "./Dialog";
 export { Dropzone } from "./Dropzone";
 export { Field } from "./Field";
 export { HeroState } from "./HeroState";

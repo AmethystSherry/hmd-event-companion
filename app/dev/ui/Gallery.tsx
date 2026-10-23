@@ -33,6 +33,7 @@ import {
   CardLabel,
   Chip,
   Countdown,
+  Dialog,
   Dropzone,
   Field,
   HeroState,
@@ -95,6 +96,7 @@ export function Gallery() {
   const [invite, setInvite] = useState<"ya" | "nanti">("ya");
   const [chips, setChips] = useState<string[]>(["Talkshow"]);
   const [sheet, setSheet] = useState(false);
+  const [dialog, setDialog] = useState(false);
   const [toastKey, setToastKey] = useState(0);
   const [undone, setUndone] = useState<string | null>(null);
   const [pin, setPin] = useState("12");
@@ -406,6 +408,24 @@ export function Gallery() {
             </Button>
           </div>
         </Sheet>
+        <Button variant="secondary" onClick={() => setDialog(true)}>
+          Buka dialog konfirmasi (BP00a)
+        </Button>
+        <Dialog
+          open={dialog}
+          onClose={() => setDialog(false)}
+          title="Selesaikan Open space?"
+          actions={
+            <>
+              <Button onClick={() => setDialog(false)}>Ya, selesaikan</Button>
+              <Button variant="secondary" onClick={() => setDialog(false)}>
+                Batal
+              </Button>
+            </>
+          }
+        >
+          Udah jalan 00:12:34. Layar tamu otomatis jeda sampai kamu mulai sesi berikutnya.
+        </Dialog>
       </Section>
 
       <Section title="Hero state & loading">

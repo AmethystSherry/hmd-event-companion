@@ -1,0 +1,58 @@
+/* Dialog di tengah: kartu radius 32, padding 24, dim seperti Sheet. */
+.root {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--margin);
+}
+
+.scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.32);
+  animation: fade-in 200ms ease-out;
+}
+
+.panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-width: calc(var(--screen-width) - 2 * var(--margin));
+  padding: 24px 20px 20px;
+  border-radius: var(--radius-sheet);
+  background: var(--card);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.18);
+  outline: none;
+  animation: dialog-in 260ms var(--ease-spring);
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel {
+    animation: fade-in 150ms ease-out;
+  }
+}
