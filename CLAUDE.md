@@ -173,6 +173,10 @@ npm run lint && npm run typecheck && npm run format:check
 npm run build
 ```
 Butuh `.env.local` (salin `.env.example`): `EVENT_PIN`, `TICKET_HMAC_SECRET`, `SESSION_SECRET`.
+Testing dari luar (sementara, sebelum Vercel): `npm run dev` + `cloudflared tunnel --protocol http2
+--url http://localhost:3000` → link `https://….trycloudflare.com` (HTTPS, kamera jalan; ganti tiap
+dijalankan ulang; laptop harus nyala). Quick tunnel nggak meneruskan SSE → `LiveRefresh` otomatis
+polling `/api/live?once=1` tiap 4 dtk. Jangan kirim undangan tamu asli dari link tunnel.
 Uji alur: `/dev/states/f1` (pratinjau 27 layar + link tamu + CSV dummy + "Reset data ke awal").
 F2: `/dev/states/f2` → "Siapkan data uji" → "Pura-pura hari-H" → buka link tamu + /panitia → Scan.
 Sesi: tombol "Mulai sesi 1" / "Selesaikan sesi" di halaman yang sama, atau lewat BP00.

@@ -10,6 +10,11 @@ export async function GET(req: Request) {
   if (!allowed) return new Response("unauthorized", { status: 401 });
 
   const store = await getStore();
+  // ?once=1 → `rev` saja, untuk polling cadangan kalau SSE tertahan proxy (mis. Cloudflare quick
+  // tunnel tidak meneruskan SSE).
+  if (new URL(req.url).searchParams.has("once")) {
+    return new Response(String(store.rev), { headers: { "Cache-Control": "no-store" } });
+  }
   const enc = new TextEncoder();
   let stop = () => {};
 

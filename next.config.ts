@@ -17,8 +17,9 @@ function buildSha(): string {
 const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
-  // Dev: izinkan HP di Wi-Fi yang sama (IP jaringan lokal) memuat aset dev & hot reload.
-  allowedDevOrigins: ["192.168.*.*", "10.*.*.*", "172.*.*.*"],
+  // Dev: izinkan HP di Wi-Fi yang sama (IP jaringan lokal) dan link Cloudflare Tunnel untuk
+  // testing (`cloudflared tunnel --url http://localhost:3000`) memuat aset dev & hot reload.
+  allowedDevOrigins: ["192.168.*.*", "10.*.*.*", "172.*.*.*", "*.trycloudflare.com"],
   env: {
     NEXT_PUBLIC_APP_VERSION: pkg.version,
     NEXT_PUBLIC_BUILD_SHA: buildSha(),
