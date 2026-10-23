@@ -86,6 +86,18 @@ export function countdownLabel(target: Date, now: Date): string {
   return `${minutes} menit`;
 }
 
+// ISO → jam WIB "13.04" (cap "MASUK 13.04", P06).
+export function timeWib(iso: string): string {
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: WIB,
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  })
+    .format(new Date(iso))
+    .replace(":", ".");
+}
+
 // "13.00" + 60 → "14.00" (rundown). Menit dari tengah malam ↔ "HH.MM".
 export function toMinutes(hhmm: string): number {
   const [h, m] = hhmm.split(/[.:]/).map(Number);

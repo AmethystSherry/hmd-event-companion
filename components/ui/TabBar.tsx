@@ -7,22 +7,32 @@ import styles from "./TabBar.module.css";
 // Warna tetap di kedua mode. Di layar scan (P05/P06) tidak ada tab aktif: active="scan".
 export type CrewTab = "kontrol" | "tamu" | "tanya" | "scan";
 
+// Rute per event: /panitia/event/{id}/kontrol · /tamu · /tanya (belum ada) · /scan.
 const TABS = [
-  { id: "kontrol", label: "Kontrol", href: "/panitia", Icon: ListBullets },
-  { id: "tamu", label: "Tamu", href: "/panitia/tamu", Icon: Users },
-  { id: "tanya", label: "Tanya", href: "/panitia/tanya", Icon: ChatCircle },
+  { id: "kontrol", label: "Kontrol", path: "kontrol", Icon: ListBullets },
+  { id: "tamu", label: "Tamu", path: "tamu", Icon: Users },
+  { id: "tanya", label: "Tanya", path: "tanya", Icon: ChatCircle },
 ] as const;
 
-export function TabBar({ active, className }: { active: CrewTab; className?: string }) {
+export function TabBar({
+  active,
+  eventId,
+  className,
+}: {
+  active: CrewTab;
+  eventId?: string; // kosong = pratinjau /dev/ui (tautan ke /panitia)
+  className?: string;
+}) {
+  const href = (path: string) => (eventId ? `/panitia/event/${eventId}/${path}` : "/panitia");
   return (
     <nav aria-label="Navigasi panitia" className={cx(styles.wrap, className)}>
       <div className={styles.bar}>
-        {TABS.map(({ id, label, href, Icon }) => {
+        {TABS.map(({ id, label, path, Icon }) => {
           const on = id === active;
           return (
             <Link
               key={id}
-              href={href}
+              href={href(path)}
               aria-label={label}
               aria-current={on ? "page" : undefined}
               className={cx(styles.tab, on && styles.active)}
@@ -34,7 +44,7 @@ export function TabBar({ active, className }: { active: CrewTab; className?: str
         })}
       </div>
       <Link
-        href="/panitia/scan"
+        href={href("scan")}
         aria-label="Scan tiket"
         aria-current={active === "scan" ? "page" : undefined}
         className={styles.scan}

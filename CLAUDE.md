@@ -9,10 +9,13 @@ Web app mobile untuk House Moving Day Potara Studio (Minggu 8 Nov 2026, 13.00–
   tag **`archive-pre-revisi`** (commit `db60e73`) — bukan acuan alur. Ambil ulang hanya kalau diminta
   (`git show archive-pre-revisi:<path>`). Jangan force push / rewrite history / hapus branch.
 - **F1 · Undangan & konfirmasi sudah dibangun** (Figma band `4732:12593`, `F1-deliverables.md`,
-  prd §7 F1). F2–F5 & N1–N4 belum; kerjakan lewat `HANDOFF-CLAUDE-CODE.md` setelah F1 di-review.
+  prd §7 F1).
 - Update 22 Okt sore (Figma `4810:11003/11052/11132/11218`): PE03/PE03b dibangun ulang + sheet
   PE03e Ubah detail event & PE03h Hapus event. "Buka Kontrol acara" aktif kalau detail + tamu +
-  rundown terisi → `/panitia/event/[id]/kontrol` (placeholder F3, guard redirect kalau belum siap).
+  rundown terisi → `/panitia/event/[id]/kontrol` (guard redirect kalau belum siap).
+- **F2 · Check-in di pintu sudah dibangun** (22 Okt malam; Figma band `4667:4654`,
+  `F2-deliverables.md`). 12 keputusan terbuka di deliverables dijawab pakai default — lihat
+  "Aturan F2 di kode". F3–F5 & N1–N4 belum; kerjakan lewat `HANDOFF-CLAUDE-CODE.md`.
 - Branch & tag arsip baru ada di lokal (repo belum punya remote); push setelah remote ditambahkan.
 
 ## Sumber kebenaran
@@ -31,7 +34,8 @@ Web app mobile untuk House Moving Day Potara Studio (Minggu 8 Nov 2026, 13.00–
 - Rencana hosting: Vercel Hobby (gratis). Data (keputusan 22 Okt): store lokal in-memory +
   `.data/store.json` (di-gitignore) lewat `lib/data`; nanti diganti Supabase free di balik interface
   `DataStore` yang sama sebelum deploy (file JSON tidak persisten di Vercel).
-- QR tiket: `qrcode` (MIT), SVG dirender di server.
+- QR tiket: `qrcode` (MIT), SVG dirender di server. Scan QR (F2): `qr-scanner` (MIT) —
+  BarcodeDetector di Android Chrome, decoder Web Worker di iPhone Safari.
 
 ## Struktur (main)
 ```
@@ -40,19 +44,26 @@ app/
   (tamu)/t/[token]/       T01/T01e/T02b/T03/T03h · konfirmasi/ (T02/T02c/T02d) · kalender/ (.ics)
   panitia/                P01 + PE01/PE02 · actions.ts (semua server action panitia)
     event/[id]/           PE03/PE03b (+ sheet PE03e/PE03h) · rundown/ (PE04k/PE04/PE04a) ·
-                          tamu/ (P04k/P04a/P04c/P04/P04b/d/e/f) · kontrol/ (placeholder F3)
+                          tamu/ (P04k/P04a/P04c/P04/P04b/d/e/f) · kontrol/ (BP00) ·
+                          scan/ (P05/P05b/P06/P06b/P06c) · scan/cari/ (P07/P07b/P07c)
   api/live/               SSE: kirim `rev` store tiap ada perubahan (tanpa data tamu)
+  api/panitia/            event/[id]/manifest (GET daftar pintu) · checkin (POST antrean op)
   dev/ui/                 preview design system (light & dark)
   dev/states/f1/          27 layar F1 dengan data contoh + alat uji (link tamu, CSV dummy, reset)
+  dev/states/f2/          13 layar F2 + alat uji (jam pura-pura hari-H, data 12 hadir, reset check-in)
   tokens.css · globals.css · fonts/
 components/ui/            komponen design system Clean v0.5
 components/f1/            layar F1 presentasional (dipakai route asli & /dev/states/f1)
-components/               LiveRefresh (SSE → router.refresh) · TicketQr · RegisterOffline (SW)
+components/f2/            tamu.tsx (T05/T05a/BT02/T03b) · Kontrol (BP00) · DoorApp (P05–P07) ·
+                          useDoor (manifest + antrean) · Viewfinder (kamera) · DoorPage (guard route)
+components/               LiveRefresh (SSE → router.refresh) · RefreshAt · TicketQr · RegisterOffline
 components/icons.ts       ekspor ikon Phosphor (/ssr)
 lib/data/                 tipe, store (logika murni + tes), seed, getStore() (file .data/)
-lib/server/               env, HMAC (QR & cookie sesi), rate-limit PIN, akses crew/tamu, origin
-lib/                      csv · format · invite · confirm · ics · view · fixtures · clipboard · cx
-public/                   figma/ · sw.js (tiket offline) · contoh-tamu.csv · dev/*.csv (dummy)
+lib/server/               env, HMAC (QR & cookie sesi), rate-limit PIN, akses crew/tamu, origin,
+                          clock (hari-H + jam palsu dev), door (manifest & terapkan op check-in)
+lib/                      csv · format · invite · confirm · ics · view · fixtures · clipboard · cx ·
+                          door (logika pintu tanpa secret, jalan di HP) · offline/doorDb (IndexedDB)
+public/                   figma/ · sw.js (tiket & layar pintu offline) · contoh-tamu.csv · dev/*.csv
 next.config.ts            header X-Robots-Tag noindex, allowedDevOrigins (HP di LAN)
 ```
 
@@ -66,6 +77,39 @@ next.config.ts            header X-Robots-Tag noindex, allowedDevOrigins (HP di 
   (kalau browser memblokir jendela baru, tombol bawah jadi "Lanjut kirim").
 - Realtime: tiap perubahan store menaikkan `rev` → `/api/live` (SSE) → `router.refresh()`.
 - Layar di `components/f1/` tidak memanggil server sendiri: aksi masuk lewat props (kosong = pratinjau).
+
+## Aturan F2 di kode
+Keputusan default 22 Okt (jawaban "Keputusan & asumsi" di F2-deliverables; prd.md §7 F2 belum diubah):
+1. Hari-H mulai **00.00 WIB** tanggal event (`lib/server/clock` → `isEventDay`); scan boleh sebelum
+   13.00. Tamu T03 → T05, panitia PE03b → BP00 otomatis. Dev: cookie `hmd_now` / env `HMD_FAKE_NOW`
+   (diabaikan di production), dipasang dari `/dev/states/f2`.
+2. "Kecerahan maks" = QR layar penuh latar putih + Wake Lock (browser nggak bisa atur brightness).
+3. Walk-in P07c dibangun: nama wajib, IG opsional, langsung "Udah masuk" (`source: "walkin"`).
+4. Pembagi "dari N" = tamu RSVP hadir (walk-in & yang datang ikut jadi hadir saat check-in).
+5. RSVP "Nggak bisa"/belum jawab tapi datang → tetap check-in, RSVP jadi hadir (dipulihkan saat Batalkan).
+6. Toast Batalkan 5 dtk hanya untuk ✓ manual (bukan scan).
+7. P07 cari nama, @IG, **dan kode pendek** (HMD-014-7F3K).
+8. PDF daftar manual **di-drop** (nggak ada di band F2); cadangannya P07 yang jalan offline.
+9. Validasi offline: manifest (tamu + ticketId + status, tanpa WA/token/secret) diunduh setelah PIN
+   → IndexedDB; HP mencocokkan ticketId dari QR `<ticketId>.<sig>`, tanda tangan dicek server saat
+   sinkron. (Hash nggak dipakai: `crypto.subtle` nggak ada di http LAN.) Sesi 401 → data dihapus.
+10. Valid = getar (Android) + bunyi pendek WebAudio (iPhone juga); gagal = bunyi rendah.
+11. Copy ikut Figma sekarang (usulan copy di deliverables belum diterapkan).
+12. Card Pintu masuk 4 varian (`doorCardCopy`; "sesi jalan" ditebak dari jam sesi ke-2 sampai F3).
+    Stat tile Check-in tetap, tap → P07. BT02 "Masuk sekarang"/auto 3 dtk → T03b (F3/F4 belum ada);
+    "Kembali ke acara" di T03b nonaktif. `checkedInBy` = label HP ("HP 7K2Q"), bukan nama orang.
+- Check-in = op `{opId, kind: scan|manual|walkin|undo}` dari HP → `POST /api/panitia/checkin`,
+  idempoten per opId (kirim ulang aman); yang sampai server duluan menang (HP kedua → P06b).
+  Online: hasil server ditunggu ≤ 3 dtk untuk sheet P06; offline: hasil lokal + antre (P05b),
+  dikirim ulang tiap 5 dtk / saat `online`. Op dibuang dari antrean setelah manifest baru masuk.
+- `/scan` dan `/scan/cari` = satu `DoorApp` (pindah layar pakai `history.pushState`, tanpa
+  jaringan). SW meng-cache kerangka halaman itu (network-first, navigasi saja; request RSC dilewati).
+- HP tamu: check-in → `rev` naik → SSE → `router.refresh()` → status tiket berubah selagi terbuka
+  → T05a (sobek ±900 ms) → BT02 (3 dtk, sekali per tiket via localStorage) → T03b. HP tamu offline →
+  refresh saat `online`/tab terlihat lagi. Dibuka > 10 menit setelah masuk → langsung T03b.
+- Kamera butuh HTTPS di HP (`npx next dev --experimental-https`); gagal/ditolak → P07b.
+- Store dev ada di `globalThis.__hmdStoreF2`: naikkan kuncinya tiap method store bertambah (server
+  dev yang sedang jalan nggak membuat ulang instance lama saat HMR).
 
 ## Design system (Clean v0.5)
 - Token: `app/tokens.css` — warna semantik light (utama) + dark (`prefers-color-scheme`, atau paksa
@@ -91,8 +135,8 @@ next.config.ts            header X-Robots-Tag noindex, allowedDevOrigins (HP di 
 - `IconButton` = khusus tombol back/close 44 di toolbar (gaya secondary, varian `glass` di kamera).
 - `Screen`: `withBack` (konten mulai 8px), `bottom` + `bottomHeight` (1 tombol 54, 2 tombol 118,
   +caption 28) → fade scroll-edge otomatis di atas aksi bawah.
-- Catatan: `TabBar` masih menautkan ke `/panitia/*` (rute diarsipkan → 404 kalau diklik);
-  `Ticket` tanpa QR asli menampilkan placeholder (generator QR diarsipkan).
+- `TabBar` pakai prop `eventId` → `/panitia/event/{id}/kontrol|tamu|tanya|scan` (Tanya belum ada →
+  404); tanpa `eventId` (pratinjau /dev/ui) semua ke `/panitia`. `Ticket` tanpa QR = placeholder.
 - Ikon: hanya lewat `@/components/icons` (ukuran via prop `size`, warna `currentColor`).
 - Bentuk yang ikut tema (lekukan, gerigi, tepi sobek tiket) digambar CSS/SVG inline dengan `var(--bg)`.
 - Jangan pakai warna hex di komponen; pakai token. Pengecualian tetap di kedua mode:
@@ -109,6 +153,7 @@ npm run build
 ```
 Butuh `.env.local` (salin `.env.example`): `EVENT_PIN`, `TICKET_HMAC_SECRET`, `SESSION_SECRET`.
 Uji alur: `/dev/states/f1` (pratinjau 27 layar + link tamu + CSV dummy + "Reset data ke awal").
+F2: `/dev/states/f2` → "Siapkan data uji" → "Pura-pura hari-H" → buka link tamu + /panitia → Scan.
 
 ## Konvensi
 - Copy UI Bahasa Indonesia santai, persis Figma/design.md §7. Jam 24 jam pakai titik (13.00).
@@ -122,4 +167,5 @@ Uji alur: `/dev/states/f1` (pratinjau 27 layar + link tamu + CSV dummy + "Reset 
 - [x] Phase 0 — fondasi (scaffold, font, noindex) — sisa yang relevan tetap di main
 - [x] Phase 1 — design system (`/dev/ui`)
 - [x] F1 — undangan & konfirmasi (27 layar, store lokal, realtime SSE) — menunggu review
-- [ ] F2–F5, N1–N4 — berikutnya (versi lama: tag `archive-pre-revisi`)
+- [x] F2 — check-in di pintu (13 layar, scan QR, antrean offline, tiket sobek realtime) — menunggu review
+- [ ] F3–F5, N1–N4 — berikutnya (versi lama: tag `archive-pre-revisi`)

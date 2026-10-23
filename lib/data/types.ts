@@ -33,7 +33,7 @@ export type Guest = {
   followConfirmed: boolean;
   keyNo: number; // nomor kunci di tiket (#014)
   reminderSentAt: string | null;
-  source: "csv" | "manual";
+  source: "csv" | "manual" | "walkin"; // walkin = ditambah di pintu (P07c)
   createdAt: string;
 };
 
@@ -53,7 +53,27 @@ export type Ticket = {
   guestId: string;
   shortCode: string; // HMD-014-7F3K
   status: "aktif" | "dipakai";
+  // F2 check-in (opsional supaya .data/store.json lama tetap terbaca).
+  checkedInAt?: string | null;
+  checkedInBy?: string | null; // label HP panitia ("HP 7K2Q"), satu PIN = tanpa identitas orang
+  method?: CheckInMethod | null;
+  guestNo?: number | null; // "tamu ke-9"
+  opId?: string | null; // id operasi check-in dari HP panitia → kirim ulang tidak dobel
+  rsvpBefore?: Rsvp | null; // RSVP sebelum check-in (dipulihkan saat Batalkan)
 };
+
+export type CheckInMethod = "scan" | "manual";
+
+// Hasil check-in (P06 / P06b / P06c). Sama untuk respons server & validasi lokal di HP panitia.
+export type CheckInResult =
+  | { kind: "valid"; guestId: string; guestNo: number; at: string }
+  | { kind: "sudah-dipakai"; guestId: string; at: string; method: CheckInMethod }
+  | { kind: "tidak-dikenal" }
+  | { kind: "gagal"; error: string };
+
+// Angka pintu: pembagi "dari N" = tamu RSVP hadir (walk-in & yang datang walau "Nggak bisa"
+// ikut jadi hadir saat check-in).
+export type DoorStats = { checkedIn: number; expected: number; total: number };
 
 export type StoreData = {
   version: 1;

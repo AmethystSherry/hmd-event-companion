@@ -1,0 +1,417 @@
+/* Pola layar F2 (bukan komponen design system). */
+
+.success {
+  color: var(--success-text);
+}
+
+/* Badge yang bisa ditap (T05 "Kecerahan maks"): area tap 44, tampilan tetap Badge. */
+.badgeButton {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+}
+
+.qrOff {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+
+.qrOff > :last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.rowIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--card-2);
+  color: var(--label-2);
+  flex-shrink: 0;
+}
+
+/* ---- Animasi sobek (design.md "Animasi sobek", ±900 ms) ---- */
+.tearWrap {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: var(--content-width);
+}
+
+.tearHead {
+  animation: tear-head 900ms var(--ease-spring) both;
+}
+
+/* 150–450 ms potongan miring 4°, 450–900 ms jatuh +420 & memudar (easing gravitasi). */
+.tearStub {
+  transform-origin: 0 0;
+  animation:
+    tear-tilt 300ms 150ms ease-out both,
+    tear-fall 450ms 450ms var(--ease-gravity) forwards;
+}
+
+@keyframes tear-tilt {
+  from {
+    transform: translateY(0) rotate(0);
+  }
+  to {
+    transform: translateY(6px) rotate(4deg);
+  }
+}
+
+@keyframes tear-fall {
+  from {
+    transform: translateY(6px) rotate(4deg);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(420px) rotate(14deg);
+    opacity: 0;
+  }
+}
+
+@keyframes tear-head {
+  0%,
+  50% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-4px);
+  }
+}
+
+/* BT02: cap "Masuk" muncul scale 1.2 → 1. */
+.stampIn :global(.stamp) {
+  animation: stamp-in 420ms var(--ease-spring) both;
+}
+
+@keyframes stamp-in {
+  from {
+    transform: rotate(10deg) scale(1.2);
+    opacity: 0;
+  }
+  to {
+    transform: rotate(10deg) scale(1);
+    opacity: 1;
+  }
+}
+
+/* Reduce motion: crossfade 200 ms. */
+@media (prefers-reduced-motion: reduce) {
+  .tearHead,
+  .stampIn :global(.stamp) {
+    animation: none;
+  }
+  .tearStub {
+    animation: fade-out 200ms ease forwards;
+  }
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+/* ---- T05 QR layar penuh ("Kecerahan maks") — putih di kedua mode, sama seperti QR ---- */
+.fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px;
+  border: 0;
+  background: var(--qr-bg);
+  color: var(--qr-ink);
+}
+
+.bigQr {
+  width: min(78vw, 340px);
+  aspect-ratio: 1;
+  margin-bottom: 14px;
+}
+
+.bigQr > * {
+  width: 100%;
+  height: 100%;
+}
+
+.fullscreenHint {
+  margin-top: 18px;
+  opacity: 0.6;
+}
+
+/* ---- Panitia ---- */
+
+/* BP00 card Pintu masuk */
+.door {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.door > :last-child {
+  margin-top: 12px;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+/* Rundown (bagian F3): progress per sesi */
+.rundownHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 20px 0;
+}
+
+.progress {
+  display: grid;
+  grid-auto-flow: column;
+  gap: 4px;
+  padding: 12px 20px 4px;
+}
+
+.progress span {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--card-2);
+}
+
+.progress .done {
+  background: var(--accent);
+}
+
+/* P05 viewfinder: kotak gelap (warna tetap) + bingkai sudut + video kamera. */
+.viewfinder {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  width: 100%;
+  aspect-ratio: 358 / 380;
+  border-radius: var(--radius-card);
+  background: #101010;
+  overflow: hidden;
+}
+
+.viewfinder video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.frame {
+  position: relative;
+  width: 56%;
+  aspect-ratio: 1;
+  pointer-events: none;
+}
+
+.frame span {
+  position: absolute;
+  width: 26%;
+  height: 26%;
+  border: 4px solid #ffffff;
+}
+
+.frame span:nth-child(1) {
+  top: 0;
+  left: 0;
+  border-right: 0;
+  border-bottom: 0;
+  border-top-left-radius: 22px;
+}
+.frame span:nth-child(2) {
+  top: 0;
+  right: 0;
+  border-left: 0;
+  border-bottom: 0;
+  border-top-right-radius: 22px;
+}
+.frame span:nth-child(3) {
+  bottom: 0;
+  left: 0;
+  border-right: 0;
+  border-top: 0;
+  border-bottom-left-radius: 22px;
+}
+.frame span:nth-child(4) {
+  bottom: 0;
+  right: 0;
+  border-left: 0;
+  border-top: 0;
+  border-bottom-right-radius: 22px;
+}
+
+.viewfinderHint {
+  position: relative;
+  color: rgba(255, 255, 255, 0.85);
+  text-align: center;
+}
+
+/* P05b strip "Sinyal lemah" */
+.strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: var(--radius-pill);
+  background: var(--warning-soft);
+  color: var(--warning-text);
+}
+
+.strip svg {
+  flex-shrink: 0;
+}
+
+/* P06 sheet hasil */
+.result {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 4px 4px 0;
+}
+
+.resultGuest {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.resultGuest > :nth-child(2) {
+  flex: 1;
+  min-width: 0;
+}
+
+.okIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--success-soft);
+  color: var(--success-text);
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.resultHero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px 6px;
+  text-align: center;
+}
+
+.heroIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  margin-bottom: 4px;
+}
+
+.heroIcon[data-tone="warning"] {
+  background: var(--warning-soft);
+  color: var(--warning-text);
+}
+
+.heroIcon[data-tone="danger"] {
+  background: var(--danger-soft);
+  color: var(--danger-text);
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* P07 */
+.filters {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.guestTitle {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.guestBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 20px;
+  text-align: center;
+}
+
+/* P07c sheet */
+.sheetHead {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px 4px 4px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Toast di atas tab bar / bawah layar */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom) + 96px);
+  z-index: 40;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: calc(100% - 32px);
+}

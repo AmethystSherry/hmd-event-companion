@@ -41,6 +41,7 @@ export {
   Scroll,
   Sparkle,
   Star,
+  Sun,
   Stop,
   Trash,
   UploadSimple,
@@ -48,6 +49,7 @@ export {
   Users,
   WarningCircle,
   WhatsappLogo,
+  WifiLow,
   WifiSlash,
   X,
 } from "@phosphor-icons/react/ssr";

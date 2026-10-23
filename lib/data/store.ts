@@ -2,6 +2,9 @@ import { randomBytes, randomUUID } from "node:crypto";
 import type { CsvRow } from "../csv";
 import { toMinutes } from "../format";
 import type {
+  CheckInMethod,
+  CheckInResult,
+  DoorStats,
   Event,
   Guest,
   GuestStats,
@@ -44,6 +47,9 @@ export type RsvpInput = {
 };
 
 export type InviteSnapshot = Pick<Guest, "inviteStatus" | "invitedAt">;
+
+// Satu operasi check-in dari HP panitia: opId acak dibuat di HP (dipakai ulang saat kirim ulang).
+export type CheckInOp = { opId: string; method: CheckInMethod; by: string; at: string };
 
 const CODE_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"; // tanpa 0/O/1/I
 
@@ -137,6 +143,56 @@ export function createStore(
       source,
       createdAt: now(),
     };
+  }
+
+  function ensureTicket(g: Guest): Ticket {
+    const existing = data.tickets.find((t) => t.guestId === g.id);
+    if (existing) return existing;
+    const t: Ticket = {
+      ticketId: randomUUID(),
+      guestId: g.id,
+      shortCode: shortCode(g.keyNo),
+      status: "aktif",
+    };
+    data.tickets.push(t);
+    return t;
+  }
+
+  // Op yang sudah pernah diterapkan → kembalikan hasil yang sama (idempoten).
+  function replay(opId: string): CheckInResult | null {
+    const t = data.tickets.find((x) => x.opId === opId && x.status === "dipakai");
+    return t
+      ? { kind: "valid", guestId: t.guestId, guestNo: t.guestNo ?? 0, at: t.checkedInAt! }
+      : null;
+  }
+
+  function checkInGuest(g: Guest, t: Ticket, op: CheckInOp): CheckInResult {
+    if (t.status === "dipakai") {
+      return {
+        kind: "sudah-dipakai",
+        guestId: g.id,
+        at: t.checkedInAt ?? op.at,
+        method: t.method ?? "scan",
+      };
+    }
+    t.rsvpBefore = g.rsvp;
+    if (g.rsvp !== "hadir") {
+      g.rsvp = "hadir";
+      g.respondedAt = op.at;
+    }
+    const ids = new Set(guestsOf(g.eventId).map((x) => x.id));
+    const guestNo =
+      data.tickets.filter((x) => ids.has(x.guestId) && x.status === "dipakai").length + 1;
+    Object.assign(t, {
+      status: "dipakai",
+      checkedInAt: op.at,
+      checkedInBy: op.by,
+      method: op.method,
+      guestNo,
+      opId: op.opId,
+    } satisfies Partial<Ticket>);
+    commit();
+    return { kind: "valid", guestId: g.id, guestNo, at: op.at };
   }
 
   return {
@@ -327,19 +383,84 @@ export function createStore(
         g.inviteStatus = "diundang";
         g.invitedAt = g.respondedAt;
       }
-      if (input.rsvp === "hadir" && !data.tickets.some((t) => t.guestId === id)) {
-        data.tickets.push({
-          ticketId: randomUUID(),
-          guestId: id,
-          shortCode: shortCode(g.keyNo),
-          status: "aktif",
-        });
-      }
+      if (input.rsvp === "hadir") ensureTicket(g);
       commit();
       return g;
     },
     ticketFor(guestId: string): Ticket | null {
       return data.tickets.find((t) => t.guestId === guestId) ?? null;
+    },
+
+    // ---- F2 · Check-in di pintu ----
+    // Satu op = satu check-in dari HP panitia (scan P06 / ✓ P07 / walk-in P07c). Op yang sama
+    // dikirim ulang (sinyal putus) → hasil sama, hitungan tidak dobel. Dua HP scan tiket yang
+    // sama → yang sampai di server duluan menang, yang kedua dapat "sudah-dipakai".
+    checkIn(
+      eventId: string,
+      target: { ticketId: string } | { guestId: string },
+      op: CheckInOp,
+    ): CheckInResult {
+      const done = replay(op.opId);
+      if (done) return done;
+      if ("ticketId" in target) {
+        const t = data.tickets.find((x) => x.ticketId === target.ticketId);
+        const g = t && data.guests.find((x) => x.id === t.guestId);
+        if (!t || !g || g.eventId !== eventId) return { kind: "tidak-dikenal" };
+        return checkInGuest(g, t, op);
+      }
+      const g = data.guests.find((x) => x.id === target.guestId && x.eventId === eventId);
+      if (!g) return { kind: "tidak-dikenal" };
+      // RSVP "Nggak bisa"/belum jawab tapi datang → tetap boleh masuk, tiket dibuat di sini.
+      return checkInGuest(g, ensureTicket(g), op);
+    },
+
+    // P07c · walk-in: tamu baru langsung "Udah masuk" (RSVP hadir, ikut pembagi).
+    addWalkIn(eventId: string, input: { name: string; ig: string }, op: CheckInOp): CheckInResult {
+      const done = replay(op.opId);
+      if (done) return done;
+      event(eventId);
+      if (input.ig) assertIgFree(eventId, input.ig);
+      const g = newGuest(eventId, { name: input.name, ig: input.ig, wa: null }, "walkin");
+      g.inviteStatus = "diundang";
+      g.invitedAt = op.at;
+      g.rsvp = "hadir";
+      g.respondedAt = op.at;
+      data.guests.push(g);
+      return checkInGuest(g, ensureTicket(g), op);
+    },
+
+    // Toast "Batalkan" (5 dtk) setelah ✓ manual: tiket aktif lagi, RSVP kembali seperti semula.
+    undoCheckIn(opId: string): boolean {
+      const t = data.tickets.find((x) => x.opId === opId && x.status === "dipakai");
+      if (!t) return false;
+      const g = data.guests.find((x) => x.id === t.guestId);
+      if (g && t.rsvpBefore && t.rsvpBefore !== "hadir") g.rsvp = t.rsvpBefore;
+      Object.assign(t, {
+        status: "aktif",
+        checkedInAt: null,
+        checkedInBy: null,
+        method: null,
+        guestNo: null,
+        opId: null,
+        rsvpBefore: null,
+      } satisfies Partial<Ticket>);
+      commit();
+      return true;
+    },
+
+    doorStats(eventId: string): DoorStats {
+      const guests = guestsOf(eventId);
+      const ids = new Set(guests.map((g) => g.id));
+      return {
+        checkedIn: data.tickets.filter((t) => ids.has(t.guestId) && t.status === "dipakai").length,
+        expected: guests.filter((g) => g.rsvp === "hadir").length,
+        total: guests.length,
+      };
+    },
+
+    listTickets(eventId: string): Ticket[] {
+      const ids = new Set(guestsOf(eventId).map((g) => g.id));
+      return data.tickets.filter((t) => ids.has(t.guestId));
     },
 
     snapshot(): StoreData {

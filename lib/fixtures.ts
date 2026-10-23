@@ -14,7 +14,7 @@ export const demoEvent = seed.events[0];
 export const demoOtherEvent = seed.events[1];
 export const demoSessions = seed.sessions;
 
-const NAMES: Array<[string, string]> = [
+export const NAMES: Array<[string, string]> = [
   ["Yoga Saputra", "yogasap"],
   ["Dimas Pratama", "dimaspr"],
   ["Rara Wening", "rarawening"],

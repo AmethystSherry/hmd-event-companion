@@ -32,7 +32,7 @@ import {
 import type { FormResult, GuestForm } from "@/app/panitia/actions";
 import { copyText } from "@/lib/clipboard";
 import type { InviteSnapshot } from "@/lib/data/store";
-import type { GuestStats, InviteStatus, Rsvp } from "@/lib/data/types";
+import type { Guest, GuestStats, InviteStatus, Rsvp } from "@/lib/data/types";
 import { firstName } from "@/lib/format";
 import { fillTemplate, igDmUrl, REMINDER_TEMPLATE, waLink } from "@/lib/invite";
 import f1 from "./f1.module.css";
@@ -48,7 +48,7 @@ export type GuestRowData = {
   invitedLabel: string | null; // "20 Okt"
   rsvp: Rsvp;
   reminderSent: boolean;
-  source: "csv" | "manual";
+  source: Guest["source"];
   dmTemplate: string; // template DM yang berlaku untuk tamu ini
   link: string; // link undangan /t/{token}
   reminderLink: string; // link pengingat /t/{token}?dari=wa (T03h)
@@ -498,7 +498,7 @@ function GuestSheet({
           <p className="t-card-title">{guest ? "Ubah tamu" : "Tambah tamu"}</p>
           <p className="t-label c-label-2">
             {guest
-              ? `${guest.name} · ${guest.source === "csv" ? "baris dari CSV" : "ditambah manual"}`
+              ? `${guest.name} · ${guest.source === "csv" ? "baris dari CSV" : guest.source === "walkin" ? "walk-in di pintu" : "ditambah manual"}`
               : "Ditambah manual, CSV nggak bisa diunggah ulang."}
           </p>
         </div>

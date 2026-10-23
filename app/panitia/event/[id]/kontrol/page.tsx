@@ -1,20 +1,27 @@
 import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
-import { CaretLeft, Lightning } from "@/components/icons";
-import { HeroState, IconButton, Screen, ScreenHeader, Skeleton } from "@/components/ui";
+import { KontrolScreen } from "@/components/f2/Kontrol";
+import { LiveRefresh } from "@/components/LiveRefresh";
+import { Screen, Skeleton } from "@/components/ui";
 import { getStore } from "@/lib/data";
+import { doorCardCopy } from "@/lib/door";
+import { eventPhase } from "@/lib/format";
 import { requireCrew } from "@/lib/server/access";
+import { isEventDay, serverNow } from "@/lib/server/clock";
 
 export const metadata = { title: "Kontrol acara · House Moving Day" };
 
-// Kontrol acara (F3) — placeholder. Hanya bisa dibuka kalau detail, tamu, dan rundown terisi
-// (tombol "Buka Kontrol acara" di PE03b); kalau belum, kembali ke Home event.
+// BP00 Kontrol acara (F2: card Pintu masuk + Scan tiket; rundown penuh di F3).
+// Hanya bisa dibuka kalau tamu & rundown terisi; kalau belum, kembali ke Home event (PE03b).
+// Hari-H: Home event otomatis pindah ke sini.
 export default function KontrolPage({ params }: PageProps<"/panitia/event/[id]/kontrol">) {
   return (
     <Suspense
       fallback={
         <Screen withBack>
           <Skeleton height={90} radius={12} />
+          <Skeleton height={190} />
+          <Skeleton height={110} />
           <Skeleton height={240} />
         </Screen>
       }
@@ -30,25 +37,32 @@ async function Kontrol({ params }: Pick<PageProps<"/panitia/event/[id]/kontrol">
   const store = await getStore();
   const event = store.getEvent(id);
   if (!event) notFound();
-  if (!store.listGuests(id).length || !store.listSessions(id).length) {
-    redirect(`/panitia/event/${id}`);
-  }
+  const sessions = store.listSessions(id);
+  if (!store.listGuests(id).length || !sessions.length) redirect(`/panitia/event/${id}`);
+
+  const now = await serverNow();
+  const eventDay = isEventDay(event.date, now);
+  const stats = store.doorStats(id);
+  const phase = eventPhase(event.date, now);
   return (
-    <Screen withBack>
-      <ScreenHeader
-        leading={
-          <IconButton
-            href={`/panitia/event/${id}`}
-            label="Kembali ke Home event"
-            icon={<CaretLeft />}
-          />
-        }
-        eyebrow={event.name}
-        title="Kontrol acara"
+    <>
+      <KontrolScreen
+        event={event}
+        sessions={sessions}
+        checkIn={stats}
+        eventDay={eventDay}
+        phaseLabel={eventDay ? "Hari-H · Live" : phase.label}
+        backHref={eventDay ? "/panitia" : `/panitia/event/${id}`}
+        door={doorCardCopy({
+          ...stats,
+          date: event.date,
+          startsAt: event.startsAt,
+          secondSessionAt: sessions[1]?.startsAt ?? null,
+          now,
+          eventDay,
+        })}
       />
-      <HeroState icon={<Lightning size={30} />} title="Segera hadir">
-        Kontrol acara (rundown, check-in, foto & pertanyaan) dibangun di tahap berikutnya.
-      </HeroState>
-    </Screen>
+      <LiveRefresh />
+    </>
   );
 }

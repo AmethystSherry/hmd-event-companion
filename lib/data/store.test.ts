@@ -150,3 +150,91 @@ describe("ubah & hapus event (PE03e / PE03h)", () => {
     expect(store.listEvents()).toHaveLength(1); // event lain tetap
   });
 });
+
+describe("check-in di pintu (F2)", () => {
+  const at = "2026-11-08T06:04:00.000Z"; // 13.04 WIB
+  const op = (opId: string, method: "scan" | "manual" = "scan") => ({
+    opId,
+    method,
+    by: "HP A",
+    at,
+  });
+
+  function withTicket() {
+    const { store } = fresh();
+    importDummy(store);
+    const g = store.listGuests(HMD_ID)[0];
+    store.setRsvp(g.id, {
+      rsvp: "hadir",
+      name: g.name,
+      ig: g.ig,
+      wa: "6281234567890",
+      followConfirmed: true,
+    });
+    return { store, g, ticket: store.ticketFor(g.id)! };
+  }
+
+  it("scan pertama valid (tamu ke-1), scan kedua dari HP lain → sudah dipakai, hitungan tetap", () => {
+    const { store, g, ticket } = withTicket();
+    expect(store.checkIn(HMD_ID, { ticketId: ticket.ticketId }, op("a"))).toEqual({
+      kind: "valid",
+      guestId: g.id,
+      guestNo: 1,
+      at,
+    });
+    expect(store.checkIn(HMD_ID, { ticketId: ticket.ticketId }, op("b"))).toMatchObject({
+      kind: "sudah-dipakai",
+      method: "scan",
+    });
+    expect(store.doorStats(HMD_ID)).toEqual({ checkedIn: 1, expected: 1, total: 20 });
+  });
+
+  it("op yang dikirim ulang (sinyal putus) idempoten: hasil sama, rev tidak naik", () => {
+    const { store, ticket } = withTicket();
+    const first = store.checkIn(HMD_ID, { ticketId: ticket.ticketId }, op("a"));
+    const rev = store.rev;
+    expect(store.checkIn(HMD_ID, { ticketId: ticket.ticketId }, op("a"))).toEqual(first);
+    expect(store.rev).toBe(rev);
+  });
+
+  it("tiket acak / milik event lain → tidak dikenal", () => {
+    const { store, ticket } = withTicket();
+    expect(store.checkIn(HMD_ID, { ticketId: "acak" }, op("a")).kind).toBe("tidak-dikenal");
+    expect(store.checkIn("open-studio", { ticketId: ticket.ticketId }, op("b")).kind).toBe(
+      "tidak-dikenal",
+    );
+  });
+
+  it("RSVP 'Nggak bisa' tapi datang → check-in manual, RSVP jadi hadir; Batalkan memulihkan", () => {
+    const { store } = fresh();
+    importDummy(store);
+    const g = store.listGuests(HMD_ID)[1];
+    store.setRsvp(g.id, {
+      rsvp: "nggak",
+      name: g.name,
+      ig: g.ig,
+      wa: null,
+      followConfirmed: false,
+    });
+    expect(store.checkIn(HMD_ID, { guestId: g.id }, op("m", "manual")).kind).toBe("valid");
+    expect(store.getGuest(g.id)?.rsvp).toBe("hadir");
+    expect(store.ticketFor(g.id)).toMatchObject({ status: "dipakai", method: "manual" });
+    expect(store.undoCheckIn("m")).toBe(true);
+    expect(store.getGuest(g.id)?.rsvp).toBe("nggak");
+    expect(store.ticketFor(g.id)).toMatchObject({ status: "aktif", checkedInAt: null });
+    expect(store.undoCheckIn("m")).toBe(false);
+  });
+
+  it("walk-in tercatat masuk, ikut pembagi, IG yang sudah dipakai ditolak", () => {
+    const { store } = withTicket();
+    const r = store.addWalkIn(HMD_ID, { name: "Budi Santoso", ig: "budisantoso" }, op("w"));
+    expect(r).toMatchObject({ kind: "valid", guestNo: 1 });
+    expect(store.addWalkIn(HMD_ID, { name: "Budi Santoso", ig: "budisantoso" }, op("w"))).toEqual(
+      r,
+    );
+    expect(store.listGuests(HMD_ID).filter((g) => g.source === "walkin")).toHaveLength(1);
+    expect(store.doorStats(HMD_ID)).toEqual({ checkedIn: 1, expected: 2, total: 21 });
+    const taken = store.listGuests(HMD_ID)[0].ig;
+    expect(() => store.addWalkIn(HMD_ID, { name: "X", ig: taken }, op("w2"))).toThrow(StoreError);
+  });
+});

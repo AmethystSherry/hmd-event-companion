@@ -5,7 +5,8 @@ import { useEffect, useRef } from "react";
 
 // Realtime ringan: dengarkan /api/live (SSE). Tiap `rev` store naik → router.refresh() supaya
 // server component memuat data terbaru tanpa reload (mis. jawaban tamu masuk ke P04).
-// Cadangan: refresh juga saat tab kembali terlihat (koneksi SSE bisa putus di HP yang tidur).
+// Cadangan: refresh juga saat tab kembali terlihat atau sinyal kembali (koneksi SSE bisa putus di
+// HP yang tidur / offline) — mis. tiket tamu yang discan saat HP-nya offline langsung sobek.
 export function LiveRefresh({ token }: { token?: string }) {
   const router = useRouter();
   const last = useRef<number | null>(null);
@@ -20,10 +21,13 @@ export function LiveRefresh({ token }: { token?: string }) {
     const onVisible = () => {
       if (document.visibilityState === "visible") router.refresh();
     };
+    const onOnline = () => router.refresh();
     document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("online", onOnline);
     return () => {
       es.close();
       document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("online", onOnline);
     };
   }, [router, token]);
 
