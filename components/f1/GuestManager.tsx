@@ -376,9 +376,11 @@ export function GuestManager({
                 </p>
                 <div className={styles.badges}>
                   {g.inviteStatus === "diundang" ? (
-                    <Badge tone="success">
-                      {justInvited === g.id ? "Diundang barusan" : "Diundang"}
-                    </Badge>
+                    justInvited === g.id ? (
+                      <Badge tone="success">Diundang barusan</Badge>
+                    ) : (
+                      <Badge tone="neutral">Diundang</Badge>
+                    )
                   ) : (
                     <Badge tone="neutral">Belum diundang</Badge>
                   )}
@@ -532,7 +534,7 @@ function GuestSheet({
           <div className={styles.statusBox}>
             <div className={styles.badges}>
               {guest.inviteStatus === "diundang" ? (
-                <Badge tone="success">
+                <Badge tone="neutral">
                   Diundang{guest.invitedLabel ? ` ${guest.invitedLabel}` : ""}
                 </Badge>
               ) : (

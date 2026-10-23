@@ -242,7 +242,9 @@ function CsvReview({
             </p>
             {issues.map((i) => (
               <div key={i.line} className={styles.issueRow}>
-                <span className={`t-label c-label-2 ${styles.lineTag}`}>Baris {i.line}</span>
+                <Badge tone="danger" className={styles.lineTag}>
+                  Baris {i.line}
+                </Badge>
                 <div className={f1.stack}>
                   <p className="t-body-emph">{i.title}</p>
                   <p className="t-label c-label-2">{i.detail}</p>

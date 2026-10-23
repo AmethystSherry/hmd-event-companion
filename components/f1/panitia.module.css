@@ -139,11 +139,6 @@
 
 .lineTag {
   flex-shrink: 0;
-  min-width: 64px;
-  padding: 6px 10px;
-  border-radius: 10px;
-  background: var(--card-2);
-  text-align: center;
 }
 
 /* P04: baris tamu — 2 tombol ikon 36 sama besar. */

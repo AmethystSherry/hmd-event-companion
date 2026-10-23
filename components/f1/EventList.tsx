@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { CalendarBlank, CaretRight, Plus } from "@/components/icons";
+import { CalendarBlank, CaretRight, ListBullets, Plus, Users } from "@/components/icons";
 import {
   Badge,
   Button,
@@ -103,8 +103,10 @@ export function EventList({
                     {e.dateLabel}
                   </p>
                   <div className={f1.pills}>
-                    <Pill>{e.guests ? `${e.guests} tamu` : "Belum ada tamu"}</Pill>
-                    <Pill>{e.sessions ? `Rundown ${e.sessions} sesi` : "Rundown kosong"}</Pill>
+                    <Pill icon={<Users />}>{e.guests ? `${e.guests} tamu` : "Belum ada tamu"}</Pill>
+                    <Pill icon={<ListBullets />}>
+                      {e.sessions ? `Rundown ${e.sessions} sesi` : "Rundown kosong"}
+                    </Pill>
                   </div>
                 </Card>
               </Link>
