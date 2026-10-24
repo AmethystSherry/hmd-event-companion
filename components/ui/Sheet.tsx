@@ -28,13 +28,20 @@ export function Sheet({
 }) {
   const titleId = useId();
   const panel = useRef<HTMLDivElement>(null);
+  // onClose lewat ref: pemanggil biasanya mengirim fungsi baru tiap render. Kalau ikut jadi
+  // dependency efek di bawah, tiap ketikan di Field dalam sheet memfokus ulang panel → input
+  // kehilangan fokus dan keyboard HP tertutup.
+  const close = useRef(onClose);
+  useEffect(() => {
+    close.current = onClose;
+  });
 
   useEffect(() => {
     if (!open) return;
     const prev = document.activeElement as HTMLElement | null;
     panel.current?.focus();
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && dismissible) onClose();
+      if (e.key === "Escape" && dismissible) close.current();
     };
     document.addEventListener("keydown", onKey);
     const overflow = document.body.style.overflow;
@@ -44,7 +51,7 @@ export function Sheet({
       document.body.style.overflow = overflow;
       prev?.focus();
     };
-  }, [open, dismissible, onClose]);
+  }, [open, dismissible]);
 
   if (!open) return null;
   return (
