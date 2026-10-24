@@ -1,5 +1,6 @@
 import { getStore, mutateStore } from "@/lib/data";
 import { purgeAt } from "@/lib/feedback";
+import { guestFromToken } from "./access";
 import { serverNow } from "./clock";
 import { deletePhotoFiles } from "./photos";
 import { summarizeFeedback } from "./summary";
@@ -31,4 +32,16 @@ export async function refreshSummary(eventId: string, force = false): Promise<bo
   const done = (await serverNow()).toISOString();
   await mutateStore((s) => s.saveSummary(eventId, job.basedOn, result, done));
   return true;
+}
+
+// Halaman tamu F5 (selesai/, buku-tamu/, kolase/): tamu valid, data belum dihapus, acara udah
+// ditutup. null → halaman mengalihkan ke /t/{token} (yang memilih layar sesuai keadaan).
+export async function closedGuest(token: string) {
+  const guest = await guestFromToken(token);
+  if (!guest || (await ensurePurged(guest.eventId))) return null;
+  const store = await getStore();
+  const event = store.getEvent(guest.eventId);
+  if (!event || event.mode !== "closed") return null;
+  const inside = store.ticketFor(guest.id)?.status === "dipakai";
+  return { guest, event, store, inside };
 }

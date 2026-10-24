@@ -40,13 +40,16 @@ import {
   IconButton,
   InnerBox,
   ListRow,
+  Masonry,
   NumberedRow,
   LogoMark,
+  PhotoPin,
   Pill,
   PinPad,
   Segmented,
   Sheet,
   Skeleton,
+  StarRating,
   StatTile,
   TabBar,
   TextAction,
@@ -90,6 +93,14 @@ const COLORS = [
   "danger-text",
 ];
 
+// T15: pin kolase placeholder (tinggi bervariasi, foto sendiri berlabel "Fotoku").
+const PINS = [
+  { id: "a", name: "Rara Wening", caption: "Rara · Talkshow", h: 1200, tone: 0, mine: true },
+  { id: "b", name: "Bima Sakti", caption: "Bima · Open space", h: 900, tone: 1, mine: false },
+  { id: "c", name: "Nadia Putri", caption: "Nadia · Tur kantor", h: 1000, tone: 2, mine: false },
+  { id: "d", name: "Fajar Nugroho", caption: "Fajar · Open space", h: 1300, tone: 3, mine: false },
+];
+
 export function Gallery() {
   const [theme, setTheme] = useState<Theme>("system");
   const [follow, setFollow] = useState(true);
@@ -100,6 +111,7 @@ export function Gallery() {
   const [toastKey, setToastKey] = useState(0);
   const [undone, setUndone] = useState<string | null>(null);
   const [pin, setPin] = useState("12");
+  const [stars, setStars] = useState(4);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -445,6 +457,30 @@ export function Gallery() {
           <Skeleton height={110} radius={22} />
           <Skeleton height={110} radius={22} />
         </div>
+      </Section>
+
+      <Section title="F5 · StarRating, Masonry + PhotoPin">
+        <Card>
+          <CardLabel>Nilai acaranya</CardLabel>
+          <StarRating label="Nilai acaranya" value={stars} onChange={setStars} />
+        </Card>
+        <Masonry
+          items={PINS}
+          itemKey={(p) => p.id}
+          ratio={(p) => p.h / 1000}
+          render={(p) => (
+            <PhotoPin
+              width={1000}
+              height={p.h}
+              name={p.name}
+              caption={p.caption}
+              mine={p.mine}
+              tone={p.tone}
+              label={`Buka foto dari ${p.name}`}
+              onOpen={() => {}}
+            />
+          )}
+        />
       </Section>
 
       <Section title="F1 · Countdown, NumberedRow, Dropzone, PinPad">

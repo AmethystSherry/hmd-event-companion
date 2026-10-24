@@ -1,0 +1,103 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+  column-gap: 8px;
+  align-items: start;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pin {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+}
+
+.open {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 16px;
+  background: none;
+  transition: transform var(--press-ms) ease-out;
+}
+
+.open:active {
+  transform: scale(var(--press-scale));
+}
+
+.open:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.photo {
+  position: relative;
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--card-2);
+}
+
+.photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Placeholder gradasi seperti Figma (oranye, gelap, krem, amber). */
+.ph0 {
+  background: linear-gradient(170deg, var(--accent) 35%, var(--accent-soft));
+}
+
+.ph1 {
+  background: linear-gradient(160deg, var(--label-2), var(--label));
+}
+
+.ph2 {
+  background: linear-gradient(160deg, var(--card-2), var(--separator));
+}
+
+.ph3 {
+  background: linear-gradient(160deg, var(--warning-soft), var(--accent-soft));
+}
+
+/* Label kaca "Fotoku" di pojok kiri atas. */
+.mine {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 4px 10px;
+  border: 0.5px solid var(--glass-stroke);
+  border-radius: var(--radius-pill);
+  background: var(--glass);
+  box-shadow: var(--shadow-glass);
+  color: var(--label);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+}
+
+.caption {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 0 2px;
+}
+
+.captionText {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}

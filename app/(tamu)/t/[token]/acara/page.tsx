@@ -38,6 +38,7 @@ async function EventScreen({ params }: Pick<PageProps<"/t/[token]/acara">, "para
   const ticket = guest ? store.ticketFor(guest.id) : null;
   // Belum masuk (atau link salah) → kembali ke tiket.
   if (!guest || !event || ticket?.status !== "dipakai") redirect(`/t/${token}`);
+  if (event.mode === "closed") redirect(`/t/${token}/selesai`); // F5 · BT12
 
   const { active, next } = rundownView(event, store.listSessions(event.id));
   return (

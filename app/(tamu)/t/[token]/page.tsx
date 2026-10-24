@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { LiveRefresh } from "@/components/LiveRefresh";
 import { GuestDayTicket } from "@/components/f2/tamu";
@@ -54,6 +55,8 @@ async function Router({
   if (!guest || !event || purged || daysUntil(event.date, new Date()) < -30) {
     return <InvalidLinkScreen retryHref={`/t/${token}`} />;
   }
+  // F5: acara ditutup → BT12 (yang belum masuk dapat layar "Acara udah selesai").
+  if (event.mode === "closed") redirect(`/t/${token}/selesai`);
 
   const live = <LiveRefresh token={token} />;
   const now = await serverNow();

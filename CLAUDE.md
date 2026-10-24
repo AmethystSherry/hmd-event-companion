@@ -31,8 +31,9 @@ Web app mobile untuk House Moving Day Potara Studio (Minggu 8 Nov 2026, 13.00–
   `N4-deliverables.md`). Semua keputusan terbuka dijawab pakai default — lihat "Aturan N4 di kode".
   **Belum jalan di Vercel sampai pemilik menjalankan blok bucket `hmd-photos` di
   `supabase/schema.sql`** (SQL Editor). Tombol "Foto buat kolase" sementara di placeholder `acara/`.
-- **F5 · Tutup acara & feedback — logika (Prompt B, 24 Okt)**: store + API + Claude + CSV + tes,
-  **belum ada layar** (BT12/T14*/T15* = Prompt C, BP04*/P11* = Prompt D di `F5-prompt-claude-code.md`).
+- **F5 · Tutup acara & feedback — logika (Prompt B, 24 Okt)**: store + API + Claude + CSV + tes.
+  **Layar tamu (Prompt C, 24 Okt)**: BT12 · T14/T14b/T14c/T14d · T15/T15b/T15c/T15d (+T15e share
+  sheet HP). Layar panitia BP04*/P11* = Prompt D di `F5-prompt-claude-code.md`, belum.
   12 keputusan F5-deliverables dijawab pakai rekomendasi — lihat "Aturan F5 di kode". Ringkasan
   Claude butuh `ANTHROPIC_API_KEY` di Vercel (tanpa key → P11b).
 
@@ -64,7 +65,8 @@ Web app mobile untuk House Moving Day Potara Studio (Minggu 8 Nov 2026, 13.00–
 app/
   layout.tsx · page.tsx   root layout (font, noindex) · beranda sementara
   (tamu)/t/[token]/       T01/T01e/T02b/T03/T03h · konfirmasi/ (T02/T02c/T02d) · kalender/ (.ics) ·
-                          acara/ (layar Sesi/Jeda, placeholder F3/F4) · foto/ (N4 BT06–BT07c)
+                          acara/ (layar Sesi/Jeda, placeholder F3/F4) · foto/ (N4 BT06–BT07c) ·
+                          selesai/ (F5 BT12) · buku-tamu/ (T14*) · kolase/ (T15*, T14d)
   panitia/                P01 + PE01/PE02 · actions.ts (semua server action panitia)
     event/[id]/           PE03/PE03b (+ sheet PE03e/PE03h) · rundown/ (PE04k/PE04/PE04a) ·
                           tamu/ (P04k/P04a/P04c/P04/P04b/d/e/f) · kontrol/ (BP00/BP00a/BP00b) ·
@@ -80,8 +82,9 @@ app/
   dev/states/f1/          27 layar F1 dengan data contoh + alat uji (link tamu, CSV dummy, reset)
   dev/states/f2/          13 layar F2 + alat uji (jam pura-pura hari-H, data 12 hadir, reset check-in)
   dev/states/n4/          7 layar N4 + alat uji (check-in semua, 30 foto dummy, hapus semua foto)
-  dev/states/f5/          alat uji F5 (selesaikan semua sesi, tutup/buka lagi, 15 feedback dummy,
-                          ringkasan sekarang, reset feedback, loncat ke 8 Des)
+  dev/states/f5/          10 layar F5 tamu + alat uji (foto dummy, selesaikan semua sesi, tutup/buka
+                          lagi, 15 feedback dummy, ringkasan sekarang, reset feedback, loncat ke 8 Des,
+                          link tamu udah/belum masuk)
   tokens.css · globals.css · fonts/
 components/ui/            komponen design system Clean v0.5
 components/f1/            layar F1 presentasional (dipakai route asli & /dev/states/f1)
@@ -90,6 +93,8 @@ components/f2/            tamu.tsx (T05/T05a/BT02/T03b) · Kontrol (BP00 + dialo
                           Placeholder (Foto/Tanya)
 components/n4/            KolaseApp (BT06/BT06b/BT07/BT07b/BT07c) · useCamera · capture (crop+kompres) ·
                           usePhotoOutbox (kirim + antrean) · PhotoOutbox (antrean di layar acara)
+components/f5/            Selesai (BT12 + belum masuk) · BukuTamu (T14/b/c) · KolaseKulkas (T15/T15c/
+                          T15d/T14d) · FotoDetail (T15b) · kolaseCanvas (gambar 9:16) · saveImage
 components/               LiveRefresh (SSE → router.refresh) · RefreshAt · TicketQr · RegisterOffline
 components/icons.ts       ekspor ikon Phosphor (/ssr)
 lib/data/                 tipe, store (logika murni + tes), seed, getStore() (file .data/)
@@ -98,6 +103,7 @@ lib/server/               env, HMAC (QR & cookie sesi), rate-limit PIN, akses cr
                           photos (file foto: Supabase Storage / .data/photos) · photoResponse ·
                           summary (Claude, F5) · feedback (hapus H+30 lazy + buat ringkasan)
 lib/                      csv (+ CSV buku tamu) · feedback (aturan buku tamu, tanggal hapus) ·
+                          kolase (masonry, tata letak 9:16, filter, foto → KolasePhoto) ·
                           format · invite · confirm · ics · view · fixtures · clipboard · cx ·
                           door (logika pintu tanpa secret, jalan di HP) · offline/doorDb (IndexedDB) ·
                           rundown (status sesi + stopwatch dari state acara) · photo (crop, batas,
@@ -232,6 +238,25 @@ Keputusan 24 Okt (rekomendasi atas "Keputusan & asumsi" + "Temuan" di F5-deliver
     `serverNow`, jadi bisa diuji dengan `hmd_now`). Arsip rekap tanpa jawaban per tamu disimpan di
     `Event.recapArchive`, lalu isian per tamu & metadata foto dihapus (file foto dihapus sesudahnya),
     nama/IG/WA tamu jadi "Tamu #nn" + token baru (link lama → T01e). Idempoten. Cron = Phase 8.
+13. **Routing tamu**: acara `closed` → `/t/[token]`, `acara/`, `foto/` dialihkan ke `selesai/`
+    (BT12; HP yang terbuka pindah sendiri lewat rev → SSE). `selesai/ buku-tamu/ kolase/` pakai
+    `closedGuest(token)`: belum ditutup / data dihapus → `/t/[token]`. Belum check-in → `selesai/`
+    versi sederhana "Acaranya udah selesai" + Follow @potarastudio (copy bukan dari Figma).
+    Udah isi buku tamu → BT12 "Isi buku tamu" & `/buku-tamu` ke `/kolase?isi=1` (T14d, query
+    dihapus setelah toast).
+14. **T14**: draft + clientId di `localStorage` (`hmd-buku-tamu:{token}`), kirim tunggu ≤ 5 dtk,
+    gagal/offline → T14b + kirim ulang saat `online`; rating kosong → tombol `aria-disabled`, tap →
+    hint merah + fokus ke bintang (T14c). Opsi "paling seru" = judul sesi rundown apa adanya.
+15. **T15**: `Masonry` + `PhotoPin` (thumbnail, rasio asli, kolom terpendek); chip Semua · Fotoku
+    (kalau punya foto) · sesi yang punya foto. T15b = overlay scroll-snap (pushState `?foto=`,
+    back HP/Esc/X menutup, fokus terkunci), simpan foto (blob disiapkan saat slide aktif), hapus
+    foto sendiri → Dialog → `DELETE` → toast. T15d: CTA jadi secondary "Kembali" + copy disesuaikan.
+16. **Gambar 9:16** (`components/f5/kolaseCanvas`): canvas 1080×1920, warna token light (elemen
+    bantu `data-theme="light"`), font body, maks 12 foto filter aktif (foto full lewat proxy),
+    2 kolom (≤ 4) / 3 kolom, JPEG 0,9 `kolase-hmd.jpg`. Dibuat **sebelum** tap (sheet T15c dibuka /
+    1,5 dtk setelah T15 tenang) supaya `navigator.share` tetap dalam gesture. Pratinjau T15c =
+    gambar hasil itu sendiri. Simpan: iOS → share sheet, Android/desktop → download, webview IG/FB
+    → gambar layar penuh (data: URL) + toast "Tekan lama gambarnya buat simpan". Batal share = diam.
 
 ## Design system (Clean v0.5)
 - Token: `app/tokens.css` — warna semantik light (utama) + dark (`prefers-color-scheme`, atau paksa
@@ -242,7 +267,8 @@ Keputusan 24 Okt (rekomendasi atas "Keputusan & asumsi" + "Temuan" di F5-deliver
   Toggle, Segmented, Badge, Pill/Chip/AddChip,
   Card/CardLabel/InnerBox, StatTile, ListRow/Avatar, Banner/TextAction, HeroState, Field, Toast
   (undo ring), Sheet (bawah / `floating`), TabBar, Ticket (+`torn`)/TicketStub, LogoMark,
-  Screen/ScreenHeader/Skeleton, SearchField, Dialog (konfirmasi tengah layar, BP00a/BP00b).
+  Screen/ScreenHeader/Skeleton, SearchField, Dialog (konfirmasi tengah layar, BP00a/BP00b),
+  StarRating (T14), Masonry + PhotoPin (T15, nanti galeri panitia). `TextAction` bisa `href`.
 - **Button** (`Clean/Button` 4587:316, 12 varian): `size` `lg` (54, lebar penuh) | `sm` (36, lebar
   hug, area tap 44) × `variant` `primary` | `secondary` | `destructive` × `iconOnly` (+ `label` wajib
   untuk aria-label). Aturan pakai:
@@ -302,5 +328,5 @@ menghapus data per orang di store lokal → balikin lewat `/dev/states/f1` Reset
 - [x] N4 (24 Okt) — foto kolase polaroid (5 layar + 2 kasus, kompres di HP, antrean offline) —
       menunggu review & bucket Supabase
 - [~] F5 (24 Okt) — logika tutup acara, buku tamu, rekap, ringkasan Claude, CSV, hapus H+30 + tes;
-      layar tamu (Prompt C) & panitia (Prompt D) belum
+      layar tamu BT12/T14*/T15* (Prompt C) — menunggu review; layar panitia (Prompt D) belum
 - [ ] F3, F4, N1–N3 — berikutnya (versi lama: tag `archive-pre-revisi`)

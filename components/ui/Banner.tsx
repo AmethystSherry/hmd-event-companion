@@ -34,8 +34,24 @@ export function Banner({
   );
 }
 
-// Aksi teks di dalam banner/toast ("Coba lagi", "Batalkan").
-export function TextAction({ children, onClick }: { children: ReactNode; onClick?: () => void }) {
+// Aksi teks di dalam banner/toast ("Coba lagi", "Batalkan"). `href` = link keluar (T15 "Follow
+// @potarastudio", tab baru).
+export function TextAction({
+  children,
+  onClick,
+  href,
+}: {
+  children: ReactNode;
+  onClick?: () => void;
+  href?: string;
+}) {
+  if (href) {
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer" className={styles.textAction}>
+        {children}
+      </a>
+    );
+  }
   return (
     <button type="button" className={styles.textAction} onClick={onClick}>
       {children}
