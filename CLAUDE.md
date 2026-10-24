@@ -20,7 +20,13 @@ Web app mobile untuk House Moving Day Potara Studio (Minggu 8 Nov 2026, 13.00–
   stopwatch + Mulai/Selesaikan lewat Dialog BP00a/BP00b, state acara prd §6 di store); layar scan
   tanpa TabBar ("Lihat daftar tamu"); P06 baru; P07 tanpa badge "Belum masuk" + P07d Profil tamu.
   Layar tamu Sesi/Jeda & Foto/Tanya panitia masih placeholder (F3/F4).
-- Branch & tag arsip baru ada di lokal (repo belum punya remote); push setelah remote ditambahkan.
+- Repo GitHub private `AmethystSherry/hmd-event-companion` (tag `f2-done`, `archive-pre-revisi`;
+  branch `archive/pre-revisi` sengaja tetap lokal).
+- **Deploy (24 Okt)**: Vercel Hobby project `hmd-event-companion` (tim alfin100605-9544's projects),
+  auto-deploy tiap push ke `main`. Supabase Free `supabase-cinnabar-jacket` (Singapore) lewat
+  integrasi Vercel Storage → env `SUPABASE_*` otomatis; tabel dari `supabase/schema.sql` sudah
+  dijalankan. Secret (`EVENT_PIN`, `TICKET_HMAC_SECRET`, `SESSION_SECRET`) diisi sendiri oleh
+  pemilik di Vercel. Di production jam palsu & alat `/dev/states` mati.
 
 ## Sumber kebenaran
 - **Figma** `xYZlQ3GjRHHtYcod8rTIZJ`, page DOKSLI SAPI → section "Screen Flow · All Case" → frame
