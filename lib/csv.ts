@@ -213,3 +213,54 @@ export function commonMessage(rows: CsvRow[]): string | null {
 }
 
 export const SAMPLE_CSV_HEADER = "nama,ig,pesan,wa";
+
+// ---- F5 · Unduh CSV rekap buku tamu (P11) ----
+
+export type FeedbackCsvRow = {
+  name: string;
+  ig: string;
+  rating: number;
+  highlight: string | null; // judul sesi
+  improve: string | null;
+  inviteAgain: boolean | null;
+  at: string; // "2026-11-08 17.10" (WIB)
+};
+
+export const FEEDBACK_CSV_HEADER = [
+  "nama",
+  "ig",
+  "rating",
+  "paling_seru",
+  "perbaikan",
+  "mau_diundang",
+  "waktu_isi",
+] as const;
+
+// Satu sel: sel yang diawali = + - @ (atau tab/CR) diberi ' supaya Excel/Sheets nggak menjalankannya
+// sebagai rumus (CSV injection); koma, kutip, ; dan baris baru → dikutip.
+export function csvCell(value: string | number | null): string {
+  let s = value === null ? "" : String(value);
+  if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
+  return /[",;\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+// UTF-8 BOM supaya Excel membaca huruf non-ASCII dengan benar; baris pakai CRLF.
+export function feedbackCsv(rows: FeedbackCsvRow[]): string {
+  const lines = [
+    FEEDBACK_CSV_HEADER.join(","),
+    ...rows.map((r) =>
+      [
+        r.name,
+        r.ig, // tanpa "@" (sel diawali @ dianggap rumus)
+        r.rating,
+        r.highlight,
+        r.improve,
+        r.inviteAgain === null ? "" : r.inviteAgain ? "ya" : "nggak",
+        r.at,
+      ]
+        .map(csvCell)
+        .join(","),
+    ),
+  ];
+  return `﻿${lines.join("\r\n")}\r\n`;
+}

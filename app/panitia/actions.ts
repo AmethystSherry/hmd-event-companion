@@ -246,3 +246,11 @@ export async function finishSession(eventId: string, sessionId: string): Promise
   const now = await serverNow();
   return guestOp((store) => store.finishSession(eventId, sessionId, now.toISOString()));
 }
+
+// F5 · BP04b "Ya, tutup acara": mode closed → semua HP tamu pindah ke BT12 (rev → SSE).
+// Sekali jalan; dobel tap / dua HP → idempoten di store. Sesi terakhir belum selesai → error.
+export async function closeEvent(eventId: string): Promise<FormResult> {
+  await requireCrew();
+  const now = await serverNow();
+  return guestOp((store) => store.closeEvent(eventId, now.toISOString()));
+}

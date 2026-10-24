@@ -31,6 +31,10 @@ Web app mobile untuk House Moving Day Potara Studio (Minggu 8 Nov 2026, 13.00–
   `N4-deliverables.md`). Semua keputusan terbuka dijawab pakai default — lihat "Aturan N4 di kode".
   **Belum jalan di Vercel sampai pemilik menjalankan blok bucket `hmd-photos` di
   `supabase/schema.sql`** (SQL Editor). Tombol "Foto buat kolase" sementara di placeholder `acara/`.
+- **F5 · Tutup acara & feedback — logika (Prompt B, 24 Okt)**: store + API + Claude + CSV + tes,
+  **belum ada layar** (BT12/T14*/T15* = Prompt C, BP04*/P11* = Prompt D di `F5-prompt-claude-code.md`).
+  12 keputusan F5-deliverables dijawab pakai rekomendasi — lihat "Aturan F5 di kode". Ringkasan
+  Claude butuh `ANTHROPIC_API_KEY` di Vercel (tanpa key → P11b).
 
 ## Sumber kebenaran
 - **Figma** `xYZlQ3GjRHHtYcod8rTIZJ`, page DOKSLI SAPI → section "Screen Flow · All Case" → frame
@@ -68,12 +72,16 @@ app/
                           scan/ (P05/P05b/P06/P06b/P06c) · scan/cari/ (P07/P07b/P07c)
   api/live/               SSE: kirim `rev` store tiap ada perubahan (tanpa data tamu)
   api/panitia/            event/[id]/manifest (GET daftar pintu) · checkin (POST antrean op) ·
-                          foto/[id] (GET gambar, sesi PIN)
+                          foto/[id] (GET gambar, sesi PIN) · event/[id]/rekap.csv (GET, F5) ·
+                          event/[id]/ringkasan (POST ringkasan Claude, F5)
   api/t/[token]/foto/     POST upload foto (N4) · [id] GET gambar / DELETE foto sendiri
+  api/t/[token]/buku-tamu POST isian buku tamu (F5 · T14)
   dev/ui/                 preview design system (light & dark)
   dev/states/f1/          27 layar F1 dengan data contoh + alat uji (link tamu, CSV dummy, reset)
   dev/states/f2/          13 layar F2 + alat uji (jam pura-pura hari-H, data 12 hadir, reset check-in)
   dev/states/n4/          7 layar N4 + alat uji (check-in semua, 30 foto dummy, hapus semua foto)
+  dev/states/f5/          alat uji F5 (selesaikan semua sesi, tutup/buka lagi, 15 feedback dummy,
+                          ringkasan sekarang, reset feedback, loncat ke 8 Des)
   tokens.css · globals.css · fonts/
 components/ui/            komponen design system Clean v0.5
 components/f1/            layar F1 presentasional (dipakai route asli & /dev/states/f1)
@@ -87,8 +95,10 @@ components/icons.ts       ekspor ikon Phosphor (/ssr)
 lib/data/                 tipe, store (logika murni + tes), seed, getStore() (file .data/)
 lib/server/               env, HMAC (QR & cookie sesi), rate-limit PIN, akses crew/tamu, origin,
                           clock (hari-H + jam palsu dev), door (manifest & terapkan op check-in),
-                          photos (file foto: Supabase Storage / .data/photos) · photoResponse
-lib/                      csv · format · invite · confirm · ics · view · fixtures · clipboard · cx ·
+                          photos (file foto: Supabase Storage / .data/photos) · photoResponse ·
+                          summary (Claude, F5) · feedback (hapus H+30 lazy + buat ringkasan)
+lib/                      csv (+ CSV buku tamu) · feedback (aturan buku tamu, tanggal hapus) ·
+                          format · invite · confirm · ics · view · fixtures · clipboard · cx ·
                           door (logika pintu tanpa secret, jalan di HP) · offline/doorDb (IndexedDB) ·
                           rundown (status sesi + stopwatch dari state acara) · photo (crop, batas,
                           kemiringan, URL foto) · offline/photoDb (antrean foto IndexedDB)
@@ -150,13 +160,14 @@ Keputusan default 22 Okt (jawaban "Keputusan & asumsi" di F2-deliverables; prd.m
   → T05a (sobek ±900 ms) → BT02 (3 dtk, sekali per tiket via localStorage) → T03b. HP tamu offline →
   refresh saat `online`/tab terlihat lagi. Dibuka > 10 menit setelah masuk → langsung T03b.
 - Kamera butuh HTTPS di HP (`npx next dev --experimental-https`); gagal/ditolak → P07b.
-- Store dev ada di `globalThis.__hmdStoreF4`: naikkan kuncinya tiap method store bertambah (server
+- Store dev ada di `globalThis.__hmdStoreF5`: naikkan kuncinya tiap method store bertambah (server
   dev yang sedang jalan nggak membuat ulang instance lama saat HMR). Server dev yang sudah jalan
   bisa tetap memakai modul server lama (mis. `store.getPhoto is not a function`) → restart `npm run dev`.
 
 ## Aturan N4 di kode
 Keputusan default 24 Okt (jawaban "Keputusan & asumsi" + "Temuan" di N4-deliverables):
-1. Hanya tamu yang **udah check-in**; acara `closed` → `/foto` dialihkan ke `acara/`, upload ditolak.
+1. Hanya tamu yang **udah check-in**; acara `closed` → `/foto` dialihkan ke `acara/`, upload ditolak
+   (tetap, keputusan F5). Hapus foto sendiri **tetap boleh setelah ditutup** sampai data dihapus H+30.
 2. Kamera default **depan**, preview di-mirror (CSS), hasil **tidak** mirror. Ganti kamera = tombol
    kanan. Senter cuma kalau `track.getCapabilities().torch` ada; tombol Lightning disembunyikan
    kalau kamera belum jalan (BT06b).
@@ -181,8 +192,46 @@ Keputusan default 24 Okt (jawaban "Keputusan & asumsi" + "Temuan" di N4-delivera
     BT07b. Antrean dicoba tiap 5 dtk & saat `online`, juga dari layar `acara/` (`PhotoOutbox`).
     Ditolak server (4xx) → dibuang + toast. Terkirim selagi BT07b terbuka → layar pindah ke BT07.
 13. Hapus foto sendiri: `DELETE /api/t/[token]/foto/[id]` (soft delete `deletedAt` + file dihapus),
-    UI di F5 (T15b). Hapus otomatis H+30 belum ada (Phase 8).
+    UI di F5 (T15b). Hapus otomatis H+30: lihat "Aturan F5 di kode".
 14. Tile "Foto" BP00 = `photoCount` (realtime lewat `rev`).
+
+## Aturan F5 di kode
+Keputusan 24 Okt (rekomendasi atas "Keputusan & asumsi" + "Temuan" di F5-deliverables, disetujui):
+1. **Tutup acara** `closeEvent` → `mode: closed` + `closedAt`, sekali jalan (dobel tap / dua HP →
+   `false`, rev tetap). Boleh kalau **nggak ada sesi yang jalan & sesi terakhir selesai** (sesi yang
+   dilewati nggak menghalangi), selain itu `sesi-belum-selesai`. Setelah ditutup `startSession`/
+   `finishSession` → `acara-ditutup`. `reopenEvent` dev saja. Server action `closeEvent`.
+2. Upload foto setelah ditutup **tetap ditolak**; CTA T15d diganti secondary "Kembali" (Prompt C).
+   Hapus foto sendiri boleh sampai H+30 (aturan N4 no. 1 direvisi).
+3. Pembagi "dari N" di BT12/BP04b/P11 = tamu **udah check-in** (`feedbackRecap.expected`).
+4. "Mau diundang lagi?" **nggak terpilih dari awal** (opsional); % dihitung dari yang menjawab.
+5. BP04 = kartu terakhir carousel BP00 ("Jeda terakhir"), tanpa TabBar. BP04b = **Sheet** (Figma).
+   Setelah ditutup, kartu hero "Acara udah ditutup · {jam}" + "Lihat rekap buku tamu" (Prompt D).
+6. Buku tamu cuma tamu udah check-in & acara closed; **1 isian per tamu, nggak bisa diubah**.
+   `POST /api/t/[token]/buku-tamu` (JSON `clientId` UUID, rating 1–5 wajib, `highlightSessionId`,
+   `improve` ≤ 280, `inviteAgain` boolean|null). Idempoten per clientId; id lain → `sudah-isi`
+   (respons `{ok:true,status:"sudah-isi"}` → T14d). Rate-limit 10/menit per tamu (per instance).
+7. Link WA terima kasih **di luar F5** — tamu pakai link `/t/[token]` yang sama.
+8. T15: IconButton unduh di header dihapus; TextAction "Follow @potarastudio". T14b/T14c ada back.
+   Tile "Pertanyaan" disembunyikan sampai N1 jadi. Kolase 9:16 = JPEG 0,9 `kolase-hmd.jpg`, maks 12 foto.
+9. **Rekap** `feedbackRecap`: rata-rata 1 desimal, paling seru semua sesi urut terbanyak (seri =
+   urutan rundown), jawaban "perbaiki" bernomor urut jawaban ("Tamu #04"), tanpa nama.
+10. **Ringkasan Claude** (`lib/server/summary.ts`): server saja, `ANTHROPIC_API_KEY` (+
+    `ANTHROPIC_MODEL`, default `claude-haiku-5-5`, effort low, structured output JSON), timeout 15
+    dtk tanpa retry. Input tanpa nama/IG (rating, judul sesi, teks perbaikan, mau diundang); teks
+    tamu ditandai sebagai data. Output tepat 3 poin ≤ 90 huruf (dipotong "…"). Cache di
+    `Event.summary` (`basedOn`, `pendingSince` 30 dtk cegah dobel). Dibuat kalau ≥ 3 jawaban dan
+    (belum ada / ≥ 3 jawaban baru / "Coba lagi"). Gagal → poin lama tetap + `error` (P11b), nggak
+    diulang otomatis. Alur `refreshSummary`: `beginSummary` (mutateStore) → Claude di luar store →
+    `saveSummary`. P11 tampil dari cache, HP panitia memanggil `POST …/ringkasan` (`{force}`).
+11. **CSV** `GET /api/panitia/event/[id]/rekap.csv` (sesi PIN): `nama, ig, rating, paling_seru,
+    perbaikan, mau_diundang, waktu_isi`, UTF-8 BOM + CRLF, sel diawali `= + - @` diberi `'`
+    (ig tanpa "@"). Setelah H+30 → 410.
+12. **Hapus H+30** (`purgeAt` = tanggal event + 30 hari 00.00 WIB = 8 Des 2026): lazy lewat
+    `ensurePurged` (link tamu `/t/[token]`, Kontrol acara, API buku tamu/CSV/ringkasan; jam
+    `serverNow`, jadi bisa diuji dengan `hmd_now`). Arsip rekap tanpa jawaban per tamu disimpan di
+    `Event.recapArchive`, lalu isian per tamu & metadata foto dihapus (file foto dihapus sesudahnya),
+    nama/IG/WA tamu jadi "Tamu #nn" + token baru (link lama → T01e). Idempoten. Cron = Phase 8.
 
 ## Design system (Clean v0.5)
 - Token: `app/tokens.css` — warna semantik light (utama) + dark (`prefers-color-scheme`, atau paksa
@@ -232,6 +281,9 @@ polling `/api/live?once=1` tiap 4 dtk. Jangan kirim undangan tamu asli dari link
 Uji alur: `/dev/states/f1` (pratinjau 27 layar + link tamu + CSV dummy + "Reset data ke awal").
 F2: `/dev/states/f2` → "Siapkan data uji" → "Pura-pura hari-H" → buka link tamu + /panitia → Scan.
 Sesi: tombol "Mulai sesi 1" / "Selesaikan sesi" di halaman yang sama, atau lewat BP00.
+F5: `/dev/states/f2` → Siapkan data uji → `/dev/states/f5` → "Isi 15 feedback dummy" (check-in,
+selesaikan sesi, tutup acara otomatis) → "Buat ringkasan sekarang" / Unduh CSV. "Loncat ke 8 Des"
+menghapus data per orang di store lokal → balikin lewat `/dev/states/f1` Reset data.
 
 ## Konvensi
 - Copy UI Bahasa Indonesia santai, persis Figma/design.md §7. Jam 24 jam pakai titik (13.00).
@@ -249,4 +301,6 @@ Sesi: tombol "Mulai sesi 1" / "Selesaikan sesi" di halaman yang sama, atau lewat
 - [x] F2 v2 (23 Okt) — BP00 kartu sesi + Mulai/Selesaikan, scan/P06/P07/P07d baru — menunggu review
 - [x] N4 (24 Okt) — foto kolase polaroid (5 layar + 2 kasus, kompres di HP, antrean offline) —
       menunggu review & bucket Supabase
-- [ ] F3–F5, N1–N3 — berikutnya (versi lama: tag `archive-pre-revisi`)
+- [~] F5 (24 Okt) — logika tutup acara, buku tamu, rekap, ringkasan Claude, CSV, hapus H+30 + tes;
+      layar tamu (Prompt C) & panitia (Prompt D) belum
+- [ ] F3, F4, N1–N3 — berikutnya (versi lama: tag `archive-pre-revisi`)

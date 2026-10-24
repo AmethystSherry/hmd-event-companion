@@ -15,6 +15,7 @@ import { getStore } from "@/lib/data";
 import { daysUntil, eventStart, keyLabel, timeWib } from "@/lib/format";
 import { guestFromToken } from "@/lib/server/access";
 import { isEventDay, serverNow } from "@/lib/server/clock";
+import { ensurePurged } from "@/lib/server/feedback";
 import { secrets } from "@/lib/server/config";
 import { signTicket } from "@/lib/server/crypto";
 
@@ -46,9 +47,11 @@ async function Router({
 }: Pick<PageProps<"/t/[token]">, "params" | "searchParams">) {
   const [{ token }, query] = await Promise.all([params, searchParams]);
   const guest = await guestFromToken(token);
+  // F5: lewat H+30 → data per orang dihapus (token lama ikut mati) → T01e.
+  const purged = guest ? await ensurePurged(guest.eventId) : false;
   const store = await getStore();
   const event = guest ? store.getEvent(guest.eventId) : null;
-  if (!guest || !event || daysUntil(event.date, new Date()) < -30) {
+  if (!guest || !event || purged || daysUntil(event.date, new Date()) < -30) {
     return <InvalidLinkScreen retryHref={`/t/${token}`} />;
   }
 

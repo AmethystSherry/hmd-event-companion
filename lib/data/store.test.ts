@@ -356,13 +356,14 @@ describe("foto kolase (N4)", () => {
     });
   });
 
-  it("hapus cuma foto sendiri; acara ditutup → nggak bisa tambah/hapus", () => {
+  it("hapus cuma foto sendiri; acara ditutup → nggak bisa tambah, hapus tetap boleh (F5)", () => {
     const { store, a, b } = withGuests();
     store.addPhoto(photo(a.id, 1));
     expect(store.deletePhoto(b.id, id(1), at("14:00"))).toBe(false);
     store.getEvent(HMD_ID)!.mode = "closed";
     expect(() => store.addPhoto(photo(a.id, 2))).toThrow(StoreError);
-    expect(() => store.deletePhoto(a.id, id(1), at("17:10"))).toThrow(StoreError);
+    expect(store.deletePhoto(a.id, id(1), at("17:10"))).toBe(true);
+    expect(store.photoCount(HMD_ID)).toBe(0);
   });
 
   it("hapus tamu → metadata fotonya ikut hilang", () => {

@@ -1,11 +1,16 @@
 import { randomBytes, randomUUID } from "node:crypto";
 import type { CsvRow } from "../csv";
+import { MAX_IMPROVE, summaryDue } from "../feedback";
 import { toMinutes } from "../format";
 import type {
   CheckInMethod,
   CheckInResult,
   DoorStats,
   Event,
+  Feedback,
+  FeedbackForSummary,
+  FeedbackInput,
+  FeedbackRecap,
   Guest,
   GuestStats,
   Photo,
@@ -30,7 +35,13 @@ export class StoreError extends Error {
       | "ig-dipakai"
       | "foto-tidak-ada"
       | "foto-penuh"
-      | "acara-ditutup",
+      | "acara-ditutup"
+      | "sesi-belum-selesai"
+      | "acara-belum-ditutup"
+      | "belum-masuk"
+      | "sudah-isi"
+      | "isian-tidak-valid"
+      | "data-dihapus",
     message: string,
   ) {
     super(message);
@@ -86,6 +97,19 @@ export function emptyData(): StoreData {
   return { version: 1, rev: 0, events: [], guests: [], sessions: [], tickets: [] };
 }
 
+function emptyRecap(): FeedbackRecap {
+  return {
+    respondents: 0,
+    expected: 0,
+    avgRating: null,
+    inviteAgainPct: null,
+    highlights: [],
+    improvements: [],
+    summary: null,
+    purgedAt: null,
+  };
+}
+
 export function computeStats(guests: Guest[]): GuestStats {
   const invited = guests.filter((g) => g.inviteStatus === "diundang").length;
   const hadir = guests.filter((g) => g.rsvp === "hadir").length;
@@ -118,6 +142,13 @@ export function createStore(
   function event(id: string): Event {
     const e = data.events.find((x) => x.id === id);
     if (!e) throw new StoreError("event-tidak-ada", "Event nggak ketemu");
+    return e;
+  }
+
+  // Kontrol sesi cuma selagi acara belum ditutup (F5: "Layar acara nggak bisa dibuka lagi").
+  function openEvent(id: string): Event {
+    const e = event(id);
+    if (e.mode === "closed") throw new StoreError("acara-ditutup", "Acaranya udah ditutup");
     return e;
   }
 
@@ -193,6 +224,61 @@ export function createStore(
     const s = data.sessions.find((x) => x.id === id && x.eventId === eventId);
     if (!s) throw new StoreError("sesi-tidak-ada", "Sesi nggak ketemu");
     return s;
+  }
+
+  function closable(eventId: string): boolean {
+    const list = sessionsOf(eventId);
+    return (
+      list.length > 0 &&
+      !list.some((s) => s.status === "berlangsung") &&
+      list[list.length - 1].status === "selesai"
+    );
+  }
+
+  function feedbackOf(eventId: string): Feedback[] {
+    return (data.feedback ?? [])
+      .filter((f) => f.eventId === eventId)
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  }
+
+  function checkedInIds(eventId: string): Set<string> {
+    const ids = new Set(guestsOf(eventId).map((g) => g.id));
+    return new Set(
+      data.tickets
+        .filter((t) => ids.has(t.guestId) && t.status === "dipakai")
+        .map((t) => t.guestId),
+    );
+  }
+
+  // Rekap P11 dari isian sekarang (sebelum dihapus H+30).
+  function liveRecap(eventId: string): FeedbackRecap {
+    const list = feedbackOf(eventId);
+    const sessions = sessionsOf(eventId);
+    const answered = list.filter((f) => f.inviteAgain !== null);
+    const avg = list.length ? list.reduce((n, f) => n + f.rating, 0) / list.length : null;
+    return {
+      respondents: list.length,
+      // Pembagi = tamu yang udah masuk; yang ngisi pasti udah masuk (kecuali check-in dibatalkan).
+      expected: Math.max(checkedInIds(eventId).size, list.length),
+      avgRating: avg === null ? null : Math.round(avg * 10) / 10,
+      inviteAgainPct: answered.length
+        ? Math.round((answered.filter((f) => f.inviteAgain).length / answered.length) * 100)
+        : null,
+      highlights: sessions
+        .map((s, i) => ({
+          i,
+          sessionId: s.id,
+          title: s.title,
+          count: list.filter((f) => f.highlightSessionId === s.id).length,
+        }))
+        .sort((a, b) => b.count - a.count || a.i - b.i)
+        .map(({ sessionId, title, count }) => ({ sessionId, title, count })),
+      improvements: list.flatMap((f, i) =>
+        f.improve ? [{ no: i + 1, text: f.improve, at: f.createdAt }] : [],
+      ),
+      summary: event(eventId).summary?.points ?? null,
+      purgedAt: null,
+    };
   }
 
   // Sesi sesudah `id` (urut jam) yang belum selesai; null kalau sudah yang terakhir.
@@ -305,6 +391,7 @@ export function createStore(
       data.tickets = data.tickets.filter((t) => !guestIds.has(t.guestId));
       data.sessions = data.sessions.filter((s) => s.eventId !== id);
       if (data.photos) data.photos = data.photos.filter((p) => p.eventId !== id);
+      if (data.feedback) data.feedback = data.feedback.filter((f) => f.eventId !== id);
       commit();
     },
 
@@ -338,7 +425,7 @@ export function createStore(
     // Mulai sesi N: mode=sesi, N berlangsung (startedAt). Sesi lain yang masih jalan ikut selesai.
     // Mulai sesi yang sudah jalan = tidak berubah (dobel tap / dua HP panitia) → false, rev tetap.
     startSession(eventId: string, sessionId: string, at: string): boolean {
-      const e = event(eventId);
+      const e = openEvent(eventId);
       const s = sessionOf(eventId, sessionId);
       if (s.status === "berlangsung") return false;
       for (const x of data.sessions) {
@@ -364,7 +451,7 @@ export function createStore(
     // Selesaikan sesi N: N selesai (endedAt), mode=jeda, berikutnya = sesi sesudah N yang belum selesai.
     // Sesi yang nggak lagi jalan → false (idempoten).
     finishSession(eventId: string, sessionId: string, at: string): boolean {
-      const e = event(eventId);
+      const e = openEvent(eventId);
       const s = sessionOf(eventId, sessionId);
       if (s.status !== "berlangsung") return false;
       s.status = "selesai";
@@ -373,6 +460,41 @@ export function createStore(
         mode: "jeda",
         activeSessionId: null,
         nextSessionId: nextAfter(eventId, s.id),
+        stateUpdatedAt: at,
+      } satisfies Partial<Event>);
+      commit();
+      return true;
+    },
+
+    // ---- F5 · Tutup acara (BP04 → BP04b) ----
+    // Boleh kalau nggak ada sesi yang jalan dan sesi terakhir udah selesai (sesi yang dilewati
+    // nggak menghalangi). Sekali jalan: udah ditutup → false, rev tetap (dobel tap / dua HP).
+    canClose(eventId: string): boolean {
+      return closable(eventId);
+    },
+    closeEvent(eventId: string, at: string): boolean {
+      const e = event(eventId);
+      if (e.mode === "closed") return false;
+      if (!closable(eventId)) {
+        throw new StoreError("sesi-belum-selesai", "Selesaikan sesi terakhir dulu");
+      }
+      Object.assign(e, {
+        mode: "closed",
+        activeSessionId: null,
+        nextSessionId: null,
+        stateUpdatedAt: at,
+        closedAt: at,
+      } satisfies Partial<Event>);
+      commit();
+      return true;
+    },
+    // Dev saja (/dev/states/f5): buka lagi acara yang udah ditutup → jeda.
+    reopenEvent(eventId: string, at: string): boolean {
+      const e = event(eventId);
+      if (e.mode !== "closed") return false;
+      Object.assign(e, {
+        mode: "jeda",
+        closedAt: null,
         stateUpdatedAt: at,
       } satisfies Partial<Event>);
       commit();
@@ -445,6 +567,7 @@ export function createStore(
       data.guests = data.guests.filter((g) => g.id !== id);
       data.tickets = data.tickets.filter((t) => t.guestId !== id);
       if (data.photos) data.photos = data.photos.filter((p) => p.guestId !== id);
+      if (data.feedback) data.feedback = data.feedback.filter((f) => f.guestId !== id);
       commit();
     },
 
@@ -597,13 +720,11 @@ export function createStore(
       return { photo, created: true };
     },
 
-    // T15b (UI di F5): hapus foto sendiri sampai acara ditutup. false = bukan miliknya / udah hilang.
+    // T15b: hapus foto sendiri, juga setelah acara ditutup (keputusan F5) sampai data dihapus H+30.
+    // false = bukan miliknya / udah hilang.
     deletePhoto(guestId: string, id: string, at: string): boolean {
       const p = data.photos?.find((x) => x.id === id && x.guestId === guestId && !x.deletedAt);
       if (!p) return false;
-      if (event(p.eventId).mode === "closed") {
-        throw new StoreError("acara-ditutup", "Acaranya udah ditutup");
-      }
       p.deletedAt = at;
       commit();
       return true;
@@ -629,6 +750,162 @@ export function createStore(
         mine: all.length - others.length,
         latest: others.slice(0, 4).map((p) => p.id),
       };
+    },
+
+    // ---- F5 · Buku tamu (T14) & rekap (P11) ----
+    // Cuma tamu yang udah masuk, setelah acara ditutup. Satu isian per tamu: kirim ulang id yang
+    // sama → isian yang sama (created false, rev tetap); id lain → "sudah-isi".
+    addFeedback(
+      guestId: string,
+      input: FeedbackInput,
+      at: string,
+    ): { feedback: Feedback; created: boolean } {
+      const g = guest(guestId);
+      const e = event(g.eventId);
+      const same = data.feedback?.find((f) => f.id === input.id);
+      if (same) {
+        if (same.guestId !== g.id) throw new StoreError("isian-tidak-valid", "Isiannya bentrok");
+        return { feedback: same, created: false };
+      }
+      if (e.purgedAt) throw new StoreError("data-dihapus", "Data acara ini udah dihapus");
+      if (e.mode !== "closed") {
+        throw new StoreError("acara-belum-ditutup", "Buku tamu kebuka setelah acara ditutup");
+      }
+      if (data.tickets.find((t) => t.guestId === g.id)?.status !== "dipakai") {
+        throw new StoreError("belum-masuk", "Buku tamu buat tamu yang udah datang");
+      }
+      if (data.feedback?.some((f) => f.guestId === g.id)) {
+        throw new StoreError("sudah-isi", "Kamu sudah isi buku tamu");
+      }
+      const improve = input.improve?.trim() || null;
+      if (
+        !Number.isInteger(input.rating) ||
+        input.rating < 1 ||
+        input.rating > 5 ||
+        (improve !== null && improve.length > MAX_IMPROVE) ||
+        (input.highlightSessionId !== null &&
+          !sessionsOf(e.id).some((s) => s.id === input.highlightSessionId))
+      ) {
+        throw new StoreError("isian-tidak-valid", "Isiannya belum pas");
+      }
+      const feedback: Feedback = {
+        id: input.id,
+        eventId: e.id,
+        guestId: g.id,
+        rating: input.rating,
+        highlightSessionId: input.highlightSessionId,
+        improve,
+        inviteAgain: input.inviteAgain,
+        createdAt: at,
+      };
+      (data.feedback ??= []).push(feedback);
+      commit();
+      return { feedback, created: true };
+    },
+    feedbackFor(guestId: string): Feedback | null {
+      return data.feedback?.find((f) => f.guestId === guestId) ?? null;
+    },
+    // Urut waktu isi (untuk CSV).
+    listFeedback(eventId: string): Feedback[] {
+      return feedbackOf(eventId);
+    },
+    // P11 / P11b / P11c. Setelah dihapus H+30 (P11d): dari arsip tanpa jawaban per tamu.
+    feedbackRecap(eventId: string): FeedbackRecap {
+      const e = event(eventId);
+      if (e.purgedAt) {
+        return { ...emptyRecap(), ...e.recapArchive, improvements: [], purgedAt: e.purgedAt };
+      }
+      return liveRecap(eventId);
+    },
+
+    // Ringkasan Claude. Panggilan Claude-nya di luar store (lib/server/summary): beginSummary
+    // menandai "sedang dibuat" dan mengembalikan jawaban tanpa nama; saveSummary menyimpan hasil.
+    // null = nggak perlu dibuat (< 3 jawaban, udah segar, atau HP lain lagi membuat).
+    beginSummary(
+      eventId: string,
+      at: string,
+      force = false,
+    ): { items: FeedbackForSummary[]; basedOn: number } | null {
+      const e = event(eventId);
+      const list = feedbackOf(eventId);
+      if (e.purgedAt || !summaryDue(e.summary, list.length, Date.parse(at), force)) return null;
+      e.summary = {
+        points: null,
+        basedOn: 0,
+        createdAt: null,
+        error: null,
+        errorAt: null,
+        ...e.summary,
+        pendingSince: at,
+      };
+      commit();
+      const titles = new Map(sessionsOf(eventId).map((s) => [s.id, s.title]));
+      return {
+        basedOn: list.length,
+        items: list.map((f) => ({
+          rating: f.rating,
+          highlight: f.highlightSessionId ? (titles.get(f.highlightSessionId) ?? null) : null,
+          improve: f.improve,
+          inviteAgain: f.inviteAgain,
+        })),
+      };
+    },
+    // Hasil Claude: poin baru menggantikan yang lama; gagal → poin lama tetap disimpan (P11b
+    // tampil kalau belum pernah ada poin).
+    saveSummary(
+      eventId: string,
+      basedOn: number,
+      result: { points: string[] } | { error: string },
+      at: string,
+    ): void {
+      const e = event(eventId);
+      const prev = e.summary;
+      e.summary =
+        "points" in result
+          ? {
+              points: result.points,
+              basedOn,
+              createdAt: at,
+              error: null,
+              errorAt: null,
+              pendingSince: null,
+            }
+          : {
+              points: prev?.points ?? null,
+              basedOn,
+              createdAt: prev?.createdAt ?? null,
+              error: result.error,
+              errorAt: at,
+              pendingSince: null,
+            };
+      commit();
+    },
+
+    // ---- F5 · Hapus data per orang H+30 (P11d, prd §8) ----
+    // Simpan rekap tanpa nama dulu, lalu hapus isian per tamu, nama/IG/WA tamu (diganti
+    // "Tamu #nn", link lama mati karena token diganti), dan metadata foto. Kembalikan id foto
+    // supaya pemanggil menghapus filenya (di luar store). Udah pernah → [] dan rev tetap.
+    purgePersonalData(eventId: string, at: string): string[] {
+      const e = event(eventId);
+      if (e.purgedAt) return [];
+      const recap = liveRecap(eventId);
+      e.recapArchive = { ...recap, improvements: [], purgedAt: at };
+      e.purgedAt = at;
+      e.dmTemplate = "";
+      const photoIds = (data.photos ?? []).filter((p) => p.eventId === eventId).map((p) => p.id);
+      if (data.photos) data.photos = data.photos.filter((p) => p.eventId !== eventId);
+      if (data.feedback) data.feedback = data.feedback.filter((f) => f.eventId !== eventId);
+      for (const g of guestsOf(eventId)) {
+        Object.assign(g, {
+          name: `Tamu #${String(g.keyNo).padStart(2, "0")}`,
+          ig: `tamu${g.keyNo}`,
+          wa: null,
+          dmTemplate: null,
+          token: newToken(),
+        } satisfies Partial<Guest>);
+      }
+      commit();
+      return photoIds;
     },
 
     snapshot(): StoreData {

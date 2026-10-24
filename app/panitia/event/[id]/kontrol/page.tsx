@@ -8,6 +8,7 @@ import { eventPhase } from "@/lib/format";
 import { rundownView } from "@/lib/rundown";
 import { requireCrew } from "@/lib/server/access";
 import { isEventDay, serverNow } from "@/lib/server/clock";
+import { ensurePurged } from "@/lib/server/feedback";
 import { finishSession, startSession } from "../../../actions";
 
 export const metadata = { title: "Kontrol acara · House Moving Day" };
@@ -35,6 +36,7 @@ export default function KontrolPage({ params }: PageProps<"/panitia/event/[id]/k
 async function Kontrol({ params }: Pick<PageProps<"/panitia/event/[id]/kontrol">, "params">) {
   await requireCrew();
   const { id } = await params;
+  await ensurePurged(id); // F5: hapus data per orang H+30 (lazy)
   const store = await getStore();
   const event = store.getEvent(id);
   if (!event) notFound();

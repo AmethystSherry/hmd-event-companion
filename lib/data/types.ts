@@ -21,6 +21,11 @@ export type Event = {
   activeSessionId?: string | null;
   nextSessionId?: string | null;
   stateUpdatedAt?: string | null;
+  // F5: tutup acara (sekali jalan), ringkasan Claude, rekap tanpa nama setelah hapus H+30.
+  closedAt?: string | null;
+  summary?: FeedbackSummary | null;
+  purgedAt?: string | null;
+  recapArchive?: FeedbackRecap | null;
 };
 
 export type EventMode = "pre" | "jeda" | "sesi" | "closed";
@@ -94,6 +99,7 @@ export type StoreData = {
   sessions: Session[];
   tickets: Ticket[];
   photos?: Photo[]; // N4 (opsional: store lama tetap terbaca)
+  feedback?: Feedback[]; // F5
 };
 
 // N4 · foto kolase polaroid. File gambarnya di Supabase Storage / .data/photos (bukan di store);
@@ -121,4 +127,54 @@ export type GuestStats = {
   nggak: number;
   belumJawab: number; // diundang tapi belum jawab
   answered: number;
+};
+
+// F5 · buku tamu (T14). Satu isian per tamu, nggak bisa diubah. id = clientId (UUID dari HP) →
+// kirim ulang (sinyal putus) = isian yang sama.
+export type Feedback = {
+  id: string;
+  eventId: string;
+  guestId: string;
+  rating: number; // 1–5, wajib
+  highlightSessionId: string | null; // "Bagian paling seru"
+  improve: string | null; // "Satu hal yang bisa kami perbaiki", ≤ 280 huruf
+  inviteAgain: boolean | null; // "Mau diundang lagi?" — belum dipilih = null
+  createdAt: string;
+};
+
+export type FeedbackInput = Pick<
+  Feedback,
+  "id" | "rating" | "highlightSessionId" | "improve" | "inviteAgain"
+>;
+
+// Rekap P11. Pembagi = tamu yang udah check-in (yang bisa isi buku tamu). Tanpa nama: jawaban
+// "perbaiki" diberi nomor urut jawaban ("Tamu #04"), bukan nomor kunci.
+export type FeedbackRecap = {
+  respondents: number;
+  expected: number;
+  avgRating: number | null; // 1 desimal
+  inviteAgainPct: number | null; // dari yang menjawab
+  highlights: { sessionId: string; title: string; count: number }[]; // urut terbanyak
+  improvements: { no: number; text: string; at: string }[];
+  summary: string[] | null; // 3 poin Claude (cache)
+  purgedAt: string | null; // P11d: data per orang udah dihapus, rekap dari arsip
+};
+
+// Ringkasan Claude (cache di event). basedOn = jumlah jawaban saat dibuat (juga saat gagal), jadi
+// dibuat ulang otomatis kalau ada ≥ 3 jawaban baru. pendingSince = sedang dibuat (cegah dobel).
+export type FeedbackSummary = {
+  points: string[] | null;
+  basedOn: number;
+  createdAt: string | null;
+  error: string | null;
+  errorAt: string | null;
+  pendingSince: string | null;
+};
+
+// Yang dikirim ke Claude: tanpa nama, IG, atau id tamu.
+export type FeedbackForSummary = {
+  rating: number;
+  highlight: string | null;
+  improve: string | null;
+  inviteAgain: boolean | null;
 };
