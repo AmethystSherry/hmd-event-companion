@@ -33,7 +33,8 @@ Web app mobile untuk House Moving Day Potara Studio (Minggu 8 Nov 2026, 13.00–
   `supabase/schema.sql`** (SQL Editor). Tombol "Foto buat kolase" sementara di placeholder `acara/`.
 - **F5 · Tutup acara & feedback — logika (Prompt B, 24 Okt)**: store + API + Claude + CSV + tes.
   **Layar tamu (Prompt C, 24 Okt)**: BT12 · T14/T14b/T14c/T14d · T15/T15b/T15c/T15d (+T15e share
-  sheet HP). Layar panitia BP04*/P11* = Prompt D di `F5-prompt-claude-code.md`, belum.
+  sheet HP). **Layar panitia (Prompt D, 24 Okt)**: BP04 + BP04b di `kontrol/`, P11/P11b/P11c/P11d
+  di `rekap/`. Semua layar F5 menunggu review.
   12 keputusan F5-deliverables dijawab pakai rekomendasi — lihat "Aturan F5 di kode". Ringkasan
   Claude butuh `ANTHROPIC_API_KEY` di Vercel (tanpa key → P11b).
 
@@ -69,7 +70,8 @@ app/
                           selesai/ (F5 BT12) · buku-tamu/ (T14*) · kolase/ (T15*, T14d)
   panitia/                P01 + PE01/PE02 · actions.ts (semua server action panitia)
     event/[id]/           PE03/PE03b (+ sheet PE03e/PE03h) · rundown/ (PE04k/PE04/PE04a) ·
-                          tamu/ (P04k/P04a/P04c/P04/P04b/d/e/f) · kontrol/ (BP00/BP00a/BP00b) ·
+                          tamu/ (P04k/P04a/P04c/P04/P04b/d/e/f) · kontrol/ (BP00/BP00a/BP00b +
+                          F5 BP04/BP04b) · rekap/ (F5 P11/P11b/P11c/P11d) ·
                           foto/ · tanya/ (placeholder F3/F4) ·
                           scan/ (P05/P05b/P06/P06b/P06c) · scan/cari/ (P07/P07b/P07c)
   api/live/               SSE: kirim `rev` store tiap ada perubahan (tanpa data tamu)
@@ -82,7 +84,7 @@ app/
   dev/states/f1/          27 layar F1 dengan data contoh + alat uji (link tamu, CSV dummy, reset)
   dev/states/f2/          13 layar F2 + alat uji (jam pura-pura hari-H, data 12 hadir, reset check-in)
   dev/states/n4/          7 layar N4 + alat uji (check-in semua, 30 foto dummy, hapus semua foto)
-  dev/states/f5/          10 layar F5 tamu + alat uji (foto dummy, selesaikan semua sesi, tutup/buka
+  dev/states/f5/          17 layar F5 (tamu + panitia) + alat uji (foto dummy, selesaikan semua sesi, tutup/buka
                           lagi, 15 feedback dummy, ringkasan sekarang, reset feedback, loncat ke 8 Des,
                           link tamu udah/belum masuk)
   tokens.css · globals.css · fonts/
@@ -94,7 +96,8 @@ components/f2/            tamu.tsx (T05/T05a/BT02/T03b) · Kontrol (BP00 + dialo
 components/n4/            KolaseApp (BT06/BT06b/BT07/BT07b/BT07c) · useCamera · capture (crop+kompres) ·
                           usePhotoOutbox (kirim + antrean) · PhotoOutbox (antrean di layar acara)
 components/f5/            Selesai (BT12 + belum masuk) · BukuTamu (T14/b/c) · KolaseKulkas (T15/T15c/
-                          T15d/T14d) · FotoDetail (T15b) · kolaseCanvas (gambar 9:16) · saveImage
+                          T15d/T14d) · FotoDetail (T15b) · kolaseCanvas (gambar 9:16) · saveImage ·
+                          Rekap (P11/P11b/P11c/P11d)
 components/               LiveRefresh (SSE → router.refresh) · RefreshAt · TicketQr · RegisterOffline
 components/icons.ts       ekspor ikon Phosphor (/ssr)
 lib/data/                 tipe, store (logika murni + tes), seed, getStore() (file .data/)
@@ -257,6 +260,22 @@ Keputusan 24 Okt (rekomendasi atas "Keputusan & asumsi" + "Temuan" di F5-deliver
     1,5 dtk setelah T15 tenang) supaya `navigator.share` tetap dalam gesture. Pratinjau T15c =
     gambar hasil itu sendiri. Simpan: iOS → share sheet, Android/desktop → download, webview IG/FB
     → gambar layar penuh (data: URL) + toast "Tekan lama gambarnya buat simpan". Batal share = diam.
+17. **BP04** (`KontrolScreen` prop `finale` + `close`): `canClose` → kartu terakhir carousel
+    "Jeda terakhir" (Closing selesai = `endedAt` sesi terakhir) + "Tutup acara & buka buku tamu" →
+    Sheet BP04b (jumlah HP tamu = check-in, "Semua sesi udah selesai · x/n", tombol "Menutup acara…"
+    selagi jalan). Rundown: sesi selesai = ikon cek di lingkaran success-soft + "Selesai", kepala
+    "{x} dari {n} selesai". Tile Pertanyaan tetap "0" sebelum ditutup (sama BP00).
+18. **BP00 setelah ditutup** (TODO desain, belum ada di Figma): carousel diganti kartu "Acara udah
+    ditutup · Ditutup {jam}" + "Lihat rekap buku tamu" → `rekap/`; tile ke-3 = "Mengisi x/n".
+    Scan tiket tetap ada.
+19. **P11** (`/panitia/event/[id]/rekap`, sesi PIN, sebelum ditutup = P11c): angka & `BarList` dari
+    `feedbackRecap`, realtime lewat `LiveRefresh`. Kartu ringkasan dari `summaryView` (lib/feedback):
+    siap · lagi dibuat (skeleton; HP yang melihat ringkasan basi memanggil `POST …/ringkasan`, sekali
+    per jumlah jawaban) · gagal (P11b: Banner + "Coba lagi" force, + daftar "Satu hal yang bisa
+    diperbaiki" bernomor "Tamu #nn" — daftar cuma di P11b sesuai Figma) · < 3 jawaban ("Ringkasan
+    muncul setelah ada 3 jawaban.", copy bukan Figma). P11d: arsip + Banner, CSV nonaktif. Unduh
+    CSV = `<form method=get>` ke `rekap.csv` (`rekap-buku-tamu-hmd.csv`); 0 jawaban / dihapus →
+    nonaktif. Komponen baru `BarList` (bar teratas Ink).
 
 ## Design system (Clean v0.5)
 - Token: `app/tokens.css` — warna semantik light (utama) + dark (`prefers-color-scheme`, atau paksa
@@ -268,7 +287,8 @@ Keputusan 24 Okt (rekomendasi atas "Keputusan & asumsi" + "Temuan" di F5-deliver
   Card/CardLabel/InnerBox, StatTile, ListRow/Avatar, Banner/TextAction, HeroState, Field, Toast
   (undo ring), Sheet (bawah / `floating`), TabBar, Ticket (+`torn`)/TicketStub, LogoMark,
   Screen/ScreenHeader/Skeleton, SearchField, Dialog (konfirmasi tengah layar, BP00a/BP00b),
-  StarRating (T14), Masonry + PhotoPin (T15, nanti galeri panitia). `TextAction` bisa `href`.
+  StarRating (T14), Masonry + PhotoPin (T15, nanti galeri panitia), BarList (P11). `TextAction`
+  bisa `href`.
 - **Button** (`Clean/Button` 4587:316, 12 varian): `size` `lg` (54, lebar penuh) | `sm` (36, lebar
   hug, area tap 44) × `variant` `primary` | `secondary` | `destructive` × `iconOnly` (+ `label` wajib
   untuk aria-label). Aturan pakai:
@@ -327,6 +347,6 @@ menghapus data per orang di store lokal → balikin lewat `/dev/states/f1` Reset
 - [x] F2 v2 (23 Okt) — BP00 kartu sesi + Mulai/Selesaikan, scan/P06/P07/P07d baru — menunggu review
 - [x] N4 (24 Okt) — foto kolase polaroid (5 layar + 2 kasus, kompres di HP, antrean offline) —
       menunggu review & bucket Supabase
-- [~] F5 (24 Okt) — logika tutup acara, buku tamu, rekap, ringkasan Claude, CSV, hapus H+30 + tes;
-      layar tamu BT12/T14*/T15* (Prompt C) — menunggu review; layar panitia (Prompt D) belum
+- [x] F5 (24 Okt) — tutup acara, buku tamu, kolase 9:16, rekap + ringkasan Claude, CSV, hapus H+30;
+      16 layar (BT12, T14*, T15*, BP04/BP04b, P11*) — menunggu review & `ANTHROPIC_API_KEY` di Vercel
 - [ ] F3, F4, N1–N3 — berikutnya (versi lama: tag `archive-pre-revisi`)

@@ -1,5 +1,6 @@
 export { Badge, type BadgeTone } from "./Badge";
 export { Banner, TextAction } from "./Banner";
+export { BarList } from "./BarList";
 export { Button } from "./Button";
 export { Card, CardLabel, InnerBox } from "./Card";
 export { Countdown } from "./Countdown";

@@ -9,11 +9,12 @@ import { rundownView } from "@/lib/rundown";
 import { requireCrew } from "@/lib/server/access";
 import { isEventDay, serverNow } from "@/lib/server/clock";
 import { ensurePurged } from "@/lib/server/feedback";
-import { finishSession, startSession } from "../../../actions";
+import { closeEvent, finishSession, startSession } from "../../../actions";
 
 export const metadata = { title: "Kontrol acara · House Moving Day" };
 
 // BP00 Kontrol acara: kartu sesi (Mulai/Selesaikan → BP00b/BP00a), stat, rundown, Scan tiket.
+// F5: semua sesi selesai → kartu BP04 "Jeda terakhir" + sheet BP04b; setelah ditutup → rekap.
 // Hanya bisa dibuka kalau tamu & rundown terisi; kalau belum, kembali ke Home event (PE03b).
 // Hari-H: Home event otomatis pindah ke sini. Realtime antar-HP panitia lewat SSE.
 export default function KontrolPage({ params }: PageProps<"/panitia/event/[id]/kontrol">) {
@@ -45,6 +46,8 @@ async function Kontrol({ params }: Pick<PageProps<"/panitia/event/[id]/kontrol">
 
   const now = await serverNow();
   const eventDay = isEventDay(event.date, now);
+  const recap = store.feedbackRecap(id);
+  const last = sessions.at(-1); // listSessions urut jam
   return (
     <>
       <KontrolScreen
@@ -58,6 +61,13 @@ async function Kontrol({ params }: Pick<PageProps<"/panitia/event/[id]/kontrol">
         serverNow={now.toISOString()}
         start={startSession}
         finish={finishSession}
+        finale={{
+          canClose: store.canClose(id),
+          closedAt: event.closedAt ?? null,
+          lastEndedAt: last?.endedAt ?? null,
+          feedback: { respondents: recap.respondents, expected: recap.expected },
+        }}
+        close={closeEvent}
       />
       <LiveRefresh />
     </>

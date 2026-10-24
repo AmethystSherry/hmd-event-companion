@@ -1,4 +1,4 @@
-import type { FeedbackInput, FeedbackSummary } from "./data/types";
+import type { FeedbackInput, FeedbackRecap, FeedbackSummary } from "./data/types";
 import { isPhotoId } from "./photo";
 
 // F5 · buku tamu & rekap: aturan tanpa secret (dipakai server, tes, dan nanti HP tamu).
@@ -51,4 +51,29 @@ export function summaryDue(
   }
   if (!state || force) return true;
   return respondents - state.basedOn >= SUMMARY_REFRESH;
+}
+
+// Kartu ringkasan P11: siap · lagi dibuat (request = HP ini yang minta) · gagal (P11b) ·
+// nunggu 3 jawaban · nggak ada (data udah dihapus tanpa ringkasan).
+export type SummaryView =
+  | { kind: "ready"; points: string[]; request?: boolean }
+  | { kind: "pending"; request: boolean }
+  | { kind: "failed" }
+  | { kind: "waiting" }
+  | { kind: "none" };
+
+export function summaryView(
+  state: FeedbackSummary | null | undefined,
+  recap: Pick<FeedbackRecap, "respondents" | "purgedAt" | "summary">,
+  nowMs: number,
+): SummaryView {
+  if (recap.purgedAt)
+    return recap.summary ? { kind: "ready", points: recap.summary } : { kind: "none" };
+  if (recap.respondents < SUMMARY_MIN) return { kind: "waiting" };
+  const request = summaryDue(state, recap.respondents, nowMs);
+  if (state?.points && !request) return { kind: "ready", points: state.points, request };
+  if (state?.error && !request && !state.pendingSince) return { kind: "failed" };
+  // Basi tapi masih ada poin lama: tampilkan poin lama sambil dibuat ulang.
+  if (state?.points) return { kind: "ready", points: state.points, request };
+  return { kind: "pending", request };
 }

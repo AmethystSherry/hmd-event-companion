@@ -28,6 +28,7 @@ import {
   Avatar,
   Badge,
   Banner,
+  BarList,
   Button,
   Card,
   CardLabel,
@@ -459,10 +460,22 @@ export function Gallery() {
         </div>
       </Section>
 
-      <Section title="F5 · StarRating, Masonry + PhotoPin">
+      <Section title="F5 · StarRating, BarList, Masonry + PhotoPin">
         <Card>
           <CardLabel>Nilai acaranya</CardLabel>
           <StarRating label="Nilai acaranya" value={stars} onChange={setStars} />
+        </Card>
+        <Card>
+          <CardLabel>Bagian paling seru</CardLabel>
+          <BarList
+            label="Bagian paling seru"
+            items={[
+              { key: "a", label: "Talkshow", value: 7 },
+              { key: "b", label: "Open space", value: 4 },
+              { key: "c", label: "Tur kantor", value: 3 },
+              { key: "d", label: "Networking", value: 1 },
+            ]}
+          />
         </Card>
         <Masonry
           items={PINS}

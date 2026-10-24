@@ -35,24 +35,28 @@ export const metadata = { title: "F5 states · dev" };
 const TONE = { Utama: "neutral", Gagal: "danger", "Kasus lain": "crew" } as const;
 
 // /dev/states/f5: daftar layar F5 (pratinjau data contoh) + alat uji tutup acara, buku tamu,
-// ringkasan Claude, dan hapus data H+30. Layar panitia (BP04*, P11*) menyusul (Prompt D).
+// ringkasan Claude, dan hapus data H+30.
 export default function F5States() {
   return (
     <Screen>
       <ScreenHeader eyebrow="Dev · Figma section F5 (4671:4888)" title="F5 · Tutup acara" />
-      <Card inset>
-        <div className={styles.head}>
-          <CardLabel>Tamu · T15e = share sheet HP (uji dari T15/T15c)</CardLabel>
-        </div>
-        {SCREENS.map((s) => (
-          <Link key={s.code} href={`/dev/states/f5/${s.code}`} className={styles.row}>
-            <span className={`t-label-emph tabular ${styles.code}`}>{s.code}</span>
-            <span className="t-body">{s.name}</span>
-            <Badge tone={TONE[s.kind]}>{s.kind}</Badge>
-            <CaretRight size={14} className="c-label-3" />
-          </Link>
-        ))}
-      </Card>
+      {(["Tamu", "Panitia"] as const).map((lane) => (
+        <Card key={lane} inset>
+          <div className={styles.head}>
+            <CardLabel>
+              {lane === "Tamu" ? "Tamu · T15e = share sheet HP (uji dari T15/T15c)" : "Panitia"}
+            </CardLabel>
+          </div>
+          {SCREENS.filter((s) => s.lane === lane).map((s) => (
+            <Link key={s.code} href={`/dev/states/f5/${s.code}`} className={styles.row}>
+              <span className={`t-label-emph tabular ${styles.code}`}>{s.code}</span>
+              <span className="t-body">{s.name}</span>
+              <Badge tone={TONE[s.kind]}>{s.kind}</Badge>
+              <CaretRight size={14} className="c-label-3" />
+            </Link>
+          ))}
+        </Card>
+      ))}
       {process.env.NODE_ENV !== "production" ? (
         <Suspense>
           <DevTools />

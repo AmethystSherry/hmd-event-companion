@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { FeedbackSummary } from "./data/types";
-import { parseFeedbackBody, purgeAt, summaryDue } from "./feedback";
+import { parseFeedbackBody, purgeAt, summaryDue, summaryView } from "./feedback";
 
 const ID = "00000000-0000-4000-8000-000000000001";
 
@@ -58,5 +58,48 @@ describe("kapan ringkasan dibuat", () => {
     expect(summaryDue(pending, 9, now, true)).toBe(false);
     const stale = state({ pendingSince: "2026-11-08T10:09:00Z" });
     expect(summaryDue(stale, 9, now)).toBe(true);
+  });
+});
+
+describe("kartu ringkasan P11", () => {
+  const now = Date.parse("2026-11-08T10:10:00Z");
+  const base = { respondents: 5, purgedAt: null, summary: null };
+  const state = {
+    points: null,
+    basedOn: 5,
+    createdAt: null,
+    error: null,
+    errorAt: null,
+    pendingSince: null,
+  };
+
+  it("< 3 jawaban → nunggu; belum pernah → minta dibuat", () => {
+    expect(summaryView(null, { ...base, respondents: 2 }, now)).toEqual({ kind: "waiting" });
+    expect(summaryView(null, base, now)).toEqual({ kind: "pending", request: true });
+  });
+
+  it("poin segar → siap; basi → poin lama + minta dibuat ulang", () => {
+    const ready = { ...state, points: ["a", "b", "c"] };
+    expect(summaryView(ready, base, now)).toEqual({
+      kind: "ready",
+      points: ready.points,
+      request: false,
+    });
+    expect(summaryView(ready, { ...base, respondents: 8 }, now)).toMatchObject({ request: true });
+  });
+
+  it("gagal tanpa poin → P11b; HP lain lagi membuat → skeleton tanpa minta", () => {
+    expect(summaryView({ ...state, error: "x" }, base, now)).toEqual({ kind: "failed" });
+    const busy = { ...state, pendingSince: "2026-11-08T10:09:55Z" };
+    expect(summaryView(busy, base, now)).toEqual({ kind: "pending", request: false });
+  });
+
+  it("data udah dihapus → poin arsip atau nggak ada kartu", () => {
+    const purged = { ...base, purgedAt: "2026-12-08T00:00:00+07:00" };
+    expect(summaryView(null, { ...purged, summary: ["a"] }, now)).toEqual({
+      kind: "ready",
+      points: ["a"],
+    });
+    expect(summaryView(null, purged, now)).toEqual({ kind: "none" });
   });
 });

@@ -318,3 +318,65 @@
   background: var(--card);
   box-shadow: var(--shadow-tile);
 }
+
+/* ---- P11 · Rekap buku tamu ---- */
+.recapTiles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.footerNote {
+  text-align: center;
+}
+
+.csvForm {
+  display: flex;
+  flex-direction: column;
+}
+
+.claudeLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--accent-text);
+}
+
+.points {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding-left: 20px;
+}
+
+.points li::marker {
+  color: var(--label-3);
+}
+
+.pointsLoading {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.answersHead {
+  padding: 18px 20px 4px;
+}
+
+.answers {
+  margin: 0;
+  padding: 0 20px 8px;
+  list-style: none;
+}
+
+.answers li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 0;
+}
+
+.answers li + li {
+  border-top: 0.5px solid var(--separator);
+}

@@ -1,0 +1,51 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(96px, 38%) minmax(0, 1fr) 24px;
+  align-items: center;
+  gap: 12px;
+}
+
+.label {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--label);
+}
+
+.track {
+  display: block;
+  height: 8px;
+  border-radius: var(--radius-pill);
+}
+
+.bar {
+  display: block;
+  min-width: 8px;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--label-3);
+  transition: width 300ms var(--ease-gravity);
+}
+
+.top {
+  background: var(--cta);
+}
+
+.value {
+  text-align: right;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bar {
+    transition: none;
+  }
+}

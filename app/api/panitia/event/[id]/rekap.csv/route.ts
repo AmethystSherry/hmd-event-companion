@@ -29,7 +29,7 @@ export async function GET(_req: Request, ctx: RouteContext<"/api/panitia/event/[
   return new Response(feedbackCsv(rows), {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": 'attachment; filename="buku-tamu-hmd.csv"',
+      "Content-Disposition": 'attachment; filename="rekap-buku-tamu-hmd.csv"',
       "Cache-Control": "no-store",
     },
   });

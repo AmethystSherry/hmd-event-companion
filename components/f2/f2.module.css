@@ -554,3 +554,73 @@
 .profileRows {
   margin: 0 -16px;
 }
+
+/* ---- F5 · BP04 Jeda terakhir / acara ditutup + BP04b ---- */
+.finaleCard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.finaleCard > a,
+.finaleCard > button {
+  margin-top: 8px;
+}
+
+.doneIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--success-soft);
+  color: var(--success-text);
+}
+
+.closeSheet {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: center;
+}
+
+.closeIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 4px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+
+.closeInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 8px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--card-2);
+  color: var(--label);
+  text-align: left;
+}
+
+.closeInfo svg {
+  flex-shrink: 0;
+  color: var(--success-text);
+}
+
+.closeActions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
