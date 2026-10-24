@@ -6,7 +6,10 @@
 // dan tidak boleh menimpa HTML di cache.
 // N4: gambar foto kolase (/api/t/{token}/foto/{id}) cache-first — id unik, isinya nggak berubah;
 // strip BT07 tetap tampil walau sinyal hilang. Upload (POST) nggak pernah lewat sini.
-const CACHE = "hmd-v3";
+// F4: layar acara /t/{token}/acara ikut aturan halaman tamu (network-first + cadangan cache);
+// ilustrasi /figma/f3-*.webp cache-first, diunduh semua saat layar acara dibuka (S01 offline).
+// Data terbaru selagi offline diambil layar dari snapshot localStorage, bukan dari sini.
+const CACHE = "hmd-v4";
 
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", (e) =>

@@ -1,0 +1,60 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stamp {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 22px;
+  background: var(--card-2);
+  color: var(--label-3);
+}
+
+.label {
+  white-space: nowrap;
+  color: var(--label-3);
+}
+
+.done .circle {
+  background: var(--accent);
+  color: #ffffff; /* ✓ putih di atas accent, sama di kedua mode */
+}
+
+.now .circle {
+  border: 2px solid var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+
+.done .label,
+.now .label {
+  color: var(--label);
+}

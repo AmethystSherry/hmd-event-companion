@@ -1,37 +1,47 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { Camera, Coffee, Key, Play } from "@/components/icons";
-import { LiveRefresh } from "@/components/LiveRefresh";
+import { AcaraScreen } from "@/components/f4/AcaraScreen";
+import type { SheetKind } from "@/components/f4/Sheets";
 import { PhotoOutbox } from "@/components/n4/PhotoOutbox";
 import { RegisterOffline } from "@/components/RegisterOffline";
-import { Badge, Button, HeroState, Screen, ScreenHeader, Skeleton } from "@/components/ui";
+import { Screen, Skeleton } from "@/components/ui";
+import { acaraView } from "@/lib/acara";
 import { getStore } from "@/lib/data";
-import { firstName } from "@/lib/format";
-import { rundownView } from "@/lib/rundown";
 import { guestFromToken } from "@/lib/server/access";
+import { serverNow } from "@/lib/server/clock";
+
+const SHEETS: SheetKind[] = ["detail", "pembicara", "rundown", "tamu"];
+// ?sheet=&sesi= (reload / back-forward) → sheet yang sama kebuka lagi.
+function sheetFrom(sheet: unknown, sesi: unknown) {
+  const kind = SHEETS.find((k) => k === sheet);
+  return kind ? { kind, sessionId: typeof sesi === "string" ? sesi : undefined } : null;
+}
 
 export const metadata = { title: "House Moving Day · Potara Studio" };
 
-// Layar acara tamu (placeholder F3/F4): ikut mode yang diatur panitia di BP00 — SESI (sesi yang
-// lagi jalan) atau JEDA (sesi berikutnya). Panitia Mulai/Selesaikan → rev naik → SSE →
-// halaman ini pindah sendiri tanpa reload. Isi layar sebenarnya (BT20/BT03) dibangun di F3/F4.
-export default function EventScreenPage({ params }: PageProps<"/t/[token]/acara">) {
+// F4 · layar acara tamu: SESI (BT20/21/23/24) ⇄ JEDA (BT03) ikut Kontrol acara panitia.
+// Belum check-in → tiket; acara ditutup → BT12 (F5).
+export default function EventScreenPage({ params, searchParams }: PageProps<"/t/[token]/acara">) {
   return (
     <Suspense
       fallback={
         <Screen>
-          <Skeleton height={80} radius={12} />
+          <Skeleton height={420} />
           <Skeleton height={260} />
         </Screen>
       }
     >
-      <EventScreen params={params} />
+      <EventScreen params={params} searchParams={searchParams} />
     </Suspense>
   );
 }
 
-async function EventScreen({ params }: Pick<PageProps<"/t/[token]/acara">, "params">) {
+async function EventScreen({
+  params,
+  searchParams,
+}: Pick<PageProps<"/t/[token]/acara">, "params" | "searchParams">) {
   const { token } = await params;
+  const q = await searchParams;
   const guest = await guestFromToken(token);
   const store = await getStore();
   const event = guest ? store.getEvent(guest.eventId) : null;
@@ -40,54 +50,24 @@ async function EventScreen({ params }: Pick<PageProps<"/t/[token]/acara">, "para
   if (!guest || !event || ticket?.status !== "dipakai") redirect(`/t/${token}`);
   if (event.mode === "closed") redirect(`/t/${token}/selesai`); // F5 · BT12
 
-  const { active, next } = rundownView(event, store.listSessions(event.id));
+  const now = await serverNow();
+  const view = acaraView({
+    event,
+    sessions: store.listSessions(event.id),
+    guests: store.listGuests(event.id),
+    tickets: store.listTickets(event.id),
+    me: guest,
+    now,
+    rev: store.rev,
+  });
   return (
     <>
-      <Screen
-        bottomHeight={active ? 54 : 118}
-        bottom={
-          <>
-            {/* N4: pas Jeda tamu bisa foto buat kolase (BT03 asli menyusul di F3). */}
-            {!active && (
-              <Button href={`/t/${token}/foto`} icon={<Camera />}>
-                Foto buat kolase
-              </Button>
-            )}
-            <Button variant="secondary" href={`/t/${token}`} icon={<Key />}>
-              Lihat tiket
-            </Button>
-          </>
-        }
-      >
-        <ScreenHeader
-          eyebrow={`${event.name} · hai, ${firstName(guest.name)}`}
-          title={active ? active.title : "Lagi jeda"}
-          trailing={
-            active ? (
-              <Badge tone="live" pulse>
-                Sesi
-              </Badge>
-            ) : (
-              <Badge tone="neutral">Jeda</Badge>
-            )
-          }
-        />
-        {active ? (
-          <HeroState icon={<Play size={30} />} title={`${active.startsAt}–${active.endsAt}`}>
-            Sesi lagi jalan. Layar sesi lengkap (pertanyaan, titik tur) menyusul di F3/F4.
-          </HeroState>
-        ) : (
-          <HeroState
-            icon={<Coffee size={30} />}
-            title={next ? `Berikutnya: ${next.title}` : "Santai dulu"}
-          >
-            {next
-              ? `Mulai sekitar ${next.startsAt}. Layar ini pindah sendiri pas panitia mulai sesi.`
-              : "Nikmati open space. Layar ini pindah sendiri pas panitia mulai sesi."}
-          </HeroState>
-        )}
-      </Screen>
-      <LiveRefresh token={token} />
+      <AcaraScreen
+        token={token}
+        view={view}
+        serverNow={now.toISOString()}
+        initialSheet={sheetFrom(q.sheet, q.sesi)}
+      />
       <PhotoOutbox token={token} />
       <RegisterOffline />
     </>

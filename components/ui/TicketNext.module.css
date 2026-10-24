@@ -1,0 +1,125 @@
+.card {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  border-radius: 20px;
+  background: var(--accent-soft);
+  color: var(--label);
+  font: inherit;
+  text-align: left;
+}
+
+button.card {
+  cursor: pointer;
+}
+
+.count {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+  padding: 16px 14px 16px 18px;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  white-space: nowrap;
+}
+
+.value {
+  font-size: 40px;
+  line-height: 44px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Countdown habis: "Sebentar lagi" 17 Semibold. */
+.soon {
+  font-size: 17px;
+  line-height: 22px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+.tear {
+  position: relative;
+  flex-shrink: 0;
+  width: 2px;
+}
+
+.tear::before {
+  content: "";
+  position: absolute;
+  top: 12px;
+  bottom: 12px;
+  left: 0;
+  border-left: 1.5px dashed var(--accent);
+}
+
+.notchTop,
+.notchBottom {
+  position: absolute;
+  left: -8px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--card);
+}
+
+.notchTop {
+  top: -9px;
+}
+
+.notchBottom {
+  bottom: -9px;
+}
+
+.info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 14px 16px;
+}
+
+.eyebrow {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--accent-text);
+  text-transform: uppercase;
+}
+
+.speaker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.speaker > :last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.avatar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--card);
+  font-size: 8px;
+  font-weight: 500;
+}

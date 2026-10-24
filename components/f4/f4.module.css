@@ -1,0 +1,477 @@
+/* F4 · layar acara tamu (Figma C18 4899:12734, ukuran full 390×844). */
+
+.screen {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: var(--screen-width);
+  min-height: 100dvh;
+  margin: 0 auto;
+  background: var(--card);
+}
+
+/* Ilustrasi full-bleed: tinggi = sisa layar di atas panel + 32 (panel menimpa 32). Minimal 160
+   (HP pendek: halaman scroll, panel tetap utuh). */
+.art {
+  position: relative;
+  flex: 1 0 auto;
+  min-height: 160px;
+  margin-bottom: -32px;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.artImg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Fade 110 dari ilustrasi ke warna panel (token, ikut dark mode). */
+.fade {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 110px;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    color-mix(in srgb, var(--card) 55%, transparent) 55%,
+    var(--card)
+  );
+}
+
+.panel {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px 20px calc(env(safe-area-inset-bottom) + 34px);
+  border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+}
+
+/* FAB "Foto buat kolase" = Button primary icon-only 54, kanan atas panel. */
+.fab {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 1;
+}
+
+/* Header kasih ruang kanan 64 supaya judul panjang turun baris, bukan masuk ke bawah FAB. */
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.header > .status,
+.header > .titleBtn,
+.header > h1 {
+  max-width: calc(100% - 64px);
+}
+
+.status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.titleBtn {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.titleBtn h1 {
+  margin: 0;
+}
+
+.header h1 {
+  margin: 0;
+}
+
+.header p {
+  margin: 0;
+}
+
+/* Kartu pembicara (BT21) → BT21p. */
+.speaker {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px;
+  border: 0;
+  border-radius: 20px;
+  background: var(--card-2);
+  color: var(--label);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.speakerAvatar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 22px;
+  background: var(--accent);
+  color: var(--card);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.speakerText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.speakerText > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.eyebrow {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.speakerGo {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 16px;
+  background: var(--card);
+  color: var(--label);
+}
+
+/* Jeda terakhir: kartu tiket diganti 1 baris. */
+.finale {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 20px;
+  background: var(--card-2);
+}
+
+.shortcuts {
+  display: flex;
+  gap: 8px;
+}
+
+.tile {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 12px 0;
+  border: 0;
+  border-radius: 16px;
+  background: var(--card-2);
+  color: var(--label);
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.tile:active {
+  transform: scale(var(--press-scale));
+}
+
+/* Tanya disorot cuma pas Talkshow jalan; selain itu redup & nggak bisa di-tap. */
+.tileHot {
+  background: var(--accent-soft);
+}
+
+.tileOff {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.tileOff:active {
+  transform: none;
+}
+
+/* ---- Sheet (BT22 / BT21p / BT04 / BT05) ---- */
+.sheet {
+  align-items: stretch;
+  gap: 16px;
+  padding-top: 12px;
+}
+
+.sheet > :first-child {
+  align-self: center;
+}
+
+.sheetHead {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sheetHead p,
+.sheetTitle,
+.profile p {
+  margin: 0;
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.no {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 18px;
+  background: var(--card-2);
+  color: var(--label-2);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.no[data-state="berlangsung"],
+.no[data-state="berikutnya"] {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+
+.profile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.profileAvatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 88px;
+  height: 88px;
+  margin-bottom: 4px;
+  border-radius: 44px;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-size: 24px;
+  font-weight: 500;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* BT05 · sheet tinggi (top 187 di 844). */
+.tamu {
+  min-height: calc(100dvh - 187px);
+  gap: 14px;
+  border-radius: 28px 28px 0 0;
+}
+
+.search {
+  width: 100%;
+}
+
+.rowHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.link {
+  color: var(--accent-text);
+  text-decoration: none;
+}
+
+/* Kartu kamu: tiket gelap (--cta), takik kiri-kanan di garis sobek, logo mark samar miring 14°. */
+.myCard {
+  position: relative;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 20px;
+  background: var(--cta);
+  color: var(--on-cta);
+  box-shadow: var(--shadow-card);
+}
+
+.myHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px 10px;
+}
+
+.myEyebrow {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.72;
+}
+
+.myNo {
+  color: var(--accent);
+}
+
+.myTear {
+  display: block;
+  margin: 0 14px;
+  border-top: 1.5px dashed color-mix(in srgb, var(--on-cta) 40%, transparent);
+}
+
+.myBody {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 18px 18px;
+}
+
+.myTop {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.myAvatar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border: 3px solid var(--accent);
+  border-radius: 28px;
+  background: var(--card);
+  color: var(--accent-text);
+  font-size: 17px;
+  font-weight: 500;
+}
+
+.myName {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.myName > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.myName > span:last-child {
+  opacity: 0.72;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chips li {
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--on-cta) 14%, transparent);
+}
+
+.myLogo {
+  position: absolute;
+  top: 108px;
+  right: -4px;
+  opacity: 0.08;
+  transform: rotate(14deg);
+  filter: brightness(0) invert(1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .myLogo {
+    filter: brightness(0);
+  }
+}
+
+:root[data-theme="dark"] .myLogo {
+  filter: brightness(0);
+}
+
+.myNotch {
+  position: absolute;
+  top: 33px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--card);
+}
+
+.myNotchL {
+  left: -8px;
+}
+
+.myNotchR {
+  right: -8px;
+}
+
+/* Carousel kartu tamu: geser horizontal, keluar sampai tepi sheet. */
+.carousel {
+  display: flex;
+  gap: 10px;
+  margin: 0 -20px;
+  padding: 0 20px 4px;
+  overflow-x: auto;
+  scroll-padding: 0 20px;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.empty {
+  margin: 0;
+  padding: 24px 0;
+  text-align: center;
+}
