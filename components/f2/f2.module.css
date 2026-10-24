@@ -231,16 +231,37 @@
   gap: 8px;
 }
 
+.stopwatchWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 6px;
+}
+
+.stopwatchWrap > p {
+  margin: 0;
+}
+
 .stopwatch {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 6px;
   color: var(--label);
 }
 
 .stopwatchIdle {
   color: var(--label-3);
+}
+
+/* F3 · BP02c: stopwatch lewat durasi → merah + "Lewat 2 mnt dari jadwal (14.00)". */
+.stopwatchOver,
+.overdue {
+  color: var(--danger-text);
+}
+
+/* F3 · BP01: jeda lewat jam mulai sesi berikutnya. */
+.lateStart {
+  color: var(--crew-text);
 }
 
 .stats {

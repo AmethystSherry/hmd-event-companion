@@ -37,6 +37,10 @@ Web app mobile untuk House Moving Day Potara Studio (Minggu 8 Nov 2026, 13.00–
   di `rekap/`. Semua layar F5 menunggu review.
   12 keputusan F5-deliverables dijawab pakai rekomendasi — lihat "Aturan F5 di kode". Ringkasan
   Claude butuh `ANTHROPIC_API_KEY` di Vercel (tanpa key → P11b).
+- **F3 + F4 · Selama acara (25 Okt)**: Figma band `4668:4730`, full-size C18 `4899:12734`,
+  `F3-F4-deliverables.md` v2. Layar tamu `acara/` dibangun (BT20/21/23/24 · BT03 · sheet BT22/BT21p/
+  BT04/BT05 · S01); Kontrol acara dapat BP01 jeda, BP02c, pengingat lewat jam mulai, BP02d. Keputusan
+  1–12 pakai default kecuali K3/K8/K10 (lihat "Aturan F3 + F4 di kode"). Menunggu review.
 
 ## Sumber kebenaran
 - **Figma** `xYZlQ3GjRHHtYcod8rTIZJ`, page DOKSLI SAPI → section "Screen Flow · All Case" → frame
@@ -66,8 +70,9 @@ Web app mobile untuk House Moving Day Potara Studio (Minggu 8 Nov 2026, 13.00–
 app/
   layout.tsx · page.tsx   root layout (font, noindex) · beranda sementara
   (tamu)/t/[token]/       T01/T01e/T02b/T03/T03h · konfirmasi/ (T02/T02c/T02d) · kalender/ (.ics) ·
-                          acara/ (layar Sesi/Jeda, placeholder F3/F4) · foto/ (N4 BT06–BT07c) ·
-                          selesai/ (F5 BT12) · buku-tamu/ (T14*) · kolase/ (T15*, T14d)
+                          acara/ (F4 Sesi/Jeda + sheet) · foto/ (N4 BT06–BT07c) ·
+                          selesai/ (F5 BT12) · buku-tamu/ (T14*) · kolase/ (T15*, T14d) ·
+                          galeri/ (BT07d) · tanya/ (N1) · kartu/ (T11) = placeholder
   panitia/                P01 + PE01/PE02 · actions.ts (semua server action panitia)
     event/[id]/           PE03/PE03b (+ sheet PE03e/PE03h) · rundown/ (PE04k/PE04/PE04a) ·
                           tamu/ (P04k/P04a/P04c/P04/P04b/d/e/f) · kontrol/ (BP00/BP00a/BP00b +
@@ -84,6 +89,8 @@ app/
   dev/states/f1/          27 layar F1 dengan data contoh + alat uji (link tamu, CSV dummy, reset)
   dev/states/f2/          13 layar F2 + alat uji (jam pura-pura hari-H, data 12 hadir, reset check-in)
   dev/states/n4/          7 layar N4 + alat uji (check-in semua, 30 foto dummy, hapus semua foto)
+  dev/states/f4/          20 layar F3+F4 (tamu + panitia) + alat uji (jam 13.48/14.03, mulai/selesai sesi
+                          sebagai "HP LAIN" → BP02d, isi kartu BT05)
   dev/states/f5/          17 layar F5 (tamu + panitia) + alat uji (foto dummy, selesaikan semua sesi, tutup/buka
                           lagi, 15 feedback dummy, ringkasan sekarang, reset feedback, loncat ke 8 Des,
                           link tamu udah/belum masuk)
@@ -95,12 +102,16 @@ components/f2/            tamu.tsx (T05/T05a/BT02/T03b) · Kontrol (BP00 + dialo
                           Placeholder (Foto/Tanya)
 components/n4/            KolaseApp (BT06/BT06b/BT07/BT07b/BT07c) · useCamera · capture (crop+kompres) ·
                           usePhotoOutbox (kirim + antrean) · PhotoOutbox (antrean di layar acara)
+components/f4/            AcaraScreen (BT20–24/BT03/S01, sheet lewat ?sheet=) · Sheets (BT22/BT21p/BT04/BT05) ·
+                          Placeholder (Galeri/Tanya/Kartu)
 components/f5/            Selesai (BT12 + belum masuk) · BukuTamu (T14/b/c) · KolaseKulkas (T15/T15c/
                           T15d/T14d) · FotoDetail (T15b) · kolaseCanvas (gambar 9:16) · saveImage ·
                           Rekap (P11/P11b/P11c/P11d)
-components/               LiveRefresh (SSE → router.refresh) · RefreshAt · TicketQr · RegisterOffline
+components/               LiveRefresh (SSE → router.refresh, `pollMs`, `onHealth`) · useServerNow · RefreshAt ·
+                          TicketQr · RegisterOffline
 components/icons.ts       ekspor ikon Phosphor (/ssr)
-lib/data/                 tipe, store (logika murni + tes), seed, getStore() (file .data/)
+lib/data/                 tipe, store (logika murni + tes), seed, sessionInfo (info sesi F4 + lengkapi store
+                          lama), getStore() (file .data/)
 lib/server/               env, HMAC (QR & cookie sesi), rate-limit PIN, akses crew/tamu, origin,
                           clock (hari-H + jam palsu dev), door (manifest & terapkan op check-in),
                           photos (file foto: Supabase Storage / .data/photos) · photoResponse ·
@@ -109,7 +120,8 @@ lib/                      csv (+ CSV buku tamu) · feedback (aturan buku tamu, t
                           kolase (masonry, tata letak 9:16, filter, foto → KolasePhoto) ·
                           format · invite · confirm · ics · view · fixtures · clipboard · cx ·
                           door (logika pintu tanpa secret, jalan di HP) · offline/doorDb (IndexedDB) ·
-                          rundown (status sesi + stopwatch dari state acara) · photo (crop, batas,
+                          rundown (status sesi + stopwatch, lewat jadwal, countdown) · acara (data layar
+                          tamu F4 + BT05) · device (label HP panitia) · photo (crop, batas,
                           kemiringan, URL foto) · offline/photoDb (antrean foto IndexedDB)
 public/                   figma/ · sw.js (tiket & layar pintu offline) · contoh-tamu.csv · dev/*.csv
 next.config.ts            header X-Robots-Tag noindex, allowedDevOrigins (HP di LAN)
@@ -169,7 +181,7 @@ Keputusan default 22 Okt (jawaban "Keputusan & asumsi" di F2-deliverables; prd.m
   → T05a (sobek ±900 ms) → BT02 (3 dtk, sekali per tiket via localStorage) → T03b. HP tamu offline →
   refresh saat `online`/tab terlihat lagi. Dibuka > 10 menit setelah masuk → langsung T03b.
 - Kamera butuh HTTPS di HP (`npx next dev --experimental-https`); gagal/ditolak → P07b.
-- Store dev ada di `globalThis.__hmdStoreF5`: naikkan kuncinya tiap method store bertambah (server
+- Store dev ada di `globalThis.__hmdStoreF34`: naikkan kuncinya tiap method store bertambah (server
   dev yang sedang jalan nggak membuat ulang instance lama saat HMR). Server dev yang sudah jalan
   bisa tetap memakai modul server lama (mis. `store.getPhoto is not a function`) → restart `npm run dev`.
 
@@ -277,6 +289,60 @@ Keputusan 24 Okt (rekomendasi atas "Keputusan & asumsi" + "Temuan" di F5-deliver
     CSV = `<form method=get>` ke `rekap.csv` (`rekap-buku-tamu-hmd.csv`); 0 jawaban / dihapus →
     nonaktif. Komponen baru `BarList` (bar teratas Ink).
 
+## Aturan F3 + F4 di kode
+Keputusan 25 Okt (default "Keputusan & asumsi" F3-F4-deliverables, kecuali K3/K8/K10 = usulan):
+1. **Satu route** `/t/[token]/acara` → `components/f4/AcaraScreen`: SESI kalau ada sesi jalan, selain
+   itu JEDA (termasuk sebelum sesi 1 = Berikutnya Open space, "0 dari 4 selesai", dan **jeda terakhir**
+   = 1 baris "Semua sesi udah selesai…" + 4 ✓). Data layar = `acaraView` (`lib/acara.ts`, murni,
+   bisa diserialisasi). Sheet BT22/BT21p/BT04/BT05 dibuka lewat `pushState ?sheet=detail|pembicara|
+   rundown|tamu (&sesi=)`; back HP menutup; reload membuka sheet yang sama (searchParams → `initialSheet`).
+2. **Data sesi** baru (opsional di `Session`): `room`, `roomNote`, `description`, `speaker {name, ig,
+   label}`, `topic`, `art`. Diisi seed (`lib/data/sessionInfo.ts`); form PE04 belum bisa mengubah.
+3. **K3 · seed ikut Figma**: "Open space", tagline Talkshow "Bareng Alfin Ganteng", PIC Closing "MC".
+   Store lama (`.data/` / Supabase) dilengkapi saat dimuat (`backfillSessionInfo` di `createStore`,
+   tanpa commit/rev): field kosong diisi, nilai seed lama yang **persis sama** diganti, ubahan panitia
+   tetap. Idempoten.
+4. Ilustrasi `public/figma/f3-{open-space,talkshow,office-tour,closing,break,weak-signal}.webp`
+   (raw image layer C18, 1179×1650, webp 88, 67–91 KB). Dari `Session.art`; kosong → talkshow untuk
+   `type: talkshow`, lainnya open-space. JEDA = break, JEDA offline = weak-signal. Tinggi ilustrasi =
+   sisa layar di atas panel + 32 (flex, min 160; HP pendek = halaman scroll).
+5. **Countdown** kartu tiket Berikutnya: menit ke jam mulai **terjadwal** dibulatkan ke atas, tick
+   15 dtk dari jam server (`useServerNow`). ≤ 0 → "Sebentar lagi · mulai"; > 99 mnt → "{j} jam · lagi".
+6. **Tanya** aktif (accent-soft) cuma saat sesi `type: talkshow` jalan → `/t/[token]/tanya`
+   (placeholder N1); selain itu opacity 0,4 + `aria-disabled`, tap diam.
+7. Galeri → `/t/[token]/galeri` (placeholder BT07d). FAB = `Button` primary icon-only 54 (bukan
+   komponen baru) → `/t/[token]/foto` di Sesi & Jeda.
+8. **K8 · BT05 Tamu di sini**: cuma tamu RSVP hadir **atau** udah check-in. Data ke HP tamu: nama, IG,
+   `Guest.card {role, askAbout ≤ 3}`, udah datang + jam datang — **tanpa WA, token, nomor kunci**
+   (kecuali kartu sendiri). Urut: baru datang di depan, belum datang paling belakang (nama). Cari =
+   filter lokal nama/@ig. "Ubah" → `/t/[token]/kartu` (placeholder T11). `setGuestCard` di store
+   (sekarang cuma dari /dev/states/f4).
+9. BT22 durasi: jalan "60 mnt · udah jalan 12 mnt", selesai "Selesai · 62 mnt", belum "45 mnt";
+   deskripsi kosong → topik. BT04 subjudul: Selesai · "Lagi jalan · {ruang}" · "Berikutnya ·
+   {pembicara ?? ruang}" · ruang. Tap baris rundown → BT22 sesi itu.
+10. **K10 · konflik 2 HP**: aksi **sama** dari dua HP = HP pertama menang (store tetap idempoten,
+    stopwatch nggak ke-reset); aksi **beda** dijalankan berurutan (yang terakhir menang). `Event.stateBy`
+    (label HP, `lib/device.ts`, sama dengan `checkedInBy`) + `stateAction {kind: mulai|selesai|tutup,
+    sessionId}`. Server action `startSession/finishSession/closeEvent(eventId, …, by)` → `StateResult
+    {changed, by, action}`. HP panitia: `stateUpdatedAt` berubah & `stateBy` ≠ label sendiri → toast
+    BP02d (TopToast ±4 dtk) + dialog/sheet yang kebuka ditutup; aksi no-op karena HP lain duluan →
+    toast juga. Copy: "HP 7K2Q udah mulai Open space duluan. Layarmu ikut update."
+11. **BP02c**: stopwatch & baris "Lewat {m} mnt dari jadwal ({jam selesai})" `--danger-text` saat
+    elapsed > durasi (m = dibulatkan ke bawah, min 1; nggak maksa selesai). **Pengingat** di kartu
+    Berikutnya: jam server > jam mulai → "{sesi} harusnya mulai {jam}" `--crew-text`. BP01: header
+    carousel "Lagi jeda · layar tamu nunggu sesi n", Badge crew "Berikutnya", rundown "Selesai · 62 mnt".
+    BP01b: "Layar semua tamu langsung pindah dari Jeda ke {sesi}, stopwatch mulai jalan." (ada sesi lain
+    jalan → diawali "{sesi} yang lagi jalan ikut selesai."). Rundown sesi selesai tetap ikon ✓ (F5 no. 17).
+12. **S01 / realtime**: `LiveRefresh pollMs={2000}` di `acara/` & `kontrol/` (remote ≤ 3 dtk). Offline =
+    `offline` event / `navigator.onLine` false, atau SSE/poll gagal 2× berturut (`onHealth`); balik
+    online → cek `?once=1` → toast hilang. "Info sesi terakhir {jam}" = `loadedAt` (jam server saat data
+    dimuat). Layar menyimpan snapshot `hmd-acara:{token}` + selisih jam `hmd-acara-skew` di
+    localStorage; HTML dari cache SW yang lebih lama (rev lebih kecil) → pakai snapshot. Keenam
+    ilustrasi di-fetch 1,5 dtk setelah layar dibuka (SW cache-first `/figma/`). SW cache `hmd-v4`.
+- Komponen baru: `TopToast` (S01, BP02d), `JejakAcara` (4 stempel), `TicketNext` (kartu tiket
+  Berikutnya), `GuestCard` (BT05). Kartu kamu (tiket gelap `--cta`) di `components/f4/Sheets`.
+- Server action dari browser pane Claude ditolak Next (origin `null`) → uji tombol dev di browser biasa.
+
 ## Design system (Clean v0.5)
 - Token: `app/tokens.css` — warna semantik light (utama) + dark (`prefers-color-scheme`, atau paksa
   dengan `data-theme="light|dark"` di `html` atau elemen mana pun), radius, spacing, shadow, motion,
@@ -287,8 +353,8 @@ Keputusan 24 Okt (rekomendasi atas "Keputusan & asumsi" + "Temuan" di F5-deliver
   Card/CardLabel/InnerBox, StatTile, ListRow/Avatar, Banner/TextAction, HeroState, Field, Toast
   (undo ring), Sheet (bawah / `floating`), TabBar, Ticket (+`torn`)/TicketStub, LogoMark,
   Screen/ScreenHeader/Skeleton, SearchField, Dialog (konfirmasi tengah layar, BP00a/BP00b),
-  StarRating (T14), Masonry + PhotoPin (T15, nanti galeri panitia), BarList (P11). `TextAction`
-  bisa `href`.
+  StarRating (T14), Masonry + PhotoPin (T15, nanti galeri panitia), BarList (P11), TopToast (S01,
+  BP02d), JejakAcara · TicketNext (BT03) · GuestCard (BT05). `TextAction` bisa `href`.
 - **Button** (`Clean/Button` 4587:316, 12 varian): `size` `lg` (54, lebar penuh) | `sm` (36, lebar
   hug, area tap 44) × `variant` `primary` | `secondary` | `destructive` × `iconOnly` (+ `label` wajib
   untuk aria-label). Aturan pakai:
@@ -349,4 +415,6 @@ menghapus data per orang di store lokal → balikin lewat `/dev/states/f1` Reset
       menunggu review & bucket Supabase
 - [x] F5 (24 Okt) — tutup acara, buku tamu, kolase 9:16, rekap + ringkasan Claude, CSV, hapus H+30;
       16 layar (BT12, T14*, T15*, BP04/BP04b, P11*) — menunggu review & `ANTHROPIC_API_KEY` di Vercel
-- [ ] F3, F4, N1–N3 — berikutnya (versi lama: tag `archive-pre-revisi`)
+- [x] F3 + F4 (25 Okt) — layar acara tamu Sesi/Jeda (13 layar/kasus) + Kontrol acara BP01/BP02c/
+      BP02d, ilustrasi, offline S01 — menunggu review
+- [ ] N1–N3, BT07d galeri — berikutnya (versi lama: tag `archive-pre-revisi`)

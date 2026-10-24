@@ -13,6 +13,7 @@ import {
   Timer,
   Users,
 } from "@/components/icons";
+import { useServerNow } from "@/components/useServerNow";
 import {
   Avatar,
   Badge,
@@ -26,19 +27,43 @@ import {
   Sheet,
   StatTile,
   Toast,
+  TopToast,
 } from "@/components/ui";
-import type { FormResult } from "@/app/panitia/actions";
-import type { Event } from "@/lib/data/types";
+import type { StateResult } from "@/app/panitia/actions";
+import type { Event, StateAction } from "@/lib/data/types";
 import { cx } from "@/lib/cx";
+import { deviceLabel } from "@/lib/device";
 import { dateLong, hms, msLabel, timeWib } from "@/lib/format";
-import { elapsedMs, type RundownView, type SessionView } from "@/lib/rundown";
+import {
+  actualMin,
+  elapsedMs,
+  lateToStart,
+  overdueMin,
+  type RundownView,
+  type SessionView,
+} from "@/lib/rundown";
 import s from "./f2.module.css";
 
-// BP00 · Kontrol acara (home hari-H panitia, Figma 4897:6694): carousel kartu sesi dengan
-// stopwatch + Mulai/Selesaikan (dialog BP00b/BP00a), stat, rundown, "Scan tiket" di bawah.
-// Stopwatch dihitung dari startedAt server + jam server (HP cuma memutar detiknya).
+// BP00 · Kontrol acara (home hari-H panitia, Figma 4897:6694; F3: BP02 sesi berjalan · BP01 jeda):
+// carousel kartu sesi dengan stopwatch + Mulai/Selesaikan (dialog BP01b/BP03, di kode BP00b/BP00a),
+// stat, rundown, "Scan tiket" di bawah. Stopwatch dihitung dari startedAt server + jam server (HP
+// cuma memutar detiknya). F3: waktu lewat (BP02c), pengingat lewat jam mulai, toast BP02d kalau
+// state diubah HP panitia lain.
 
-type SessionAction = (eventId: string, sessionId: string) => Promise<FormResult>;
+type SessionAction = (
+  eventId: string,
+  sessionId: string,
+  by: string | null,
+) => Promise<StateResult>;
+
+// Siapa yang terakhir mengubah state acara (Event.stateBy/stateAction) → BP02d.
+export type KontrolState = {
+  updatedAt: string | null;
+  by: string | null;
+  action: StateAction | null;
+};
+
+const BP02D_MS = 4000;
 type Confirm = { kind: "finish" | "start"; session: SessionView };
 
 // F5: penutupan acara. canClose = nggak ada sesi jalan & sesi terakhir selesai (BP04).
@@ -48,19 +73,6 @@ export type KontrolFinale = {
   lastEndedAt: string | null; // "Closing selesai {jam}"
   feedback: { respondents: number; expected: number }; // "Mengisi x/n" setelah ditutup
 };
-
-// Jam server yang ikut berjalan: selisih jam HP ↔ server diambil sekali saat render.
-function useServerNow(serverNow: string, frozen?: boolean): number {
-  const base = new Date(serverNow).getTime();
-  const [now, setNow] = useState(base);
-  useEffect(() => {
-    if (frozen) return;
-    const skew = base - Date.now();
-    const t = setInterval(() => setNow(Date.now() + skew), 1000);
-    return () => clearInterval(t);
-  }, [base, frozen]);
-  return now;
-}
 
 export function KontrolScreen({
   event,
@@ -78,6 +90,8 @@ export function KontrolScreen({
   finale,
   close,
   initialCloseSheet,
+  state,
+  initialConflict,
 }: {
   event: Pick<Event, "id" | "name" | "date">;
   rundown: RundownView;
@@ -92,16 +106,52 @@ export function KontrolScreen({
   initialConfirm?: Confirm;
   frozen?: boolean;
   finale?: KontrolFinale;
-  close?: (eventId: string) => Promise<FormResult>; // F5 BP04b; kosong = pratinjau
+  close?: (eventId: string, by: string | null) => Promise<StateResult>; // F5 BP04b
   initialCloseSheet?: boolean;
+  state?: KontrolState; // F3 BP02d
+  initialConflict?: string; // pratinjau BP02d (/dev/states/f4)
 }) {
   const base = `/panitia/event/${event.id}`;
-  const now = useServerNow(serverNow, frozen);
+  const now = useServerNow(serverNow, { frozen });
   const [confirm, setConfirm] = useState<Confirm | null>(initialConfirm ?? null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [closeSheet, setCloseSheet] = useState(!!initialCloseSheet);
+  const [conflict, setConflict] = useState<string | null>(initialConflict ?? null);
   const { sessions, active } = rundown;
+
+  // BP02d "HP 7K2Q udah mulai Open space duluan. Layarmu ikut update."
+  const conflictText = (by: string, action: StateAction | null) => {
+    const title = sessions.find((x) => x.id === action?.sessionId)?.title ?? "sesi";
+    if (action?.kind === "tutup") return `${by} udah tutup acara duluan. Layarmu ikut update.`;
+    const verb = action?.kind === "selesai" ? "selesaikan" : "mulai";
+    return `${by} udah ${verb} ${title} duluan. Layarmu ikut update.`;
+  };
+
+  // State acara diubah HP panitia lain (rev → SSE → refresh) → toast BP02d, dialog yang kebuka
+  // ditutup. Perubahan dari HP ini sendiri (label sama) diam saja. Disesuaikan saat render
+  // (state acara = props baru dari router.refresh), bukan di effect.
+  const stateAt = state?.updatedAt ?? null;
+  const [seenAt, setSeenAt] = useState(stateAt);
+  if (stateAt !== seenAt) {
+    setSeenAt(stateAt);
+    if (state?.by && state.by !== deviceLabel()) {
+      setConflict(conflictText(state.by, state.action));
+      setConfirm(null);
+      setCloseSheet(false);
+    }
+  }
+  useEffect(() => {
+    if (!conflict || initialConflict) return;
+    const t = setTimeout(() => setConflict(null), BP02D_MS);
+    return () => clearTimeout(t);
+  }, [conflict, initialConflict]);
+
+  // Hasil aksi: no-op karena HP lain udah duluan → toast BP02d juga.
+  const settle = (r: StateResult) => {
+    if (!r.ok) return setError(r.error);
+    if (!r.changed && r.by && r.by !== deviceLabel()) setConflict(conflictText(r.by, r.action));
+  };
   const done = sessions.filter((x) => x.state === "selesai").length;
   const closedAt = finale?.closedAt ?? null;
 
@@ -109,9 +159,9 @@ export function KontrolScreen({
   const runClose = () => {
     if (!close) return setCloseSheet(false);
     startTransition(async () => {
-      const r = await close(event.id);
+      const r = await close(event.id, deviceLabel());
       setCloseSheet(false);
-      if (!r.ok) setError(r.error);
+      settle(r);
     });
   };
 
@@ -120,9 +170,9 @@ export function KontrolScreen({
     const action = confirm.kind === "start" ? start : finish;
     if (!action) return setConfirm(null);
     startTransition(async () => {
-      const r = await action(event.id, confirm.session.id);
+      const r = await action(event.id, confirm.session.id, deviceLabel());
       setConfirm(null);
-      if (!r.ok) setError(r.error);
+      settle(r);
     });
   };
 
@@ -167,6 +217,8 @@ export function KontrolScreen({
             sessions={sessions}
             focusIndex={finale?.canClose ? sessions.length : rundown.focusIndex}
             now={now}
+            date={event.date}
+            waitingFor={!active && rundown.next ? rundown.next.no : null}
             disabled={!eventDay || pending}
             onAction={(session) =>
               setConfirm({ kind: session.state === "berlangsung" ? "finish" : "start", session })
@@ -260,7 +312,9 @@ export function KontrolScreen({
               title={x.title}
               subtitle={
                 x.state === "selesai"
-                  ? "Selesai"
+                  ? actualMin(x) !== null
+                    ? `Selesai · ${actualMin(x)} mnt`
+                    : "Selesai"
                   : x.state === "berlangsung"
                     ? `Lagi jalan · ${msLabel(elapsedMs(x, now))}`
                     : x.state === "berikutnya"
@@ -295,7 +349,9 @@ export function KontrolScreen({
         {confirm?.kind === "finish"
           ? `Udah jalan ${hms(elapsedMs(confirm.session, now))}. Layar tamu otomatis jeda sampai kamu mulai sesi berikutnya.`
           : confirm &&
-            `${active && active.id !== confirm.session.id ? `${active.title} yang lagi jalan ikut selesai. ` : ""}Layar semua tamu langsung pindah ke ${confirm.session.title}.`}
+            (active && active.id !== confirm.session.id
+              ? `${active.title} yang lagi jalan ikut selesai. Layar semua tamu langsung pindah ke ${confirm.session.title}, stopwatch mulai jalan.`
+              : `Layar semua tamu langsung pindah dari Jeda ke ${confirm.session.title}, stopwatch mulai jalan.`)}
       </Dialog>
 
       <Sheet
@@ -338,6 +394,11 @@ export function KontrolScreen({
           <Toast key={error}>{error}</Toast>
         </div>
       )}
+      {conflict && (
+        <TopToast key={conflict} icon={<Users size={20} />} title="Diubah oleh panitia lain">
+          {conflict}
+        </TopToast>
+      )}
     </Screen>
   );
 }
@@ -348,6 +409,8 @@ function SessionCarousel({
   sessions,
   focusIndex,
   now,
+  date,
+  waitingFor,
   disabled,
   onAction,
   finale,
@@ -355,6 +418,8 @@ function SessionCarousel({
   sessions: SessionView[];
   focusIndex: number;
   now: number;
+  date: string;
+  waitingFor: number | null; // BP01: mode jeda, layar tamu nunggu sesi n
   disabled: boolean;
   onAction: (session: SessionView) => void;
   finale?: ReactNode; // F5 BP04: kartu "Jeda terakhir" sesudah sesi terakhir
@@ -381,9 +446,11 @@ function SessionCarousel({
     <section aria-label="Sesi rundown" className={s.carouselWrap}>
       <div className={s.carouselHead}>
         <p className="t-label c-label-2">
-          {index < sessions.length
-            ? `Sesi ${index + 1} dari ${sessions.length}`
-            : "Setelah sesi terakhir"}
+          {waitingFor
+            ? `Lagi jeda · layar tamu nunggu sesi ${waitingFor}`
+            : index < sessions.length
+              ? `Sesi ${index + 1} dari ${sessions.length}`
+              : "Setelah sesi terakhir"}
         </p>
         <div aria-hidden className={s.dots}>
           {Array.from({ length: count }, (_, i) => (
@@ -394,6 +461,8 @@ function SessionCarousel({
       <div ref={track} className={s.carousel} onScroll={onScroll}>
         {sessions.map((x) => {
           const running = x.state === "berlangsung";
+          const over = running ? overdueMin(x, now) : null;
+          const late = x.state === "berikutnya" && lateToStart(date, x, now);
           return (
             <Card key={x.id} className={s.sessionCard} aria-label={`Sesi ${x.no}: ${x.title}`}>
               <div className={s.sessionTop}>
@@ -403,6 +472,8 @@ function SessionCarousel({
                   </Badge>
                 ) : x.state === "selesai" ? (
                   <Badge tone="success">Selesai</Badge>
+                ) : x.state === "berikutnya" ? (
+                  <Badge tone="crew">Berikutnya</Badge>
                 ) : (
                   <Badge tone="neutral">Belum mulai</Badge>
                 )}
@@ -411,10 +482,30 @@ function SessionCarousel({
                 </span>
               </div>
               <p className="t-card-title">{x.title}</p>
-              <p className={cx(s.stopwatch, !x.startedAt && s.stopwatchIdle)}>
-                <Timer size={22} />
-                <span className="t-number-l tabular">{hms(elapsedMs(x, now))}</span>
-              </p>
+              <div className={s.stopwatchWrap}>
+                <p
+                  className={cx(
+                    s.stopwatch,
+                    !x.startedAt && s.stopwatchIdle,
+                    over !== null && s.stopwatchOver,
+                  )}
+                >
+                  <Timer size={22} />
+                  <span className="t-number-l tabular">{hms(elapsedMs(x, now))}</span>
+                </p>
+                {/* BP02c · stopwatch > durasi */}
+                {over !== null && (
+                  <p className={cx("t-caption", s.overdue)}>
+                    Lewat {over} mnt dari jadwal ({x.endsAt})
+                  </p>
+                )}
+                {/* BP01 · jeda lewat jam mulai sesi berikutnya */}
+                {late && (
+                  <p className={cx("t-caption", s.lateStart)}>
+                    {x.title} harusnya mulai {x.startsAt}
+                  </p>
+                )}
+              </div>
               {running ? (
                 <Button
                   variant="secondary"
