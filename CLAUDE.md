@@ -35,9 +35,13 @@ Web app mobile untuk House Moving Day Potara Studio (Minggu 8 Nov 2026, 13.00–
 - CSS biasa + CSS Modules + CSS variables (tanpa Tailwind) supaya nilai piksel Figma bisa persis.
 - Font: Switzer variable self-host (`app/fonts/`, Free Font License), JetBrains Mono via `next/font`.
 - Ikon: `@phosphor-icons/react`. Tes: Vitest. Format: Prettier (printWidth 100). Lint: ESLint (config Next).
-- Rencana hosting: Vercel Hobby (gratis). Data (keputusan 22 Okt): store lokal in-memory +
-  `.data/store.json` (di-gitignore) lewat `lib/data`; nanti diganti Supabase free di balik interface
-  `DataStore` yang sama sebelum deploy (file JSON tidak persisten di Vercel).
+- Rencana hosting: Vercel Hobby (gratis). Data: lokal = in-memory + `.data/store.json`
+  (di-gitignore); kalau `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` diisi (Vercel) = Supabase free:
+  seluruh StoreData satu baris JSON `hmd_store` (skema `supabase/schema.sql`, RLS tanpa policy),
+  tulis compare-and-swap di `rev`. **Baca pakai `getStore()`, ubah wajib lewat `mutateStore(fn)`**
+  (remote: salinan `getStore()` read-only, `fn` bisa diulang saat kalah balapan — jangan ada efek
+  samping di luar store). Remote: SSE dijawab 204 → `LiveRefresh` polling `?once=1`; rate-limit
+  PIN di tabel `hmd_pin` (`attemptPin`).
 - QR tiket: `qrcode` (MIT), SVG dirender di server. Scan QR (F2): `qr-scanner` (MIT) —
   BarcodeDetector di Android Chrome, decoder Web Worker di iPhone Safari.
 

@@ -10,14 +10,14 @@ import {
   normalizeWa,
   parseGuestCsv,
 } from "@/lib/csv";
-import { getStore, StoreError, type SessionType } from "@/lib/data";
+import { mutateStore, StoreError, type DataStore, type SessionType } from "@/lib/data";
 import type { InviteSnapshot } from "@/lib/data/store";
 import { LOCATION } from "@/lib/data/seed";
 import { DEFAULT_DM_TEMPLATE } from "@/lib/invite";
 import {
   clientKey,
   endCrewSession,
-  pinGate,
+  attemptPin,
   requireCrew,
   startCrewSession,
 } from "@/lib/server/access";
@@ -34,7 +34,7 @@ export type PinState =
 
 // P01 · PIN 6 digit, 5× salah → kunci 5 menit (P01b / P01c).
 export async function loginWithPin(pin: string): Promise<PinState> {
-  const res = pinGate().attempt(await clientKey(), String(pin), secrets().eventPin);
+  const res = await attemptPin(await clientKey(), String(pin), secrets().eventPin);
   if (res.kind === "ok") {
     await startCrewSession();
     refresh();
@@ -64,10 +64,9 @@ export async function createEvent(input: { name: string; date: string }): Promis
   await requireCrew();
   const r = cleanEvent(input);
   if (!r.ok) return r;
-  const e = (await getStore()).createEvent(r.value, {
-    dmTemplate: DEFAULT_DM_TEMPLATE,
-    location: LOCATION,
-  });
+  const e = await mutateStore((store) =>
+    store.createEvent(r.value, { dmTemplate: DEFAULT_DM_TEMPLATE, location: LOCATION }),
+  );
   refresh();
   return { ok: true, id: e.id };
 }
@@ -80,7 +79,7 @@ export async function updateEvent(
   await requireCrew();
   const r = cleanEvent(input);
   if (!r.ok) return r;
-  (await getStore()).updateEvent(eventId, r.value);
+  await mutateStore((store) => store.updateEvent(eventId, r.value));
   refresh();
   return { ok: true };
 }
@@ -88,7 +87,7 @@ export async function updateEvent(
 // PE03h · hapus event berantai, lalu kembali ke Event kamu (PE01 / PE01a).
 export async function deleteEvent(eventId: string): Promise<void> {
   await requireCrew();
-  (await getStore()).deleteEvent(eventId);
+  await mutateStore((store) => store.deleteEvent(eventId));
   redirect("/panitia");
 }
 
@@ -129,16 +128,16 @@ export async function saveSession(
   await requireCrew();
   const r = cleanSession(input);
   if (!r.value) return { ok: false, error: r.error!, field: r.field };
-  const store = await getStore();
-  if (sessionId) store.updateSession(sessionId, r.value);
-  else store.addSession(eventId, r.value);
+  await mutateStore((store) =>
+    sessionId ? store.updateSession(sessionId, r.value) : store.addSession(eventId, r.value),
+  );
   refresh();
   return { ok: true };
 }
 
 export async function deleteSession(sessionId: string): Promise<FormResult> {
   await requireCrew();
-  (await getStore()).deleteSession(sessionId);
+  await mutateStore((store) => store.deleteSession(sessionId));
   refresh();
   return { ok: true };
 }
@@ -156,11 +155,8 @@ export async function importGuests(
   if (!parsed.ok) return { ok: false, error: parsed.message };
   if (!parsed.valid.length) return { ok: false, error: "Belum ada baris yang aman disimpan." };
   try {
-    (await getStore()).importCsv(
-      eventId,
-      fileName.slice(0, 80),
-      parsed.valid,
-      commonMessage(parsed.valid),
+    await mutateStore((store) =>
+      store.importCsv(eventId, fileName.slice(0, 80), parsed.valid, commonMessage(parsed.valid)),
     );
   } catch (err) {
     if (err instanceof StoreError) return { ok: false, error: err.message };
@@ -183,9 +179,9 @@ function cleanGuest(input: GuestForm) {
   return { value: { name, ig, wa } };
 }
 
-async function guestOp(fn: () => void): Promise<FormResult> {
+async function guestOp(fn: (store: DataStore) => unknown): Promise<FormResult> {
   try {
-    fn();
+    await mutateStore(fn);
   } catch (err) {
     if (err instanceof StoreError)
       return { ok: false, error: err.message, field: err.code === "ig-dipakai" ? "ig" : undefined };
@@ -200,8 +196,7 @@ export async function addGuest(eventId: string, input: GuestForm): Promise<FormR
   await requireCrew();
   const r = cleanGuest(input);
   if (!r.value) return { ok: false, error: r.error!, field: r.field };
-  const store = await getStore();
-  return guestOp(() => store.addGuest(eventId, r.value));
+  return guestOp((store) => store.addGuest(eventId, r.value));
 }
 
 // P04e · ubah tamu: status undangan & jawaban tetap.
@@ -209,34 +204,32 @@ export async function updateGuest(guestId: string, input: GuestForm): Promise<Fo
   await requireCrew();
   const r = cleanGuest(input);
   if (!r.value) return { ok: false, error: r.error!, field: r.field };
-  const store = await getStore();
-  return guestOp(() => store.updateGuest(guestId, r.value));
+  return guestOp((store) => store.updateGuest(guestId, r.value));
 }
 
 export async function deleteGuest(guestId: string): Promise<FormResult> {
   await requireCrew();
-  const store = await getStore();
-  return guestOp(() => store.deleteGuest(guestId));
+  return guestOp((store) => store.deleteGuest(guestId));
 }
 
 // P04d · balik dari IG → Diundang. Mengembalikan status sebelumnya untuk "Batalkan".
 export async function markInvited(guestId: string): Promise<InviteSnapshot> {
   await requireCrew();
-  const prev = (await getStore()).markInvited(guestId);
+  const prev = await mutateStore((store) => store.markInvited(guestId));
   refresh();
   return prev;
 }
 
 export async function undoInvite(guestId: string, prev: InviteSnapshot): Promise<void> {
   await requireCrew();
-  (await getStore()).restoreInvite(guestId, prev);
+  await mutateStore((store) => store.restoreInvite(guestId, prev));
   refresh();
 }
 
 // P04b · pengingat H-1 terkirim (ditandai saat panitia balik dari WA).
 export async function markReminderSent(guestId: string): Promise<void> {
   await requireCrew();
-  (await getStore()).markReminderSent(guestId);
+  await mutateStore((store) => store.markReminderSent(guestId));
   refresh();
 }
 
@@ -244,12 +237,12 @@ export async function markReminderSent(guestId: string): Promise<void> {
 // Jam dari server (stopwatch semua HP sama). Dobel tap / dua HP → idempoten di store.
 export async function startSession(eventId: string, sessionId: string): Promise<FormResult> {
   await requireCrew();
-  const [store, now] = await Promise.all([getStore(), serverNow()]);
-  return guestOp(() => store.startSession(eventId, sessionId, now.toISOString()));
+  const now = await serverNow();
+  return guestOp((store) => store.startSession(eventId, sessionId, now.toISOString()));
 }
 
 export async function finishSession(eventId: string, sessionId: string): Promise<FormResult> {
   await requireCrew();
-  const [store, now] = await Promise.all([getStore(), serverNow()]);
-  return guestOp(() => store.finishSession(eventId, sessionId, now.toISOString()));
+  const now = await serverNow();
+  return guestOp((store) => store.finishSession(eventId, sessionId, now.toISOString()));
 }

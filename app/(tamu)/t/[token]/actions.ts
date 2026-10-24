@@ -1,6 +1,6 @@
 "use server";
 
-import { getStore, StoreError } from "@/lib/data";
+import { mutateStore, StoreError } from "@/lib/data";
 import { normalizeIg, normalizeWa } from "@/lib/csv";
 import { validateConfirm, type ConfirmInput, type ConfirmResult } from "@/lib/confirm";
 import { guestFromToken } from "@/lib/server/access";
@@ -25,13 +25,15 @@ export async function submitConfirm(token: string, input: ConfirmInput): Promise
   const ig = normalizeIg(String(input.ig ?? "")) || guest.ig;
   const wa = normalizeWa(String(input.wa ?? ""));
   try {
-    (await getStore()).setRsvp(guest.id, {
-      rsvp: input.rsvp === "hadir" ? "hadir" : "nggak",
-      name,
-      ig,
-      wa: wa ?? guest.wa,
-      followConfirmed: !!input.follow,
-    });
+    await mutateStore((store) =>
+      store.setRsvp(guest.id, {
+        rsvp: input.rsvp === "hadir" ? "hadir" : "nggak",
+        name,
+        ig,
+        wa: wa ?? guest.wa,
+        followConfirmed: !!input.follow,
+      }),
+    );
   } catch (err) {
     if (err instanceof StoreError && err.code === "ig-dipakai") {
       return { ok: false, fields: { ig: "IG ini udah dipakai tamu lain." } };

@@ -1,4 +1,4 @@
-import { getStore } from "@/lib/data";
+import { getRev, getStore, isRemoteStore } from "@/lib/data";
 import { guestFromToken, isCrew } from "@/lib/server/access";
 
 // SSE realtime: kirim `rev` store saat terhubung & tiap ada perubahan (jawaban tamu, undangan,
@@ -9,12 +9,16 @@ export async function GET(req: Request) {
   const allowed = token ? !!(await guestFromToken(token)) : await isCrew();
   if (!allowed) return new Response("unauthorized", { status: 401 });
 
-  const store = await getStore();
   // ?once=1 → `rev` saja, untuk polling cadangan kalau SSE tertahan proxy (mis. Cloudflare quick
   // tunnel tidak meneruskan SSE).
   if (new URL(req.url).searchParams.has("once")) {
-    return new Response(String(store.rev), { headers: { "Cache-Control": "no-store" } });
+    return new Response(String(await getRev()), { headers: { "Cache-Control": "no-store" } });
   }
+  // Vercel + Supabase: tiap instance punya memori sendiri, jadi SSE dari store nggak bisa dipakai.
+  // 204 = EventSource berhenti menyambung ulang → LiveRefresh beralih ke polling ?once=1.
+  if (isRemoteStore()) return new Response(null, { status: 204 });
+
+  const store = await getStore();
   const enc = new TextEncoder();
   let stop = () => {};
 

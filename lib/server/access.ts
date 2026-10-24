@@ -1,16 +1,30 @@
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
-import { getStore, type Guest } from "../data";
+import { getStore, isRemoteStore, type Guest } from "../data";
+import { loadPinEntry, savePinEntry } from "../data/supabase";
 import { secrets } from "./config";
 import { signSession, verifySession } from "./crypto";
-import { createPinGate } from "./pinGate";
+import { createPinGate, pinStep, type PinResult } from "./pinGate";
 
 export const CREW_COOKIE = "hmd_crew";
 const CREW_SESSION_MS = 24 * 60 * 60 * 1000; // 1 hari
 
 const g = globalThis as typeof globalThis & { __hmdPinGate?: ReturnType<typeof createPinGate> };
-export const pinGate = () => (g.__hmdPinGate ??= createPinGate());
+const pinGate = () => (g.__hmdPinGate ??= createPinGate());
+
+// Rate-limit PIN: lokal in-memory; remote (Vercel, banyak instance) dicatat di Supabase.
+export async function attemptPin(
+  key: string,
+  pin: string,
+  expected: string | null,
+): Promise<PinResult> {
+  if (!isRemoteStore()) return pinGate().attempt(key, pin, expected);
+  const prev = await loadPinEntry(key);
+  const { result, entry } = pinStep(prev, pin, expected, Date.now());
+  if (entry || prev) await savePinEntry(key, entry);
+  return result;
+}
 
 // Kunci rate-limit: IP klien (di belakang proxy Vercel lewat x-forwarded-for).
 export async function clientKey(): Promise<string> {

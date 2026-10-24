@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { connection } from "next/server";
 import { seedData } from "./seed";
 import { createStore, type DataStore } from "./store";
+import { loadRemote, loadRemoteRev, saveRemote, supabaseEnv } from "./supabase";
 import type { StoreData } from "./types";
 
 export type { DataStore } from "./store";
@@ -39,12 +40,48 @@ function persist(data: StoreData) {
   }
 }
 
+// Supabase (deploy Vercel) aktif kalau env-nya diisi; tanpa itu tetap file lokal.
+export const isRemoteStore = () => supabaseEnv() !== null;
+
+// Baca data. Remote: salinan segar dari Supabase tiap panggilan (read-only — mengubah data wajib
+// lewat mutateStore, kalau tidak perubahannya hilang; commit di salinan ini melempar error).
 export async function getStore(): Promise<DataStore> {
   await connection(); // data selalu dinamis (cacheComponents)
+  if (isRemoteStore()) {
+    return createStore(await loadRemote(seedData), {
+      persist: () => {
+        throw new Error("[store] ubah data lewat mutateStore()");
+      },
+    });
+  }
   return (g.__hmdStoreF3 ??= createStore(load(), { persist }));
+}
+
+const MAX_TRIES = 5;
+
+// Ubah data. Lokal: langsung di store global. Remote: muat → jalankan `fn` → simpan kalau ada
+// commit, dengan cek `rev` (compare-and-swap). Kalah balapan (HP lain menyimpan duluan) → ulangi
+// `fn` di data terbaru, jadi `fn` hanya boleh mengubah store (aman diulang).
+export async function mutateStore<T>(fn: (store: DataStore) => T): Promise<T> {
+  await connection();
+  if (!isRemoteStore()) return fn(await getStore());
+  for (let i = 0; i < MAX_TRIES; i++) {
+    const data = await loadRemote(seedData);
+    const baseRev = data.rev;
+    const store = createStore(data);
+    const result = fn(store);
+    if (store.rev === baseRev || (await saveRemote(baseRev, store.snapshot()))) return result;
+  }
+  throw new Error("[store] gagal menyimpan: terlalu banyak perubahan bersamaan, coba lagi.");
+}
+
+// `rev` saja (polling LiveRefresh) — remote cuma membaca satu kolom.
+export async function getRev(): Promise<number> {
+  await connection();
+  return isRemoteStore() ? loadRemoteRev() : (await getStore()).rev;
 }
 
 // Dev saja: kembali ke seed (tanpa tamu). Dipanggil dari /dev/states/f1.
 export async function resetStore(): Promise<void> {
-  (await getStore()).reset(seedData());
+  await mutateStore((store) => store.reset(seedData()));
 }

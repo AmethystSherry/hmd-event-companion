@@ -1,4 +1,4 @@
-import { getStore } from "@/lib/data";
+import { mutateStore } from "@/lib/data";
 import type { CheckInRequest, CheckInResponse } from "@/lib/door";
 import { isCrew } from "@/lib/server/access";
 import { serverNow } from "@/lib/server/clock";
@@ -23,15 +23,20 @@ export async function POST(req: Request) {
     return new Response("bad request", { status: 400 });
   }
 
-  const store = await getStore();
-  if (!store.getEvent(body.eventId)) return new Response("not found", { status: 404 });
   const by = String(body.by ?? "HP panitia").slice(0, 24);
   const now = await serverNow();
-  const results = body.ops
-    .filter((op) => op && typeof op.opId === "string" && op.opId.length <= 64)
-    .map((op) => ({ opId: op.opId, result: applyDoorOp(store, body.eventId, by, op, now) }));
+  const ops = body.ops.filter((op) => op && typeof op.opId === "string" && op.opId.length <= 64);
+  const out = await mutateStore((store): CheckInResponse | null => {
+    if (!store.getEvent(body.eventId)) return null;
+    const results = ops.map((op) => ({
+      opId: op.opId,
+      result: applyDoorOp(store, body.eventId, by, op, now),
+    }));
+    return { rev: store.rev, results };
+  });
+  if (!out) return new Response("not found", { status: 404 });
 
-  return Response.json({ rev: store.rev, results } satisfies CheckInResponse, {
+  return Response.json(out, {
     headers: { "Cache-Control": "no-store" },
   });
 }
