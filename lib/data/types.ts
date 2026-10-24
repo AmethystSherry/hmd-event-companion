@@ -21,6 +21,9 @@ export type Event = {
   activeSessionId?: string | null;
   nextSessionId?: string | null;
   stateUpdatedAt?: string | null;
+  // F3 · BP02d: label HP panitia ("HP 7K2Q") & aksi yang terakhir mengubah state acara.
+  stateBy?: string | null;
+  stateAction?: StateAction | null;
   // F5: tutup acara (sekali jalan), ringkasan Claude, rekap tanpa nama setelah hapus H+30.
   closedAt?: string | null;
   summary?: FeedbackSummary | null;
@@ -30,6 +33,8 @@ export type Event = {
 
 export type EventMode = "pre" | "jeda" | "sesi" | "closed";
 export type SessionStatus = "nanti" | "berlangsung" | "selesai";
+// Aksi terakhir di Kontrol acara (BP02d): sesi yang dimulai / diselesaikan, atau acara ditutup.
+export type StateAction = { kind: "mulai" | "selesai" | "tutup"; sessionId: string | null };
 
 export type Guest = {
   id: string;
@@ -48,7 +53,11 @@ export type Guest = {
   reminderSentAt: string | null;
   source: "csv" | "manual" | "walkin"; // walkin = ditambah di pintu (P07c)
   createdAt: string;
+  card?: GuestCard | null; // F4 · kartu BT05 (N3: diisi tamu sendiri lewat T11, nanti)
 };
+
+// Kartu "Tamu di sini" (BT05): peran + "Tanya soal …" (≤ 3 topik, juga jadi chip Kartu kamu).
+export type GuestCard = { role: string | null; askAbout: string[] };
 
 export type Session = {
   id: string;
@@ -62,7 +71,17 @@ export type Session = {
   status?: SessionStatus; // kosong = "nanti"; "berikutnya" diturunkan dari Event.nextSessionId
   startedAt?: string | null;
   endedAt?: string | null;
+  // F4 · info layar acara tamu (opsional; diisi seed, form PE04 belum bisa mengubah).
+  room?: string | null; // "Ruang 01"
+  roomNote?: string | null; // "lantai 1"
+  description?: string | null; // BT22
+  speaker?: Speaker | null; // Talkshow: kartu pembicara + BT21p
+  topic?: string | null; // Talkshow: baris di bawah judul
+  art?: SessionArt | null; // ilustrasi Pota (public/figma/f3-*.webp)
 };
+
+export type Speaker = { name: string; ig: string; label: string }; // label = "Guest star"
+export type SessionArt = "open-space" | "talkshow" | "office-tour" | "closing";
 
 export type Ticket = {
   ticketId: string;

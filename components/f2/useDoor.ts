@@ -18,6 +18,7 @@ import {
   removeOps,
   saveManifest,
 } from "@/lib/offline/doorDb";
+import { deviceLabel } from "@/lib/device";
 
 // Data pintu di HP panitia: manifest (IndexedDB) + antrean check-in, sinkron ke server.
 // - Online: op dikirim langsung; hasil server dipakai untuk sheet P06 (siapa duluan, tanda tangan).
@@ -25,19 +26,6 @@ import {
 // - Realtime: /api/live (SSE) → rev naik → unduh manifest baru (angka di semua HP panitia sama).
 
 const RETRY_MS = 5000;
-
-export function deviceLabel(): string {
-  try {
-    let v = localStorage.getItem("hmd-device");
-    if (!v) {
-      v = `HP ${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
-      localStorage.setItem("hmd-device", v);
-    }
-    return v;
-  } catch {
-    return "HP panitia";
-  }
-}
 
 export function newOpId(): string {
   return typeof crypto !== "undefined" && "randomUUID" in crypto

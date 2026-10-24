@@ -284,6 +284,22 @@ describe("kontrol acara: mulai & selesaikan sesi (BP00a/BP00b, prd §6)", () => 
     expect(store.listSessions(HMD_ID).filter((s) => s.status === "berlangsung")).toHaveLength(1);
   });
 
+  it("BP02d: label HP & aksi terakhir tercatat; aksi sama dari HP lain = no-op (K10)", () => {
+    const { store } = fresh();
+    expect(store.startSession(HMD_ID, "s01", t("13:00"), "HP AAAA")).toBe(true);
+    expect(store.startSession(HMD_ID, "s01", t("13:00"), "HP BBBB")).toBe(false);
+    expect(store.getEvent(HMD_ID)).toMatchObject({
+      stateBy: "HP AAAA",
+      stateAction: { kind: "mulai", sessionId: "s01" },
+    });
+    expect(store.listSessions(HMD_ID)[0].startedAt).toBe(t("13:00"));
+    store.finishSession(HMD_ID, "s01", t("13:58"), "HP BBBB");
+    expect(store.getEvent(HMD_ID)).toMatchObject({
+      stateBy: "HP BBBB",
+      stateAction: { kind: "selesai", sessionId: "s01" },
+    });
+  });
+
   it("sesi terakhir selesai → nggak ada berikutnya; sesi nggak dikenal ditolak", () => {
     const { store } = fresh();
     store.startSession(HMD_ID, "s04", t("15:30"));

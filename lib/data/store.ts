@@ -2,6 +2,7 @@ import { randomBytes, randomUUID } from "node:crypto";
 import type { CsvRow } from "../csv";
 import { MAX_IMPROVE, summaryDue } from "../feedback";
 import { toMinutes } from "../format";
+import { backfillSessionInfo } from "./sessionInfo";
 import type {
   CheckInMethod,
   CheckInResult,
@@ -12,6 +13,7 @@ import type {
   FeedbackInput,
   FeedbackRecap,
   Guest,
+  GuestCard,
   GuestStats,
   Photo,
   PhotoSummary,
@@ -130,6 +132,7 @@ export function createStore(
   opts: { persist?: (data: StoreData) => void; now?: () => Date } = {},
 ) {
   const data = initial;
+  backfillSessionInfo(data); // F4: store lama dapat info sesi (ruang, pembicara, ilustrasi)
   const now = () => (opts.now ? opts.now() : new Date()).toISOString();
   const listeners = new Set<(rev: number) => void>();
 
@@ -423,8 +426,15 @@ export function createStore(
 
     // ---- Kontrol acara hari-H (BP00 / BP00a / BP00b, prd.md §6) ----
     // Mulai sesi N: mode=sesi, N berlangsung (startedAt). Sesi lain yang masih jalan ikut selesai.
-    // Mulai sesi yang sudah jalan = tidak berubah (dobel tap / dua HP panitia) → false, rev tetap.
-    startSession(eventId: string, sessionId: string, at: string): boolean {
+    // Mulai sesi yang sudah jalan = tidak berubah (dobel tap / dua HP panitia) → false, rev tetap
+    // (K10: aksi yang sama → HP pertama menang; stopwatch nggak ke-reset). Aksi beda = berurutan.
+    // `by` = label HP panitia → Event.stateBy (toast BP02d di HP lain).
+    startSession(
+      eventId: string,
+      sessionId: string,
+      at: string,
+      by: string | null = null,
+    ): boolean {
       const e = openEvent(eventId);
       const s = sessionOf(eventId, sessionId);
       if (s.status === "berlangsung") return false;
@@ -444,13 +454,20 @@ export function createStore(
         activeSessionId: s.id,
         nextSessionId: nextAfter(eventId, s.id),
         stateUpdatedAt: at,
+        stateBy: by,
+        stateAction: { kind: "mulai", sessionId: s.id },
       } satisfies Partial<Event>);
       commit();
       return true;
     },
     // Selesaikan sesi N: N selesai (endedAt), mode=jeda, berikutnya = sesi sesudah N yang belum selesai.
     // Sesi yang nggak lagi jalan → false (idempoten).
-    finishSession(eventId: string, sessionId: string, at: string): boolean {
+    finishSession(
+      eventId: string,
+      sessionId: string,
+      at: string,
+      by: string | null = null,
+    ): boolean {
       const e = openEvent(eventId);
       const s = sessionOf(eventId, sessionId);
       if (s.status !== "berlangsung") return false;
@@ -461,6 +478,8 @@ export function createStore(
         activeSessionId: null,
         nextSessionId: nextAfter(eventId, s.id),
         stateUpdatedAt: at,
+        stateBy: by,
+        stateAction: { kind: "selesai", sessionId: s.id },
       } satisfies Partial<Event>);
       commit();
       return true;
@@ -472,7 +491,7 @@ export function createStore(
     canClose(eventId: string): boolean {
       return closable(eventId);
     },
-    closeEvent(eventId: string, at: string): boolean {
+    closeEvent(eventId: string, at: string, by: string | null = null): boolean {
       const e = event(eventId);
       if (e.mode === "closed") return false;
       if (!closable(eventId)) {
@@ -483,6 +502,8 @@ export function createStore(
         activeSessionId: null,
         nextSessionId: null,
         stateUpdatedAt: at,
+        stateBy: by,
+        stateAction: { kind: "tutup", sessionId: null },
         closedAt: at,
       } satisfies Partial<Event>);
       commit();
@@ -502,6 +523,11 @@ export function createStore(
     },
 
     // ---- Tamu & undangan (P04*) ----
+    // F4 · kartu BT05 (sekarang cuma dari data uji /dev/states; N3 nanti lewat T11).
+    setGuestCard(id: string, card: GuestCard | null): void {
+      guest(id).card = card;
+      commit();
+    },
     listGuests(eventId: string): Guest[] {
       return guestsOf(eventId).sort((a, b) => a.keyNo - b.keyNo);
     },

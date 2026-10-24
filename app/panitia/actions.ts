@@ -10,7 +10,13 @@ import {
   normalizeWa,
   parseGuestCsv,
 } from "@/lib/csv";
-import { mutateStore, StoreError, type DataStore, type SessionType } from "@/lib/data";
+import {
+  mutateStore,
+  StoreError,
+  type DataStore,
+  type SessionType,
+  type StateAction,
+} from "@/lib/data";
 import type { InviteSnapshot } from "@/lib/data/store";
 import { LOCATION } from "@/lib/data/seed";
 import { DEFAULT_DM_TEMPLATE } from "@/lib/invite";
@@ -233,24 +239,54 @@ export async function markReminderSent(guestId: string): Promise<void> {
   refresh();
 }
 
-// BP00b · Mulai sesi (sesi lain yang masih jalan ikut selesai) · BP00a · Selesaikan sesi.
-// Jam dari server (stopwatch semua HP sama). Dobel tap / dua HP → idempoten di store.
-export async function startSession(eventId: string, sessionId: string): Promise<FormResult> {
+// Hasil aksi Kontrol acara. changed=false → aksinya udah dilakukan HP lain duluan (no-op); `by` +
+// `action` = siapa & apa yang terakhir mengubah state (toast BP02d "HP 7K2Q udah mulai …").
+export type StateResult =
+  | { ok: true; changed: boolean; by: string | null; action: StateAction | null }
+  | { ok: false; error: string };
+
+async function stateOp(
+  eventId: string,
+  fn: (store: DataStore, at: string) => boolean,
+): Promise<StateResult> {
   await requireCrew();
-  const now = await serverNow();
-  return guestOp((store) => store.startSession(eventId, sessionId, now.toISOString()));
+  const at = (await serverNow()).toISOString();
+  try {
+    const r = await mutateStore((store) => {
+      const changed = fn(store, at);
+      const e = store.getEvent(eventId);
+      return { changed, by: e?.stateBy ?? null, action: e?.stateAction ?? null };
+    });
+    refresh(); // no-op juga: layar HP ini ikut state terbaru dari HP lain
+    return { ok: true, ...r };
+  } catch (err) {
+    if (err instanceof StoreError) return { ok: false, error: err.message };
+    throw err;
+  }
 }
 
-export async function finishSession(eventId: string, sessionId: string): Promise<FormResult> {
-  await requireCrew();
-  const now = await serverNow();
-  return guestOp((store) => store.finishSession(eventId, sessionId, now.toISOString()));
+const cleanBy = (by: string | null) => (by ? by.slice(0, 16) : null);
+
+// BP01b · Mulai sesi (sesi lain yang masih jalan ikut selesai) · BP03 · Selesaikan sesi.
+// Jam dari server (stopwatch semua HP sama). Dobel tap / dua HP → idempoten di store (K10).
+export async function startSession(
+  eventId: string,
+  sessionId: string,
+  by: string | null = null,
+): Promise<StateResult> {
+  return stateOp(eventId, (store, at) => store.startSession(eventId, sessionId, at, cleanBy(by)));
+}
+
+export async function finishSession(
+  eventId: string,
+  sessionId: string,
+  by: string | null = null,
+): Promise<StateResult> {
+  return stateOp(eventId, (store, at) => store.finishSession(eventId, sessionId, at, cleanBy(by)));
 }
 
 // F5 · BP04b "Ya, tutup acara": mode closed → semua HP tamu pindah ke BT12 (rev → SSE).
 // Sekali jalan; dobel tap / dua HP → idempoten di store. Sesi terakhir belum selesai → error.
-export async function closeEvent(eventId: string): Promise<FormResult> {
-  await requireCrew();
-  const now = await serverNow();
-  return guestOp((store) => store.closeEvent(eventId, now.toISOString()));
+export async function closeEvent(eventId: string, by: string | null = null): Promise<StateResult> {
+  return stateOp(eventId, (store, at) => store.closeEvent(eventId, at, cleanBy(by)));
 }
