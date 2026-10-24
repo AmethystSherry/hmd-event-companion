@@ -21,6 +21,7 @@ export {
   DownloadSimple,
   FileText,
   HandWaving,
+  Hourglass,
   Image,
   Info,
   Key,

@@ -4,17 +4,20 @@ import { cx } from "@/lib/cx";
 import styles from "./Pill.module.css";
 
 // Clean/Pill (4587:290): chip info, ikon 16 + Label Emph.
+// `glass` (BT06): kaca di atas kamera gelap, teks putih.
 export function Pill({
   icon,
   children,
+  glass,
   className,
 }: {
   icon?: ReactNode;
   children: ReactNode;
+  glass?: boolean;
   className?: string;
 }) {
   return (
-    <span className={cx(styles.pill, className)}>
+    <span className={cx(styles.pill, glass && styles.glass, className)}>
       {icon && <span className={styles.icon}>{icon}</span>}
       {children}
     </span>

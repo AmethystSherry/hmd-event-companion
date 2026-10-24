@@ -49,6 +49,7 @@ async function Kontrol({ params }: Pick<PageProps<"/panitia/event/[id]/kontrol">
         event={event}
         rundown={rundownView(event, sessions)}
         checkIn={store.doorStats(id)}
+        photos={store.photoCount(id)}
         eventDay={eventDay}
         phaseLabel={eventDay ? "Hari-H · Live" : eventPhase(event.date, now).label}
         backHref={eventDay ? "/panitia" : `/panitia/event/${id}`}

@@ -8,6 +8,8 @@ import type {
   Event,
   Guest,
   GuestStats,
+  Photo,
+  PhotoSummary,
   Rsvp,
   Session,
   SessionType,
@@ -21,7 +23,14 @@ import type {
 export class StoreError extends Error {
   constructor(
     public code:
-      "event-tidak-ada" | "tamu-tidak-ada" | "sesi-tidak-ada" | "csv-sudah-diunggah" | "ig-dipakai",
+      | "event-tidak-ada"
+      | "tamu-tidak-ada"
+      | "sesi-tidak-ada"
+      | "csv-sudah-diunggah"
+      | "ig-dipakai"
+      | "foto-tidak-ada"
+      | "foto-penuh"
+      | "acara-ditutup",
     message: string,
   ) {
     super(message);
@@ -47,6 +56,18 @@ export type RsvpInput = {
 };
 
 export type InviteSnapshot = Pick<Guest, "inviteStatus" | "invitedAt">;
+
+// N4: metadata foto setelah file tersimpan. id = clientId (UUID dari HP).
+export type PhotoInput = {
+  id: string;
+  guestId: string;
+  at: string;
+  width: number;
+  height: number;
+  bytes: number;
+};
+
+export const MAX_PHOTOS_PER_GUEST = 20;
 
 // Satu operasi check-in dari HP panitia: opId acak dibuat di HP (dipakai ulang saat kirim ulang).
 export type CheckInOp = { opId: string; method: CheckInMethod; by: string; at: string };
@@ -114,6 +135,23 @@ export function createStore(
     if (guestsOf(eventId).some((g) => g.ig === ig && g.id !== exceptId)) {
       throw new StoreError("ig-dipakai", "Username IG ini udah dipakai tamu lain");
     }
+  }
+
+  function photosOf(eventId: string, withDeleted = false): Photo[] {
+    return (data.photos ?? [])
+      .filter((p) => p.eventId === eventId && (withDeleted || !p.deletedAt))
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }
+
+  // Sesi untuk foto baru: yang lagi jalan, atau yang terakhir selesai (foto pas Jeda ikut sesi itu).
+  function currentSessionId(eventId: string): string | null {
+    const sessions = data.sessions.filter((s) => s.eventId === eventId);
+    const active = sessions.find((s) => s.status === "berlangsung");
+    if (active) return active.id;
+    const done = sessions
+      .filter((s) => s.endedAt)
+      .sort((a, b) => b.endedAt!.localeCompare(a.endedAt!));
+    return done[0]?.id ?? null;
   }
 
   function nextKeyNo(eventId: string): number {
@@ -266,6 +304,7 @@ export function createStore(
       data.guests = data.guests.filter((g) => g.eventId !== id);
       data.tickets = data.tickets.filter((t) => !guestIds.has(t.guestId));
       data.sessions = data.sessions.filter((s) => s.eventId !== id);
+      if (data.photos) data.photos = data.photos.filter((p) => p.eventId !== id);
       commit();
     },
 
@@ -405,6 +444,7 @@ export function createStore(
       guest(id);
       data.guests = data.guests.filter((g) => g.id !== id);
       data.tickets = data.tickets.filter((t) => t.guestId !== id);
+      if (data.photos) data.photos = data.photos.filter((p) => p.guestId !== id);
       commit();
     },
 
@@ -523,6 +563,72 @@ export function createStore(
     listTickets(eventId: string): Ticket[] {
       const ids = new Set(guestsOf(eventId).map((g) => g.id));
       return data.tickets.filter((t) => ids.has(t.guestId));
+    },
+
+    // ---- N4 · Foto kolase polaroid ----
+    // File gambar sudah tersimpan duluan (lib/server/photos); di sini cuma metadata. id = clientId
+    // dari HP: kirim ulang (sinyal putus) → foto yang sama, hitungan nggak dobel.
+    addPhoto(input: PhotoInput): { photo: Photo; created: boolean } {
+      const g = guest(input.guestId);
+      const existing = photosOf(g.eventId, true).find((p) => p.id === input.id);
+      if (existing) {
+        if (existing.guestId !== g.id) throw new StoreError("foto-tidak-ada", "Foto nggak ketemu");
+        return { photo: existing, created: false };
+      }
+      if (event(g.eventId).mode === "closed") {
+        throw new StoreError("acara-ditutup", "Acaranya udah ditutup");
+      }
+      if (photosOf(g.eventId).filter((p) => p.guestId === g.id).length >= MAX_PHOTOS_PER_GUEST) {
+        throw new StoreError("foto-penuh", `Maksimal ${MAX_PHOTOS_PER_GUEST} foto per tamu`);
+      }
+      const photo: Photo = {
+        id: input.id,
+        eventId: g.eventId,
+        guestId: g.id,
+        sessionId: currentSessionId(g.eventId),
+        createdAt: input.at,
+        width: input.width,
+        height: input.height,
+        bytes: input.bytes,
+        deletedAt: null,
+      };
+      (data.photos ??= []).push(photo);
+      commit();
+      return { photo, created: true };
+    },
+
+    // T15b (UI di F5): hapus foto sendiri sampai acara ditutup. false = bukan miliknya / udah hilang.
+    deletePhoto(guestId: string, id: string, at: string): boolean {
+      const p = data.photos?.find((x) => x.id === id && x.guestId === guestId && !x.deletedAt);
+      if (!p) return false;
+      if (event(p.eventId).mode === "closed") {
+        throw new StoreError("acara-ditutup", "Acaranya udah ditutup");
+      }
+      p.deletedAt = at;
+      commit();
+      return true;
+    },
+
+    getPhoto(id: string): Photo | null {
+      return data.photos?.find((p) => p.id === id && !p.deletedAt) ?? null;
+    },
+    // Foto aktif, terbaru dulu.
+    listPhotos(eventId: string): Photo[] {
+      return photosOf(eventId);
+    },
+    photoCount(eventId: string): number {
+      return photosOf(eventId).length;
+    },
+    // BT07: "bareng {others} foto tamu lain" + strip 4 foto tamu lain terbaru + "+{others − 4}".
+    photoSummary(eventId: string, guestId: string): PhotoSummary {
+      const all = photosOf(eventId);
+      const others = all.filter((p) => p.guestId !== guestId);
+      return {
+        total: all.length,
+        others: others.length,
+        mine: all.length - others.length,
+        latest: others.slice(0, 4).map((p) => p.id),
+      };
     },
 
     snapshot(): StoreData {

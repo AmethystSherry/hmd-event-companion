@@ -93,7 +93,25 @@ export type StoreData = {
   guests: Guest[];
   sessions: Session[];
   tickets: Ticket[];
+  photos?: Photo[]; // N4 (opsional: store lama tetap terbaca)
 };
+
+// N4 · foto kolase polaroid. File gambarnya di Supabase Storage / .data/photos (bukan di store);
+// URL diturunkan dari id. id = clientId dari HP → kirim ulang = foto yang sama, nggak dobel.
+export type Photo = {
+  id: string;
+  eventId: string;
+  guestId: string;
+  sessionId: string | null; // sesi yang lagi/terakhir jalan saat difoto (filter T15)
+  createdAt: string;
+  width: number;
+  height: number;
+  bytes: number;
+  deletedAt?: string | null; // dihapus pemiliknya (T15b), file ikut dihapus
+};
+
+// Ringkasan kolase untuk BT07: total foto aktif, foto tamu lain, dan id terbaru untuk strip.
+export type PhotoSummary = { total: number; others: number; latest: string[]; mine: number };
 
 export type GuestStats = {
   total: number;

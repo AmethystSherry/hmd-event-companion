@@ -19,7 +19,8 @@ async function Content({ params }: Pick<PageProps<"/panitia/event/[id]/foto">, "
   const { id } = await params;
   return (
     <CrewPlaceholder eventId={id} title="Galeri kolase" icon={<Camera size={30} />}>
-      Foto dari tamu (kulkas polaroid) dibangun di F3.
+      Foto tamu udah masuk lewat kulkas polaroid (jumlahnya di Kontrol). Galeri kolase lengkap
+      menyusul di F5.
     </CrewPlaceholder>
   );
 }

@@ -292,3 +292,83 @@ describe("kontrol acara: mulai & selesaikan sesi (BP00a/BP00b, prd §6)", () => 
     expect(() => store.startSession(HMD_ID, "nggak-ada", t("15:00"))).toThrow(StoreError);
   });
 });
+
+describe("foto kolase (N4)", () => {
+  const at = (hhmm: string) => `2026-11-08T${hhmm}:00+07:00`;
+  const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
+  const photo = (guestId: string, n: number, hhmm = "13:30") => ({
+    id: id(n),
+    guestId,
+    at: at(hhmm),
+    width: 1067,
+    height: 1280,
+    bytes: 200_000,
+  });
+
+  function withGuests() {
+    const { store, persist } = fresh();
+    importDummy(store);
+    const [a, b] = store.listGuests(HMD_ID);
+    return { store, persist, a, b };
+  }
+
+  it("kirim ulang id yang sama nggak dobel dan rev nggak naik", () => {
+    const { store, a } = withGuests();
+    expect(store.addPhoto(photo(a.id, 1)).created).toBe(true);
+    const rev = store.rev;
+    expect(store.addPhoto(photo(a.id, 1)).created).toBe(false);
+    expect(store.rev).toBe(rev);
+    expect(store.photoCount(HMD_ID)).toBe(1);
+  });
+
+  it("id milik tamu lain ditolak", () => {
+    const { store, a, b } = withGuests();
+    store.addPhoto(photo(a.id, 1));
+    expect(() => store.addPhoto(photo(b.id, 1))).toThrow(StoreError);
+  });
+
+  it("foto ikut sesi yang jalan, atau sesi terakhir selesai pas jeda", () => {
+    const { store, a } = withGuests();
+    expect(store.addPhoto(photo(a.id, 1)).photo.sessionId).toBeNull();
+    store.startSession(HMD_ID, "s01", at("13:00"));
+    expect(store.addPhoto(photo(a.id, 2)).photo.sessionId).toBe("s01");
+    store.finishSession(HMD_ID, "s01", at("13:58"));
+    expect(store.addPhoto(photo(a.id, 3)).photo.sessionId).toBe("s01");
+  });
+
+  it("maksimal 20 foto per tamu; foto yang dihapus nggak dihitung", () => {
+    const { store, a } = withGuests();
+    for (let i = 0; i < 20; i++) store.addPhoto(photo(a.id, i));
+    expect(() => store.addPhoto(photo(a.id, 99))).toThrow(StoreError);
+    expect(store.deletePhoto(a.id, id(0), at("14:00"))).toBe(true);
+    expect(store.addPhoto(photo(a.id, 99)).created).toBe(true);
+  });
+
+  it("ringkasan BT07: foto tamu lain, 4 terbaru, foto sendiri nggak masuk strip", () => {
+    const { store, a, b } = withGuests();
+    for (let i = 1; i <= 6; i++) store.addPhoto(photo(b.id, i, `13:${10 + i}`));
+    store.addPhoto(photo(a.id, 7, "13:40"));
+    expect(store.photoSummary(HMD_ID, a.id)).toEqual({
+      total: 7,
+      others: 6,
+      mine: 1,
+      latest: [id(6), id(5), id(4), id(3)],
+    });
+  });
+
+  it("hapus cuma foto sendiri; acara ditutup → nggak bisa tambah/hapus", () => {
+    const { store, a, b } = withGuests();
+    store.addPhoto(photo(a.id, 1));
+    expect(store.deletePhoto(b.id, id(1), at("14:00"))).toBe(false);
+    store.getEvent(HMD_ID)!.mode = "closed";
+    expect(() => store.addPhoto(photo(a.id, 2))).toThrow(StoreError);
+    expect(() => store.deletePhoto(a.id, id(1), at("17:10"))).toThrow(StoreError);
+  });
+
+  it("hapus tamu → metadata fotonya ikut hilang", () => {
+    const { store, a } = withGuests();
+    store.addPhoto(photo(a.id, 1));
+    store.deleteGuest(a.id);
+    expect(store.photoCount(HMD_ID)).toBe(0);
+  });
+});

@@ -23,6 +23,22 @@
   height: 16px;
 }
 
+/* Kaca di atas kamera (BT06, warna tetap): sama dengan IconButton glass. */
+.glass {
+  height: 28px;
+  padding: 5px 12px 5px 10px;
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  font-size: 12px;
+  line-height: 16px;
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+}
+
+.glass .icon {
+  color: inherit;
+}
+
 .chip {
   display: inline-flex;
   align-items: center;

@@ -61,3 +61,22 @@
   flex-shrink: 0;
   color: var(--label-3);
 }
+
+/* size "sm" (BT06b langkah izin kamera): bulatan 22 oranye lembut, teks t-label, tanpa garis. */
+.sm {
+  gap: 10px;
+  padding: 5px 0;
+}
+
+.sm + .sm {
+  box-shadow: none;
+}
+
+.sm .number {
+  width: 22px;
+  height: 22px;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-size: 12px;
+  line-height: 16px;
+}

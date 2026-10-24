@@ -1,0 +1,279 @@
+/* ---- BT06 / BT06b · Kamera kolase: gelap tetap di light & dark (seperti viewfinder P05) ---- */
+.camera {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: var(--screen-width);
+  min-height: 100dvh;
+  margin: 0 auto;
+  background: #0a0a0a;
+  color: #ffffff;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: calc(env(safe-area-inset-top) + 8px) var(--margin) 0;
+}
+
+.toolbarSpacer {
+  width: 44px;
+  height: 44px;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.stage {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 16px var(--margin);
+}
+
+.viewfinder {
+  flex-shrink: 0;
+}
+
+.mirror {
+  transform: scaleX(-1);
+}
+
+.hint {
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+}
+
+/* Jepret: kilat putih singkat di viewfinder. */
+.flash {
+  position: absolute;
+  inset: 0;
+  background: #ffffff;
+  opacity: 0;
+  pointer-events: none;
+  animation: flash 260ms ease-out;
+}
+
+@keyframes flash {
+  from {
+    opacity: 0.85;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* BT06b: isi polaroid = card-2 terang (benda fisik) + ikon kamera dicoret. */
+.denied {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px;
+  background: #efefef;
+  color: #666666;
+  text-align: center;
+}
+
+/* Jalur cadangan (kamera bawaan HP lewat <input capture>). */
+.fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px;
+  color: rgba(255, 255, 255, 0.85);
+  text-align: center;
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 84px;
+  margin-bottom: max(calc(env(safe-area-inset-bottom) + 8px), 24px);
+  padding: 0 40px;
+}
+
+.barSpacer {
+  width: 48px;
+  height: 48px;
+}
+
+.last {
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  overflow: hidden;
+  border: 2px solid #ffffff;
+  border-radius: 12px;
+  background: #1f1c1a;
+}
+
+.last img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.shutter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: inset 0 0 0 4px #ffffff;
+  transition: transform var(--press-ms) ease-out;
+}
+
+.shutter span {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #ffffff;
+}
+
+.shutter:active {
+  transform: scale(0.94);
+}
+
+.shutter[aria-disabled="true"] {
+  opacity: 0.5;
+}
+
+.flip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  transition: transform var(--press-ms) ease-out;
+}
+
+.flip:active {
+  transform: scale(var(--press-scale));
+}
+
+.deniedPanel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 0 var(--margin) max(calc(env(safe-area-inset-bottom) + 4px), 30px);
+}
+
+/* Card & tombol BT06b terang di atas latar kamera gelap (Figma). */
+.lightGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  color: var(--label);
+}
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px;
+  border-radius: 20px;
+}
+
+/* ---- BT07 / BT07b / BT07c · Foto masuk kolase (ikut tema) ---- */
+.result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding-top: 36px;
+  text-align: center;
+}
+
+/* Foto ditempel (design.md §6): jatuh & "nempel", 450 ms spring, miring acak ±4°. */
+.drop {
+  margin-bottom: 8px;
+  animation: drop 450ms var(--ease-spring) both;
+}
+
+@keyframes drop {
+  from {
+    opacity: 0;
+    transform: translateY(-56px) rotate(calc(var(--tilt, 0deg) - 10deg)) scale(1.06);
+  }
+  /* Akhir = nilai dasar polaroid (miring, opacity 70% kalau masih antre). */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drop {
+    animation: fade 150ms ease-out both;
+  }
+  .flash {
+    animation: none;
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+}
+
+.badgeSent {
+  background: var(--success-soft);
+  color: var(--success-text);
+}
+
+.badgeQueued {
+  background: var(--warning-soft);
+  color: var(--warning-text);
+}
+
+.body {
+  max-width: 300px;
+}
+
+/* Toast di atas tombol bawah (2 tombol = 118) / bar kamera. */
+.toastDock {
+  position: fixed;
+  left: 50%;
+  bottom: calc(max(calc(env(safe-area-inset-bottom) + 4px), 30px) + 132px);
+  z-index: 30;
+  width: max-content;
+  max-width: calc(min(100vw, var(--screen-width)) - 32px);
+  transform: translateX(-50%);
+}

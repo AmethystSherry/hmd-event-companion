@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { Coffee, Key, Play } from "@/components/icons";
+import { Camera, Coffee, Key, Play } from "@/components/icons";
 import { LiveRefresh } from "@/components/LiveRefresh";
+import { PhotoOutbox } from "@/components/n4/PhotoOutbox";
 import { RegisterOffline } from "@/components/RegisterOffline";
 import { Badge, Button, HeroState, Screen, ScreenHeader, Skeleton } from "@/components/ui";
 import { getStore } from "@/lib/data";
@@ -42,10 +43,19 @@ async function EventScreen({ params }: Pick<PageProps<"/t/[token]/acara">, "para
   return (
     <>
       <Screen
+        bottomHeight={active ? 54 : 118}
         bottom={
-          <Button variant="secondary" href={`/t/${token}`} icon={<Key />}>
-            Lihat tiket
-          </Button>
+          <>
+            {/* N4: pas Jeda tamu bisa foto buat kolase (BT03 asli menyusul di F3). */}
+            {!active && (
+              <Button href={`/t/${token}/foto`} icon={<Camera />}>
+                Foto buat kolase
+              </Button>
+            )}
+            <Button variant="secondary" href={`/t/${token}`} icon={<Key />}>
+              Lihat tiket
+            </Button>
+          </>
         }
       >
         <ScreenHeader
@@ -77,6 +87,7 @@ async function EventScreen({ params }: Pick<PageProps<"/t/[token]/acara">, "para
         )}
       </Screen>
       <LiveRefresh token={token} />
+      <PhotoOutbox token={token} />
       <RegisterOffline />
     </>
   );

@@ -55,6 +55,7 @@ export function KontrolScreen({
   event,
   rundown,
   checkIn,
+  photos = 0,
   eventDay,
   phaseLabel,
   backHref,
@@ -67,6 +68,7 @@ export function KontrolScreen({
   event: Pick<Event, "id" | "name" | "date">;
   rundown: RundownView;
   checkIn: { checkedIn: number; expected: number };
+  photos?: number; // N4: jumlah foto kolase (realtime lewat rev)
   eventDay: boolean; // sebelum hari-H: sesi belum bisa dimulai, Scan belum ada
   phaseLabel: string; // "Hari-H · Live" / "Persiapan · H-17"
   backHref: string;
@@ -136,7 +138,12 @@ export function KontrolScreen({
           label="Check-in"
           href={eventDay ? `${base}/scan/cari` : undefined}
         />
-        <StatTile icon={<Camera size={18} />} value="0" label="Foto" href={`${base}/foto`} />
+        <StatTile
+          icon={<Camera size={18} />}
+          value={String(photos)}
+          label="Foto"
+          href={`${base}/foto`}
+        />
         <StatTile
           icon={<ChatCircle size={18} />}
           value="0"

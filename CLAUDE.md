@@ -15,7 +15,7 @@ Web app mobile untuk House Moving Day Potara Studio (Minggu 8 Nov 2026, 13.00–
   rundown terisi → `/panitia/event/[id]/kontrol` (guard redirect kalau belum siap).
 - **F2 · Check-in di pintu sudah dibangun** (22 Okt malam; Figma band `4667:4654`,
   `F2-deliverables.md`). 12 keputusan terbuka di deliverables dijawab pakai default — lihat
-  "Aturan F2 di kode". F3–F5 & N1–N4 belum; kerjakan lewat `HANDOFF-CLAUDE-CODE.md`.
+  "Aturan F2 di kode". F3–F5 & N1–N3 belum; kerjakan lewat `HANDOFF-CLAUDE-CODE.md`.
 - **F2 v2 (23 Okt, Prompt E)**: Button primary oranye; BP00 dirombak (carousel kartu sesi +
   stopwatch + Mulai/Selesaikan lewat Dialog BP00a/BP00b, state acara prd §6 di store); layar scan
   tanpa TabBar ("Lihat daftar tamu"); P06 baru; P07 tanpa badge "Belum masuk" + P07d Profil tamu.
@@ -27,6 +27,10 @@ Web app mobile untuk House Moving Day Potara Studio (Minggu 8 Nov 2026, 13.00–
   integrasi Vercel Storage → env `SUPABASE_*` otomatis; tabel dari `supabase/schema.sql` sudah
   dijalankan. Secret (`EVENT_PIN`, `TICKET_HMAC_SECRET`, `SESSION_SECRET`) diisi sendiri oleh
   pemilik di Vercel. Di production jam palsu & alat `/dev/states` mati.
+- **N4 · Foto kolase polaroid sudah dibangun** (24 Okt; Figma section `4670:4981`,
+  `N4-deliverables.md`). Semua keputusan terbuka dijawab pakai default — lihat "Aturan N4 di kode".
+  **Belum jalan di Vercel sampai pemilik menjalankan blok bucket `hmd-photos` di
+  `supabase/schema.sql`** (SQL Editor). Tombol "Foto buat kolase" sementara di placeholder `acara/`.
 
 ## Sumber kebenaran
 - **Figma** `xYZlQ3GjRHHtYcod8rTIZJ`, page DOKSLI SAPI → section "Screen Flow · All Case" → frame
@@ -56,31 +60,38 @@ Web app mobile untuk House Moving Day Potara Studio (Minggu 8 Nov 2026, 13.00–
 app/
   layout.tsx · page.tsx   root layout (font, noindex) · beranda sementara
   (tamu)/t/[token]/       T01/T01e/T02b/T03/T03h · konfirmasi/ (T02/T02c/T02d) · kalender/ (.ics) ·
-                          acara/ (layar Sesi/Jeda, placeholder F3/F4)
+                          acara/ (layar Sesi/Jeda, placeholder F3/F4) · foto/ (N4 BT06–BT07c)
   panitia/                P01 + PE01/PE02 · actions.ts (semua server action panitia)
     event/[id]/           PE03/PE03b (+ sheet PE03e/PE03h) · rundown/ (PE04k/PE04/PE04a) ·
                           tamu/ (P04k/P04a/P04c/P04/P04b/d/e/f) · kontrol/ (BP00/BP00a/BP00b) ·
                           foto/ · tanya/ (placeholder F3/F4) ·
                           scan/ (P05/P05b/P06/P06b/P06c) · scan/cari/ (P07/P07b/P07c)
   api/live/               SSE: kirim `rev` store tiap ada perubahan (tanpa data tamu)
-  api/panitia/            event/[id]/manifest (GET daftar pintu) · checkin (POST antrean op)
+  api/panitia/            event/[id]/manifest (GET daftar pintu) · checkin (POST antrean op) ·
+                          foto/[id] (GET gambar, sesi PIN)
+  api/t/[token]/foto/     POST upload foto (N4) · [id] GET gambar / DELETE foto sendiri
   dev/ui/                 preview design system (light & dark)
   dev/states/f1/          27 layar F1 dengan data contoh + alat uji (link tamu, CSV dummy, reset)
   dev/states/f2/          13 layar F2 + alat uji (jam pura-pura hari-H, data 12 hadir, reset check-in)
+  dev/states/n4/          7 layar N4 + alat uji (check-in semua, 30 foto dummy, hapus semua foto)
   tokens.css · globals.css · fonts/
 components/ui/            komponen design system Clean v0.5
 components/f1/            layar F1 presentasional (dipakai route asli & /dev/states/f1)
 components/f2/            tamu.tsx (T05/T05a/BT02/T03b) · Kontrol (BP00 + dialog) · DoorApp (P05–P07d) ·
                           useDoor (manifest + antrean) · Viewfinder (kamera) · DoorPage (guard route) ·
                           Placeholder (Foto/Tanya)
+components/n4/            KolaseApp (BT06/BT06b/BT07/BT07b/BT07c) · useCamera · capture (crop+kompres) ·
+                          usePhotoOutbox (kirim + antrean) · PhotoOutbox (antrean di layar acara)
 components/               LiveRefresh (SSE → router.refresh) · RefreshAt · TicketQr · RegisterOffline
 components/icons.ts       ekspor ikon Phosphor (/ssr)
 lib/data/                 tipe, store (logika murni + tes), seed, getStore() (file .data/)
 lib/server/               env, HMAC (QR & cookie sesi), rate-limit PIN, akses crew/tamu, origin,
-                          clock (hari-H + jam palsu dev), door (manifest & terapkan op check-in)
+                          clock (hari-H + jam palsu dev), door (manifest & terapkan op check-in),
+                          photos (file foto: Supabase Storage / .data/photos) · photoResponse
 lib/                      csv · format · invite · confirm · ics · view · fixtures · clipboard · cx ·
                           door (logika pintu tanpa secret, jalan di HP) · offline/doorDb (IndexedDB) ·
-                          rundown (status sesi + stopwatch dari state acara)
+                          rundown (status sesi + stopwatch dari state acara) · photo (crop, batas,
+                          kemiringan, URL foto) · offline/photoDb (antrean foto IndexedDB)
 public/                   figma/ · sw.js (tiket & layar pintu offline) · contoh-tamu.csv · dev/*.csv
 next.config.ts            header X-Robots-Tag noindex, allowedDevOrigins (HP di LAN)
 ```
@@ -139,8 +150,39 @@ Keputusan default 22 Okt (jawaban "Keputusan & asumsi" di F2-deliverables; prd.m
   → T05a (sobek ±900 ms) → BT02 (3 dtk, sekali per tiket via localStorage) → T03b. HP tamu offline →
   refresh saat `online`/tab terlihat lagi. Dibuka > 10 menit setelah masuk → langsung T03b.
 - Kamera butuh HTTPS di HP (`npx next dev --experimental-https`); gagal/ditolak → P07b.
-- Store dev ada di `globalThis.__hmdStoreF3`: naikkan kuncinya tiap method store bertambah (server
-  dev yang sedang jalan nggak membuat ulang instance lama saat HMR).
+- Store dev ada di `globalThis.__hmdStoreF4`: naikkan kuncinya tiap method store bertambah (server
+  dev yang sedang jalan nggak membuat ulang instance lama saat HMR). Server dev yang sudah jalan
+  bisa tetap memakai modul server lama (mis. `store.getPhoto is not a function`) → restart `npm run dev`.
+
+## Aturan N4 di kode
+Keputusan default 24 Okt (jawaban "Keputusan & asumsi" + "Temuan" di N4-deliverables):
+1. Hanya tamu yang **udah check-in**; acara `closed` → `/foto` dialihkan ke `acara/`, upload ditolak.
+2. Kamera default **depan**, preview di-mirror (CSS), hasil **tidak** mirror. Ganti kamera = tombol
+   kanan. Senter cuma kalau `track.getCapabilities().torch` ada; tombol Lightning disembunyikan
+   kalau kamera belum jalan (BT06b).
+3. Disimpan = foto mentah crop tengah **5:6**; bingkai polaroid digambar UI (`Polaroid`).
+4. Kompres di HP (`components/n4/capture.ts`): sisi panjang 1280, JPEG kualitas 0,85 → 0,5, lalu
+   diperkecil ×0,85 sampai ≤ 400 KB; thumbnail 320 ≤ 40 KB. Server menolak > 480/80 KB & non-JPEG.
+5. **Maks 20 foto per tamu** (`MAX_PHOTOS_PER_GUEST`, foto yang dihapus nggak dihitung).
+6. Strip BT07 = 4 foto **tamu lain** terbaru (teaser, boleh); "+N" = foto tamu lain − 4. 0 foto
+   tamu lain → "Kamu yang pertama nempel di kulkas!" tanpa strip.
+7. Webview IG/FB (`isInAppBrowser`), tanpa getUserMedia/HTTPS, atau kamera error → jalur cadangan
+   `<input type="file" accept="image/*" capture="user">` + teks "Buka di Safari/Chrome…". BT06b
+   punya TextAction "Pakai kamera bawaan HP".
+8. Copy "kolase **bareng**" di BT06 & BT07; tombol "**Kembali ke acara**" (bukan "ke jeda").
+9. Thumbnail kiri di bar kamera = foto terakhirmu → BT07; belum ada foto → disembunyikan.
+10. File di Supabase Storage bucket privat `hmd-photos` (`{eventId}/{id}.jpg` + `_t.jpg`), lokal
+    `.data/photos/`. Metadata `Photo` di store (`photos?`). HP baca lewat **route proxy** yang cek
+    token tamu (event sama) / sesi PIN; `Cache-Control: private, immutable` + SW cache-first.
+11. Upload `POST /api/t/[token]/foto` (multipart, route handler — bukan server action, batas 1 MB).
+    Urutan: file dulu (upsert), baru `mutateStore(addPhoto)`. Idempoten per id = UUID dari HP
+    (`newPhotoId`, jalan juga di http LAN). `sessionId` = sesi yang jalan / terakhir selesai.
+12. Jepret → foto masuk antrean IndexedDB **dulu**, lalu dikirim (tunggu ≤ 5 dtk) → BT07; gagal →
+    BT07b. Antrean dicoba tiap 5 dtk & saat `online`, juga dari layar `acara/` (`PhotoOutbox`).
+    Ditolak server (4xx) → dibuang + toast. Terkirim selagi BT07b terbuka → layar pindah ke BT07.
+13. Hapus foto sendiri: `DELETE /api/t/[token]/foto/[id]` (soft delete `deletedAt` + file dihapus),
+    UI di F5 (T15b). Hapus otomatis H+30 belum ada (Phase 8).
+14. Tile "Foto" BP00 = `photoCount` (realtime lewat `rev`).
 
 ## Design system (Clean v0.5)
 - Token: `app/tokens.css` — warna semantik light (utama) + dark (`prefers-color-scheme`, atau paksa
@@ -205,4 +247,6 @@ Sesi: tombol "Mulai sesi 1" / "Selesaikan sesi" di halaman yang sama, atau lewat
 - [x] F1 — undangan & konfirmasi (27 layar, store lokal, realtime SSE) — menunggu review
 - [x] F2 — check-in di pintu (13 layar, scan QR, antrean offline, tiket sobek realtime) — menunggu review
 - [x] F2 v2 (23 Okt) — BP00 kartu sesi + Mulai/Selesaikan, scan/P06/P07/P07d baru — menunggu review
-- [ ] F3–F5, N1–N4 — berikutnya (versi lama: tag `archive-pre-revisi`)
+- [x] N4 (24 Okt) — foto kolase polaroid (5 layar + 2 kasus, kompres di HP, antrean offline) —
+      menunggu review & bucket Supabase
+- [ ] F3–F5, N1–N3 — berikutnya (versi lama: tag `archive-pre-revisi`)
