@@ -11,14 +11,19 @@ import { SCREENS } from "./screens";
 
 export const metadata = { title: "N4 states · dev" };
 
-const TONE = { Utama: "neutral", Gagal: "danger", "Kasus lain": "crew" } as const;
+const TONE = {
+  "Titik mulai": "neutral",
+  Utama: "neutral",
+  Gagal: "danger",
+  "Kasus lain": "crew",
+} as const;
 
 // /dev/states/n4: daftar layar N4 (pratinjau data contoh) + alat uji foto kolase asli.
 export default function N4States() {
   return (
     <Screen>
       <ScreenHeader
-        eyebrow="Dev · Figma section N4 (4670:4981)"
+        eyebrow="Dev · Figma section N4 (4670:4981, 25 Okt)"
         title={`N4 · ${SCREENS.length} layar`}
       />
       <Card inset>

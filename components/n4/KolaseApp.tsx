@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import {
   useCallback,
   useEffect,
@@ -13,107 +14,58 @@ import {
   Camera,
   CameraRotate,
   CameraSlash,
-  Check,
-  CloudArrowUp,
-  Hourglass,
   Info,
   Lightning,
   X,
 } from "@/components/icons";
-import {
-  Button,
-  Card,
-  IconButton,
-  NumberedRow,
-  PhotoStrip,
-  Pill,
-  Polaroid,
-  Screen,
-  TextAction,
-  Toast,
-} from "@/components/ui";
+import { Button, Card, IconButton, NumberedRow, Pill, Polaroid, Toast } from "@/components/ui";
 import { cx } from "@/lib/cx";
-import type { PhotoSummary } from "@/lib/data/types";
 import { queuePhoto } from "@/lib/offline/photoDb";
-import { guestPhotoUrl, isInAppBrowser, newPhotoId, photoTilt } from "@/lib/photo";
+import { guestPhotoUrl, isInAppBrowser, newPhotoId } from "@/lib/photo";
 import { captureFile, captureVideo, type Captured } from "./capture";
 import s from "./n4.module.css";
 import { useCamera, type CameraStatus } from "./useCamera";
-import { sendPhoto, usePhotoOutbox, type SendResult } from "./usePhotoOutbox";
+import { sendPhoto } from "./usePhotoOutbox";
 
-// N4 · Foto buat kolase polaroid (tamu). Satu komponen untuk BT06 Kamera kolase (+BT06b izin
-// ditolak) dan BT07 Foto masuk kolase (+BT07b diantre, BT07c tap "+N"). Pindah layar lewat
-// history.pushState (?layar=hasil) tanpa jaringan, seperti DoorApp F2.
+// N4 · BT06 Kamera kolase (+BT06b izin ditolak). Jepret → foto masuk antrean IndexedDB dulu →
+// dikirim, ditunggu ≤ 5 dtk (shutter loading) → kamera dimatikan → layar acara + sheet hasil
+// (/acara?sheet=foto&id=…, BT07/BT07b/BT07e). Ditolak server → toast, tetap di kamera.
 
-export type KolaseView = "kamera" | "hasil";
-
-export type KolaseResult = {
-  kind: "sent" | "queued";
-  id: string;
-  src?: string; // blob: (baru jepret) atau URL proxy (foto terakhir dari server)
-};
-
-const UPLOAD_WAIT_MS = 5000; // lewat → BT07b, antrean lanjut di belakang
+const UPLOAD_WAIT_MS = 5000; // lewat → sheet BT07b, antrean lanjut di layar acara
 const TOAST_MS = 4000;
 
 const STEPS = [
   "Tap ikon aA / gembok di address bar",
-  "Pilih Izin situs › Kamera › Izinkan",
-  "Balik ke sini, lalu tap Coba lagi",
+  "Izin situs › Kamera › Izinkan",
+  "Balik ke sini, tap Coba lagi",
 ];
 
 const noSubscribe = () => () => {};
-
-function pickSummary(r: Extract<SendResult, { kind: "sent" }>["res"]): PhotoSummary {
-  return { total: r.total, others: r.others, latest: r.latest, mine: r.mine };
-}
 
 export function KolaseApp({
   token,
   name,
   date,
-  endsAt,
   backHref,
-  summary: initialSummary,
   lastOwnId,
   preview,
 }: {
   token: string;
   name: string; // nama depan di caption polaroid
   date: string; // "8.11.26"
-  endsAt: string; // "17.00" (toast BT07c)
   backHref: string; // layar acara
-  summary: PhotoSummary;
-  lastOwnId: string | null;
-  // /dev/states/n4: data contoh, tanpa kamera/jaringan/IndexedDB.
-  preview?: {
-    view: KolaseView;
-    camera?: CameraStatus;
-    result?: KolaseResult;
-    pending?: number;
-    extraToast?: boolean;
-  };
+  lastOwnId: string | null; // thumbnail kiri = foto terakhirmu
+  // /dev/states/n4: tanpa kamera/jaringan/IndexedDB.
+  preview?: { camera?: CameraStatus };
 }) {
-  const base = `/t/${token}/foto`;
-  const [view, setView] = useState<KolaseView>(preview?.view ?? "kamera");
-  const [result, setResult] = useState<KolaseResult | null>(
-    preview?.result ??
-      (lastOwnId
-        ? { kind: "sent", id: lastOwnId, src: guestPhotoUrl(token, lastOwnId, "full") }
-        : null),
-  );
-  const [summary, setSummary] = useState(initialSummary);
+  const router = useRouter();
   const [busy, setBusy] = useState(false);
+  const [leaving, setLeaving] = useState(false);
   const [flash, setFlash] = useState(0);
-  const [toast, setToast] = useState<{ key: number; text: string } | null>(
-    preview?.extraToast
-      ? { key: 0, text: `Kolase lengkap dibuka pas acara selesai (± ${endsAt})` }
-      : null,
-  );
-  const [extraPressed, setExtraPressed] = useState(!!preview?.extraToast);
-  const blobs = useRef<string[]>([]);
+  const [toast, setToast] = useState<{ key: number; text: string } | null>(null);
   const video = useRef<HTMLVideoElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+  const sheetHref = (id: string) => `/t/${token}/acara?sheet=foto&id=${id}`;
 
   // Webview Instagram/Facebook: getUserMedia sering nggak jalan → langsung kamera bawaan HP.
   const inApp = useSyncExternalStore(
@@ -121,7 +73,7 @@ export function KolaseApp({
     () => isInAppBrowser(navigator.userAgent),
     () => false,
   );
-  const cam = useCamera(video, !preview && view === "kamera" && !inApp);
+  const cam = useCamera(video, !preview && !inApp && !leaving);
   const status: CameraStatus = preview
     ? (preview.camera ?? "live")
     : inApp
@@ -132,65 +84,23 @@ export function KolaseApp({
 
   const show = useCallback((text: string) => setToast({ key: Date.now(), text }), []);
   useEffect(() => {
-    if (!toast || preview) return;
-    const t = setTimeout(() => {
-      setToast(null);
-      setExtraPressed(false);
-    }, TOAST_MS);
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), TOAST_MS);
     return () => clearTimeout(t);
-  }, [toast, preview]);
+  }, [toast]);
 
-  useEffect(() => () => blobs.current.forEach((u) => URL.revokeObjectURL(u)), []);
-
-  // Antrean di belakang: foto BT07b yang akhirnya terkirim → layar pindah ke BT07.
-  const onResult = useCallback(
-    (r: SendResult) => {
-      if (r.kind === "sent") {
-        setSummary(pickSummary(r.res));
-        setResult((cur) =>
-          cur?.kind === "queued" && cur.id === r.res.id ? { ...cur, kind: "sent" } : cur,
-        );
-      } else if (r.kind === "rejected") {
-        show(r.res.error);
-      }
-    },
-    [show],
-  );
-  const outbox = usePhotoOutbox(token, { enabled: !preview, onResult });
-  const pending = preview?.pending ?? outbox.pending;
-
-  const go = useCallback(
-    (next: KolaseView) => {
-      setView(next);
-      setToast(null);
-      setExtraPressed(false);
-      if (preview) return;
-      window.history.pushState(null, "", next === "hasil" ? `${base}?layar=hasil` : base);
-    },
-    [base, preview],
-  );
-  useEffect(() => {
-    const onPop = () =>
-      setView(window.location.search.includes("layar=hasil") ? "hasil" : "kamera");
-    window.addEventListener("popstate", onPop);
-    return () => window.removeEventListener("popstate", onPop);
-  }, []);
-
-  // Jepret → simpan di antrean dulu (foto aman walau sinyal putus) → kirim, tunggu ≤ 5 dtk.
+  // Jepret → simpan di antrean dulu (foto aman walau sinyal putus) → kirim, tunggu ≤ 5 dtk →
+  // kamera mati → sheet hasil. Status pasti (✓ / ⌛) dibaca sheet dari server + antrean.
   async function keep(cap: Captured) {
     const row = { id: newPhotoId(), token, ...cap, createdAt: Date.now() };
     await queuePhoto(row);
     const r = await sendPhoto(row, UPLOAD_WAIT_MS);
-    await outbox.refreshCount();
     if (r.kind === "rejected") {
       show(r.res.error);
       return;
     }
-    const src = URL.createObjectURL(cap.photo);
-    blobs.current.push(src);
-    if (r.kind === "sent") setSummary(pickSummary(r.res));
-    setResult({ kind: r.kind === "sent" ? "sent" : "queued", id: row.id, src });
-    go("hasil");
+    setLeaving(true);
+    router.replace(sheetHref(row.id));
   }
 
   async function run(task: () => Promise<Captured>) {
@@ -205,7 +115,7 @@ export function KolaseApp({
   }
 
   function shoot() {
-    if (busy || preview) return;
+    if (busy || leaving || preview) return;
     if (fallback) return fileInput.current?.click();
     const el = video.current;
     if (status !== "live" || !el?.videoWidth) return;
@@ -217,98 +127,6 @@ export function KolaseApp({
     const file = e.target.files?.[0];
     e.target.value = "";
     if (file) void run(() => captureFile(file));
-  }
-
-  async function retryNow() {
-    if (busy || preview) return;
-    setBusy(true);
-    try {
-      const results = await outbox.flush();
-      if (!results.some((r) => r.kind === "sent")) {
-        show("Sinyalnya masih lemah. Fotomu tetap aman di HP");
-      }
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  const fileField = (
-    <input ref={fileInput} type="file" accept="image/*" capture="user" hidden onChange={onFile} />
-  );
-
-  if (view === "hasil" && result) {
-    const queued = result.kind === "queued";
-    const strip = summary.latest.map((id) => ({
-      id,
-      src: preview ? undefined : guestPhotoUrl(token, id),
-    }));
-    const extra = summary.others - strip.length;
-    return (
-      <>
-        <Screen
-          bottomHeight={118}
-          bottom={
-            <>
-              {queued ? (
-                <Button icon={<ArrowClockwise />} onClick={retryNow} aria-disabled={busy}>
-                  Coba kirim sekarang
-                </Button>
-              ) : (
-                <Button icon={<Camera />} onClick={() => go("kamera")}>
-                  Foto lagi
-                </Button>
-              )}
-              <Button variant="secondary" href={backHref}>
-                Kembali ke acara
-              </Button>
-            </>
-          }
-        >
-          <div className={s.result}>
-            <Polaroid
-              key={result.id}
-              size="sm"
-              src={result.src}
-              alt="Fotomu"
-              name={name}
-              tilt={photoTilt(result.id)}
-              dim={queued}
-              className={s.drop}
-            />
-            <span className={cx(s.badge, queued ? s.badgeQueued : s.badgeSent)}>
-              {queued ? <CloudArrowUp size={22} /> : <Check size={22} />}
-            </span>
-            <h1 className="t-title">{queued ? "Fotomu lagi antre" : "Nempel di kulkas!"}</h1>
-            <p className={cx("t-body c-label-2", s.body)}>
-              {queued
-                ? "Sinyalnya lemah. Fotomu aman di HP dan dikirim otomatis begitu sinyal balik."
-                : summary.others > 0
-                  ? `Fotomu sekarang bagian dari kolase bareng ${summary.others} foto tamu lain.`
-                  : "Kamu yang pertama nempel di kulkas!"}
-            </p>
-            {queued && pending > 0 && (
-              <Pill icon={<Hourglass />}>{pending} foto menunggu sinyal</Pill>
-            )}
-            <PhotoStrip
-              photos={strip}
-              extra={extra}
-              pressed={extraPressed}
-              onExtra={() => {
-                setExtraPressed(true);
-                show(`Kolase lengkap dibuka pas acara selesai (± ${endsAt})`);
-              }}
-            />
-          </div>
-        </Screen>
-        {toast && (
-          <div className={s.toastDock}>
-            <Toast key={toast.key} icon={<Info />}>
-              {toast.text}
-            </Toast>
-          </div>
-        )}
-      </>
-    );
   }
 
   return (
@@ -343,7 +161,7 @@ export function KolaseApp({
               <Camera size={32} />
               <p className="t-label">Tap tombol jepret buat buka kamera HP</p>
             </div>
-          ) : preview ? undefined : (
+          ) : preview || leaving ? undefined : (
             <video
               ref={video}
               muted
@@ -359,49 +177,50 @@ export function KolaseApp({
           <p className={cx("t-label", s.hint)}>
             {inApp
               ? "Buka di Safari/Chrome biar kamera langsung jalan di sini."
-              : "Fotomu langsung nempel di kolase bareng."}
+              : "Jepret sekali, langsung nempel di kulkas bareng."}
           </p>
         )}
       </div>
 
       {denied ? (
-        <div className={s.deniedPanel}>
-          <div className={s.lightGroup} data-theme="light">
-            <Card className={s.steps}>
-              <p className="t-body-emph">Cara nyalain izin kamera</p>
-              <div>
-                {STEPS.map((step, i) => (
-                  <NumberedRow key={step} size="sm" number={i + 1} title={step} />
-                ))}
-              </div>
-            </Card>
-            <Button variant="secondary" icon={<ArrowClockwise />} onClick={cam.retry}>
-              Coba lagi
-            </Button>
-          </div>
-          <TextAction onClick={() => fileInput.current?.click()}>Pakai kamera bawaan HP</TextAction>
+        <div className={s.deniedPanel} data-theme="light">
+          <Card className={s.steps}>
+            <p className="t-body-emph">Cara nyalain izin kamera</p>
+            <div>
+              {STEPS.map((step, i) => (
+                <NumberedRow key={step} size="sm" number={i + 1} title={step} />
+              ))}
+            </div>
+          </Card>
+          <Button icon={<ArrowClockwise />} onClick={cam.retry}>
+            Coba lagi
+          </Button>
+          <Button variant="secondary" icon={<Camera />} onClick={() => fileInput.current?.click()}>
+            Pakai kamera HP
+          </Button>
         </div>
       ) : (
         <div className={s.bar}>
-          {result?.src ? (
+          {lastOwnId ? (
             <button
               type="button"
               className={s.last}
-              onClick={() => go("hasil")}
+              onClick={() => router.push(sheetHref(lastOwnId))}
               aria-label="Lihat foto terakhirmu"
             >
-              {/* eslint-disable-next-line @next/next/no-img-element -- blob: / route proxy */}
-              <img src={result.src} alt="" />
+              {/* eslint-disable-next-line @next/next/no-img-element -- route proxy */}
+              {!preview && <img src={guestPhotoUrl(token, lastOwnId)} alt="" />}
             </button>
           ) : (
             <span aria-hidden className={s.barSpacer} />
           )}
           <button
             type="button"
-            className={s.shutter}
+            className={cx(s.shutter, (busy || leaving) && s.sending)}
             onClick={shoot}
-            aria-label="Jepret"
-            aria-disabled={busy || (!fallback && status !== "live")}
+            aria-label={busy || leaving ? "Lagi ngirim foto" : "Jepret"}
+            aria-busy={busy || leaving}
+            aria-disabled={busy || leaving || (!fallback && status !== "live")}
           >
             <span />
           </button>
@@ -414,7 +233,7 @@ export function KolaseApp({
           )}
         </div>
       )}
-      {fileField}
+      <input ref={fileInput} type="file" accept="image/*" capture="user" hidden onChange={onFile} />
       {toast && (
         <div className={s.toastDock}>
           <Toast key={toast.key} icon={<Info />}>

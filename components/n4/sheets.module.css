@@ -1,0 +1,140 @@
+/* ---- BT07 / BT07b / BT07c / BT07e · sheet hasil foto ---- */
+.sheet {
+  gap: 0;
+  padding-top: 12px;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 34px);
+}
+
+.stage {
+  display: flex;
+  justify-content: center;
+  padding: 22px 0 18px;
+}
+
+/* Foto ditempel (design.md §6): jatuh & "nempel", 450 ms spring; akhir = nilai dasar polaroid. */
+.drop {
+  animation: drop 450ms var(--ease-spring) both;
+}
+
+@keyframes drop {
+  from {
+    opacity: 0;
+    transform: translateY(-56px) rotate(calc(var(--tilt, 0deg) - 10deg)) scale(1.06);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drop {
+    animation: fade 150ms ease-out both;
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 350px;
+  text-align: center;
+}
+
+.pill {
+  margin-top: 14px;
+}
+
+.strip {
+  padding: 18px 0;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+/* ---- BT07d · Galeri foto ---- */
+.galeri {
+  align-items: stretch;
+  min-height: 76dvh;
+  padding-top: 12px;
+}
+
+.galeri > :first-child {
+  align-self: center;
+}
+
+.galeriHead {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 14px;
+  margin: 0;
+  padding: 6px 4px 0;
+  list-style: none;
+}
+
+/* Hapus: ikon 16, area tap 44 (padding transparan). Warna tetap — di atas polaroid putih. */
+.trash {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #8a8a8a;
+}
+
+.trash::after {
+  content: "";
+  position: absolute;
+  inset: -14px;
+}
+
+.addTile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 100%;
+  min-height: 210px;
+  border: 1.5px dashed var(--accent);
+  border-radius: 8px;
+  background: var(--card-2);
+  color: var(--accent-text);
+  text-decoration: none;
+  transition: transform var(--press-ms) ease-out;
+}
+
+.addTile:active {
+  transform: scale(var(--press-scale));
+}
+
+/* Toast di atas tombol bawah sheet (di atas sheet & dialog). */
+.toastDock {
+  position: fixed;
+  left: 50%;
+  bottom: calc(max(calc(env(safe-area-inset-bottom) + 24px), 34px) + 130px);
+  z-index: 70;
+  width: max-content;
+  max-width: calc(min(100vw, var(--screen-width)) - 32px);
+  transform: translateX(-50%);
+}
+
+.toastInline {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-bottom: 12px;
+}

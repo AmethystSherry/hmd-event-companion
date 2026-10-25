@@ -2,19 +2,25 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { AcaraScreen } from "@/components/f4/AcaraScreen";
 import type { SheetKind } from "@/components/f4/Sheets";
-import { PhotoOutbox } from "@/components/n4/PhotoOutbox";
 import { RegisterOffline } from "@/components/RegisterOffline";
 import { Screen, Skeleton } from "@/components/ui";
 import { acaraView } from "@/lib/acara";
 import { getStore } from "@/lib/data";
+import { firstName } from "@/lib/format";
+import { isPhotoId, toGuestPhotos } from "@/lib/photo";
 import { guestFromToken } from "@/lib/server/access";
 import { serverNow } from "@/lib/server/clock";
 
-const SHEETS: SheetKind[] = ["detail", "pembicara", "rundown", "tamu"];
-// ?sheet=&sesi= (reload / back-forward) → sheet yang sama kebuka lagi.
-function sheetFrom(sheet: unknown, sesi: unknown) {
+const SHEETS: SheetKind[] = ["detail", "pembicara", "rundown", "tamu", "foto", "galeri"];
+// ?sheet=&sesi=&id= (reload / back-forward / dari kamera N4) → sheet yang sama kebuka lagi.
+function sheetFrom(sheet: unknown, sesi: unknown, id: unknown) {
   const kind = SHEETS.find((k) => k === sheet);
-  return kind ? { kind, sessionId: typeof sesi === "string" ? sesi : undefined } : null;
+  if (!kind) return null;
+  return {
+    kind,
+    sessionId: typeof sesi === "string" ? sesi : undefined,
+    photoId: typeof id === "string" && isPhotoId(id) ? id : undefined,
+  };
 }
 
 export const metadata = { title: "House Moving Day · Potara Studio" };
@@ -65,10 +71,15 @@ async function EventScreen({
       <AcaraScreen
         token={token}
         view={view}
+        photos={toGuestPhotos({
+          name: firstName(guest.name),
+          endsAt: event.endsAt,
+          guestId: guest.id,
+          photos: store.listPhotos(event.id),
+        })}
         serverNow={now.toISOString()}
-        initialSheet={sheetFrom(q.sheet, q.sesi)}
+        initialSheet={sheetFrom(q.sheet, q.sesi, q.id)}
       />
-      <PhotoOutbox token={token} />
       <RegisterOffline />
     </>
   );

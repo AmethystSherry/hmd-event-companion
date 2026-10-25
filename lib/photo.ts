@@ -1,6 +1,9 @@
+import type { Photo } from "./data/types";
+
 // N4 · logika foto kolase tanpa secret/DOM — dipakai di HP (kompres, kemiringan) dan server
 // (validasi upload). Bagian canvas ada di components/n4/capture.ts.
 
+export const MAX_PHOTOS_PER_GUEST = 20; // per tamu, foto yang dihapus nggak dihitung
 export const PHOTO_RATIO = 5 / 6; // viewfinder 300×360 (lebar/tinggi)
 export const PHOTO_LONG_SIDE = 1280;
 export const THUMB_LONG_SIDE = 320;
@@ -76,6 +79,34 @@ export function guestPhotoUrl(token: string, id: string, variant: "full" | "thum
 
 export function crewPhotoUrl(id: string, variant: "full" | "thumb" = "thumb") {
   return `/api/panitia/foto/${id}${variant === "thumb" ? "?v=thumb" : ""}`;
+}
+
+// Data foto untuk sheet layar acara (BT07/BT07b/BT07e hasil, BT07d galeri), dari server.
+export type GuestPhotos = {
+  name: string; // nama depan (caption polaroid)
+  endsAt: string; // "17.00" (toast "kebuka pas acara selesai")
+  mine: { id: string; createdAt: string }[]; // foto sendiri yang udah terkirim, terbaru dulu
+  others: number; // foto aktif tamu lain
+  latest: string[]; // 4 foto tamu lain terbaru (strip)
+};
+
+// Dari daftar foto aktif event (terbaru dulu, store.listPhotos) → data sheet tamu itu.
+export function toGuestPhotos(input: {
+  name: string;
+  endsAt: string;
+  guestId: string;
+  photos: Pick<Photo, "id" | "guestId" | "createdAt">[];
+}): GuestPhotos {
+  const others = input.photos.filter((p) => p.guestId !== input.guestId);
+  return {
+    name: input.name,
+    endsAt: input.endsAt,
+    mine: input.photos
+      .filter((p) => p.guestId === input.guestId)
+      .map((p) => ({ id: p.id, createdAt: p.createdAt })),
+    others: others.length,
+    latest: others.slice(0, 4).map((p) => p.id),
+  };
 }
 
 // Respons upload (BT07) & ringkasan kolase untuk layar tamu.

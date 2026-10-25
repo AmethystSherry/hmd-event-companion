@@ -10,8 +10,9 @@ import { guestFromToken } from "@/lib/server/access";
 
 export const metadata = { title: "Kulkas polaroid · House Moving Day" };
 
-// N4 · Foto buat kolase (BT06 → BT07). Hanya tamu yang udah check-in; acara ditutup → BT12
-// (kolase lengkap T15). Kamera, kompres, dan antrean offline jalan di HP (KolaseApp).
+// N4 · Kamera kolase (BT06/BT06b). Hasil jepret = sheet di layar acara (?sheet=foto&id=…).
+// Hanya tamu yang udah check-in; acara ditutup → BT12 (kolase lengkap T15). Kamera & kompres jalan
+// di HP (KolaseApp).
 export default function PhotoPage({ params }: PageProps<"/t/[token]/foto">) {
   return (
     <Suspense
@@ -43,9 +44,7 @@ async function Photo({ params }: Pick<PageProps<"/t/[token]/foto">, "params">) {
         token={token}
         name={firstName(guest.name)}
         date={polaroidDate(event.date)}
-        endsAt={event.endsAt}
         backHref={`/t/${token}/acara`}
-        summary={store.photoSummary(event.id, guest.id)}
         lastOwnId={lastOwn?.id ?? null}
       />
       <RegisterOffline />

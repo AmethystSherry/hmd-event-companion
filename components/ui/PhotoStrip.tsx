@@ -1,8 +1,9 @@
 import { cx } from "@/lib/cx";
 import styles from "./PhotoStrip.module.css";
 
-// Strip foto (N4 BT07, nanti F5): thumbnail 52 radius 12 + tile "+N" sisa foto. Tile bisa ditap
-// (`onExtra`, BT07c: kolase lengkap baru dibuka pas acara selesai); `pressed` = garis oranye.
+// Strip foto (N4 BT07/BT07e): thumbnail 52 radius 12 + tile "+N" card-2 sisa foto (extra 0 = tanpa
+// tile, BT07e). Tile bisa ditap (`onExtra`, BT07c: kolase lengkap kebuka pas acara selesai);
+// `pressed` = garis oranye.
 export function PhotoStrip({
   photos,
   extra = 0,

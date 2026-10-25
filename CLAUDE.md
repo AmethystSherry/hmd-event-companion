@@ -30,7 +30,7 @@ Web app mobile untuk House Moving Day Potara Studio (Minggu 8 Nov 2026, 13.00–
   integrasi Vercel Storage → env `SUPABASE_*` otomatis; tabel dari `supabase/schema.sql` sudah
   dijalankan. Secret (`EVENT_PIN`, `TICKET_HMAC_SECRET`, `SESSION_SECRET`) diisi sendiri oleh
   pemilik di Vercel. Di production jam palsu & alat `/dev/states` mati.
-- **N4 · Foto kolase polaroid sudah dibangun** (24 Okt; Figma section `4670:4981`,
+- **N4 · Foto kolase polaroid sudah dibangun** (24 Okt, **v2 25 Okt**: hasil & galeri = sheet di `acara/`; Figma section `4670:4981`,
   `N4-deliverables.md`). Semua keputusan terbuka dijawab pakai default — lihat "Aturan N4 di kode".
   **Belum jalan di Vercel sampai pemilik menjalankan blok bucket `hmd-photos` di
   `supabase/schema.sql`** (SQL Editor). Tombol "Foto buat kolase" sementara di placeholder `acara/`.
@@ -80,7 +80,7 @@ app/
   (tamu)/t/[token]/       T01a/T01/T01e/T02b/T03/T03k/T03h · konfirmasi/ (T02/T02c/T02d) · kalender/ (.ics) ·
                           acara/ (F4 Sesi/Jeda + sheet) · foto/ (N4 BT06–BT07c) ·
                           selesai/ (F5 BT12) · buku-tamu/ (T14*) · kolase/ (T15*, T14d) ·
-                          galeri/ (BT07d) · tanya/ (N1) · kartu/ (T11) = placeholder
+                          galeri/ (→ acara?sheet=galeri) · tanya/ (N1) · kartu/ (T11) = placeholder
   panitia/                P01 + PE01/PE02 · actions.ts (semua server action panitia)
     event/[id]/           PE03/PE03b (+ sheet PE03e/PE03h) · rundown/ (PE04k/PE04/PE04a/PE04b/
                           PE04s) · tamu/ (P04k/P04a/P04c/P04i/P04/P04b/d/e/f/g/h/s) · kontrol/ (BP02/BP03/BP01b +
@@ -97,7 +97,7 @@ app/
   dev/states/f1/          37 layar F1 dengan data contoh + alat uji (link tamu, CSV dummy, reset)
   dev/states/f2/          17 layar F2 (BP02/BP02-pre/BP03/BP01b …) + alat uji (jam pura-pura hari-H,
                           data 12 hadir, reset check-in, mulai/selesaikan sesi)
-  dev/states/n4/          7 layar N4 + alat uji (check-in semua, 30 foto dummy, hapus semua foto)
+  dev/states/n4/          10 layar N4 v2 (BT03 + kamera + sheet) + alat uji (check-in semua, 30 foto dummy, hapus semua foto)
   dev/states/f4/          20 layar F3+F4 (tamu + panitia) + alat uji (jam 13.48/14.03, mulai/selesai sesi
                           sebagai "HP LAIN" → BP02d, isi kartu BT05)
   dev/states/f5/          17 layar F5 (tamu + panitia) + alat uji (foto dummy, selesaikan semua sesi, tutup/buka
@@ -111,8 +111,8 @@ components/f1/            layar F1 presentasional (dipakai route asli & /dev/sta
 components/f2/            tamu.tsx (T05/T05a/BT02/T03b) · Kontrol (BP02 + dialog) · DoorApp (P05–P07d) ·
                           useDoor (manifest + antrean) · Viewfinder (kamera) · DoorPage (guard route) ·
                           Placeholder (Foto/Tanya)
-components/n4/            KolaseApp (BT06/BT06b/BT07/BT07b/BT07c) · useCamera · capture (crop+kompres) ·
-                          usePhotoOutbox (kirim + antrean) · PhotoOutbox (antrean di layar acara)
+components/n4/            KolaseApp (kamera BT06/BT06b) · useCamera · capture (crop+kompres) ·
+                          usePhotoOutbox (kirim + antrean) · NempelSheet (BT07/b/c/e) · GaleriSheet (BT07d)
 components/f4/            AcaraScreen (BT20–24/BT03/S01, sheet lewat ?sheet=) · Sheets (BT22/BT21p/BT04/BT05) ·
                           Placeholder (Galeri/Tanya/Kartu)
 components/f5/            Selesai (BT12 + belum masuk) · BukuTamu (T14/b/c) · KolaseKulkas (T15/T15c/
@@ -238,7 +238,8 @@ Keputusan default 22 Okt (jawaban "Keputusan & asumsi" di F2-deliverables; prd.m
   bisa tetap memakai modul server lama (mis. `store.getPhoto is not a function`) → restart `npm run dev`.
 
 ## Aturan N4 di kode
-Keputusan default 24 Okt (jawaban "Keputusan & asumsi" + "Temuan" di N4-deliverables):
+Keputusan default 24 Okt (jawaban "Keputusan & asumsi" + "Temuan" di N4-deliverables), direvisi v2 25 Okt
+(Figma N4 `4670:4981` versi 25 Okt, N4-deliverables v2 — hasil foto & galeri jadi sheet di `acara/`):
 1. Hanya tamu yang **udah check-in**; acara `closed` → `/foto` dialihkan ke `acara/`, upload ditolak
    (tetap, keputusan F5). Hapus foto sendiri **tetap boleh setelah ditutup** sampai data dihapus H+30.
 2. Kamera default **depan**, preview di-mirror (CSS), hasil **tidak** mirror. Ganti kamera = tombol
@@ -248,22 +249,41 @@ Keputusan default 24 Okt (jawaban "Keputusan & asumsi" + "Temuan" di N4-delivera
 4. Kompres di HP (`components/n4/capture.ts`): sisi panjang 1280, JPEG kualitas 0,85 → 0,5, lalu
    diperkecil ×0,85 sampai ≤ 400 KB; thumbnail 320 ≤ 40 KB. Server menolak > 480/80 KB & non-JPEG.
 5. **Maks 20 foto per tamu** (`MAX_PHOTOS_PER_GUEST`, foto yang dihapus nggak dihitung).
-6. Strip BT07 = 4 foto **tamu lain** terbaru (teaser, boleh); "+N" = foto tamu lain − 4. 0 foto
-   tamu lain → "Kamu yang pertama nempel di kulkas!" tanpa strip.
+6. Strip BT07 = 4 foto **tamu lain** terbaru (teaser, boleh); "+N" = foto tamu lain − 4, tap → toast
+   BT07c "Kolase lengkap kebuka pas acara selesai (± {endsAt})" (ikut alur sheet di atas tombol).
+   0 foto tamu lain → **BT07e** "Kamu yang pertama!" + strip = fotomu sendiri (maks 4), tanpa "+N".
 7. Webview IG/FB (`isInAppBrowser`), tanpa getUserMedia/HTTPS, atau kamera error → jalur cadangan
    `<input type="file" accept="image/*" capture="user">` + teks "Buka di Safari/Chrome…". BT06b
-   punya TextAction "Pakai kamera bawaan HP".
-8. Copy "kolase **bareng**" di BT06 & BT07; tombol "**Kembali ke acara**" (bukan "ke jeda").
-9. Thumbnail kiri di bar kamera = foto terakhirmu → BT07; belum ada foto → disembunyikan.
+   punya 2 tombol lg: primary "Coba lagi" + secondary "Pakai kamera HP" (input file), toolbar cuma X.
+8. Copy ikut Figma v2 ("Jepret sekali, langsung nempel di kulkas bareng.", "kebuka"). Sheet hasil:
+   primary "Foto lagi" → `/foto` (antre: "Coba kirim sekarang") + secondary "**Selesai**" = tutup sheet,
+   tetap di home (Sesi/Jeda ikut mode). Judul sheet `t-card-title`.
+9. Thumbnail kiri di bar kamera = foto terakhirmu → `/acara?sheet=foto&id=…`; belum ada → disembunyikan.
 10. File di Supabase Storage bucket privat `hmd-photos` (`{eventId}/{id}.jpg` + `_t.jpg`), lokal
     `.data/photos/`. Metadata `Photo` di store (`photos?`). HP baca lewat **route proxy** yang cek
     token tamu (event sama) / sesi PIN; `Cache-Control: private, immutable` + SW cache-first.
 11. Upload `POST /api/t/[token]/foto` (multipart, route handler — bukan server action, batas 1 MB).
     Urutan: file dulu (upsert), baru `mutateStore(addPhoto)`. Idempoten per id = UUID dari HP
     (`newPhotoId`, jalan juga di http LAN). `sessionId` = sesi yang jalan / terakhir selesai.
-12. Jepret → foto masuk antrean IndexedDB **dulu**, lalu dikirim (tunggu ≤ 5 dtk) → BT07; gagal →
-    BT07b. Antrean dicoba tiap 5 dtk & saat `online`, juga dari layar `acara/` (`PhotoOutbox`).
-    Ditolak server (4xx) → dibuang + toast. Terkirim selagi BT07b terbuka → layar pindah ke BT07.
+12. `/foto` = kamera saja (BT06/BT06b). Jepret → antrean IndexedDB **dulu** → kirim, tunggu ≤ 5 dtk
+    (shutter loading) → kamera dimatikan → `router.replace(/acara?sheet=foto&id=…)`. Ditolak (4xx) →
+    toast, tetap di kamera. Status sheet (`nempelStatus`): id ada di data server (`GuestPhotos.mine`) =
+    terkirim (BT07/BT07e), masih di antrean HP = antre (BT07b, gambar dari Blob), nggak ada di
+    keduanya = sheet nggak dibuka. Antrean dikirim dari `AcaraScreen` (`usePhotoOutbox`, tiap 5 dtk &
+    `online`); terkirim → `router.refresh()` → sheet BT07b berubah ke BT07 sendiri.
+- **Sheet N4 di `acara/`** (`components/n4/NempelSheet`, `GaleriSheet`): `?sheet=foto&id=` / `?sheet=galeri`,
+  pola pushState F4 (back HP/Esc/backdrop menutup; dari kamera = `replace`, jadi back keluar ke home).
+  `Sheet strong` = backdrop 45%. Data dari server `toGuestPhotos` (lib/photo): nama depan, `endsAt`,
+  fotoku (id + jam), jumlah & 4 foto tamu lain. `/galeri` lama dialihkan ke `/acara?sheet=galeri`.
+- **Polaroid** prop `magnet` (bulatan oranye CSS, bukan aset), `status` sent|queued (badge 30 pojok
+  kanan atas, border 3px `--card`), ukuran `lg` (kamera) · `sheet` (foto 150×170) · `grid` (152×170),
+  `caption` & slot `action`. Miring tetap `photoTilt` (±4°); galeri berganti +2°/−2°/+1,5°/−1,5°.
+- **BT07d Galeri**: `Segmented` "Foto saya · {n}" / 🔒 "Foto tamu" (opsi `locked` + `onLocked` → toast
+  BT07c). Grid 2 kolom fotoku terbaru dulu (foto antre ikut, badge ⌛, tanpa hapus); caption "{nama} ·
+  {jam}" + Trash 16 (area tap 44) → Dialog "Hapus foto ini?" → `DELETE` → toast + refresh. Tile "Foto
+  lagi" (dashed accent) disembunyikan di 20 foto → "Maks 20 foto". Kosong → tile + "Belum ada foto.
+  Jepret yang pertama!" (TODO copy). Tap polaroid = belum ada (TODO desain).
+- Badge home Figma "Sedang jeda" vs kode "Lagi jeda": **belum diubah** (keputusan F3/F4).
 13. Hapus foto sendiri: `DELETE /api/t/[token]/foto/[id]` (soft delete `deletedAt` + file dihapus),
     UI di F5 (T15b). Hapus otomatis H+30: lihat "Aturan F5 di kode".
 14. Tile "Foto" BP02 = `photoCount` (realtime lewat `rev`).
@@ -472,6 +492,8 @@ menghapus data per orang di store lokal → balikin lewat `/dev/states/f1` Reset
 - [x] F2 v3 (25 Okt) — BT02 ilustrasi + panel, kode BP02/BP03/BP01b — menunggu review
 - [x] N4 (24 Okt) — foto kolase polaroid (5 layar + 2 kasus, kompres di HP, antrean offline) —
       menunggu review & bucket Supabase
+- [x] N4 v2 (25 Okt) — hasil foto & Galeri BT07d jadi sheet di layar acara, BT07e, magnet + badge status,
+      BT06b 2 tombol — menunggu review
 - [x] F5 (24 Okt) — tutup acara, buku tamu, kolase 9:16, rekap + ringkasan Claude, CSV, hapus H+30;
       16 layar (BT12, T14*, T15*, BP04/BP04b, P11*) — menunggu review & `ANTHROPIC_API_KEY` di Vercel
 - [x] F1 update 23 + 25 Okt (v5) — 37 layar: amplop Pota, T01 baru, T02 kenalan, T02b ucapan,

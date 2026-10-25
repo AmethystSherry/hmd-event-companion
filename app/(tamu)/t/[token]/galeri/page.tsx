@@ -1,26 +1,16 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { GuestPlaceholder } from "@/components/f4/Placeholder";
-import { Image as ImageIcon } from "@/components/icons";
-import { guestFromToken } from "@/lib/server/access";
 
-export const metadata = { title: "Galeri · House Moving Day" };
-
-// Placeholder BT07d Galeri · Foto saya (susulan N4). Pintasan Galeri di layar acara (F4).
+// BT07d Galeri sekarang sheet di layar acara (N4 v2) → link lama /galeri dialihkan ke sana.
 export default function Page({ params }: PageProps<"/t/[token]/galeri">) {
   return (
     <Suspense>
-      <Body params={params} />
+      <Go params={params} />
     </Suspense>
   );
 }
 
-async function Body({ params }: Pick<PageProps<"/t/[token]/galeri">, "params">) {
+async function Go({ params }: Pick<PageProps<"/t/[token]/galeri">, "params">): Promise<never> {
   const { token } = await params;
-  if (!(await guestFromToken(token))) redirect(`/t/${token}`);
-  return (
-    <GuestPlaceholder token={token} title="Galeri" icon={<ImageIcon size={30} />}>
-      Galeri foto kolase lagi disiapin. Sementara, jepret dulu lewat tombol kamera di layar acara.
-    </GuestPlaceholder>
-  );
+  redirect(`/t/${token}/acara?sheet=galeri`);
 }

@@ -2,6 +2,7 @@ import { randomBytes, randomUUID } from "node:crypto";
 import type { CsvRow } from "../csv";
 import { MAX_IMPROVE, summaryDue } from "../feedback";
 import { toMinutes } from "../format";
+import { MAX_PHOTOS_PER_GUEST } from "../photo";
 import { backfillSessionInfo } from "./sessionInfo";
 import type {
   CheckInMethod,
@@ -76,7 +77,7 @@ export type PhotoInput = {
   bytes: number;
 };
 
-export const MAX_PHOTOS_PER_GUEST = 20;
+export { MAX_PHOTOS_PER_GUEST } from "../photo";
 
 // Satu operasi check-in dari HP panitia: opId acak dibuat di HP (dipakai ulang saat kirim ulang).
 export type CheckInOp = { opId: string; method: CheckInMethod; by: string; at: string };

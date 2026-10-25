@@ -67,14 +67,15 @@ export function usePhotoOutbox(
   token: string,
   { enabled = true, onResult }: { enabled?: boolean; onResult?: (r: SendResult) => void } = {},
 ) {
-  const [pending, setPending] = useState(0);
+  // Isi antrean (Blob ikut) → jumlah BT07b + foto antre di Galeri BT07d.
+  const [queued, setQueued] = useState<QueuedPhoto[]>([]);
   const resultRef = useRef(onResult);
   useEffect(() => {
     resultRef.current = onResult;
   });
 
   const refreshCount = useCallback(async () => {
-    setPending((await listQueued(token)).length);
+    setQueued(await listQueued(token));
   }, [token]);
 
   const flush = useCallback(async () => {
@@ -98,5 +99,5 @@ export function usePhotoOutbox(
     };
   }, [enabled, flush]);
 
-  return { pending, flush, refreshCount };
+  return { pending: queued.length, queued, flush, refreshCount };
 }

@@ -71,3 +71,8 @@
   padding-bottom: 24px;
   border-radius: 40px;
 }
+
+/* N4 BT07/BT07d: backdrop 45% (Figma rgba(16,16,16,.45)). */
+.strong .scrim {
+  background: rgba(16, 16, 16, 0.45);
+}

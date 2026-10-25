@@ -8,7 +8,7 @@ import styles from "./Sheet.module.css";
 // `floating` (P06 hasil scan): inset 8 dari tepi, radius 40 di semua sudut, dim 35%.
 // Dirender di tempat (position fixed, tanpa portal) supaya sheet yang terbuka sejak render pertama
 // tetap cocok saat hidrasi.
-// Dipakai untuk konfirmasi & aksi cepat (BP03, BP04b, P06, P07c, T15c).
+// Dipakai untuk konfirmasi & aksi cepat (BP03, BP04b, P06, P07c, T15c) dan hasil foto/galeri N4.
 export function Sheet({
   open,
   onClose,
@@ -16,6 +16,7 @@ export function Sheet({
   children,
   dismissible = true,
   floating,
+  strong,
   className,
 }: {
   open: boolean;
@@ -24,6 +25,7 @@ export function Sheet({
   children: ReactNode;
   dismissible?: boolean;
   floating?: boolean;
+  strong?: boolean; // backdrop 45% (N4 BT07/BT07d)
   className?: string;
 }) {
   const titleId = useId();
@@ -55,7 +57,7 @@ export function Sheet({
 
   if (!open) return null;
   return (
-    <div className={cx(styles.root, floating && styles.floating)}>
+    <div className={cx(styles.root, floating && styles.floating, strong && styles.strong)}>
       <div aria-hidden className={styles.scrim} onClick={dismissible ? onClose : undefined} />
       <div
         ref={panel}

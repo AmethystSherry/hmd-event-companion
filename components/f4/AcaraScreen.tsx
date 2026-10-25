@@ -14,11 +14,16 @@ import {
   WifiSlash,
 } from "@/components/icons";
 import { LiveRefresh } from "@/components/LiveRefresh";
+import { GaleriSheet } from "@/components/n4/GaleriSheet";
+import { NempelSheet, nempelStatus, type NempelStatus } from "@/components/n4/NempelSheet";
+import { usePhotoOutbox } from "@/components/n4/usePhotoOutbox";
 import { Badge, Button, JejakAcara, TicketNext, TopToast } from "@/components/ui";
 import { useServerNow } from "@/components/useServerNow";
 import { stampsOf, type AcaraView } from "@/lib/acara";
 import { cx } from "@/lib/cx";
 import { initials, timeWib } from "@/lib/format";
+import type { QueuedPhoto } from "@/lib/offline/photoDb";
+import type { GuestPhotos } from "@/lib/photo";
 import { countdownParts, minutesUntil, type SessionView } from "@/lib/rundown";
 import { DetailSheet, RundownSheet, SpeakerSheet, TamuSheet, type SheetKind } from "./Sheets";
 import styles from "./f4.module.css";
@@ -27,6 +32,8 @@ import styles from "./f4.module.css";
 // SESI = BT20 Open space · BT21 Talkshow · BT23 Tur kantor · BT24 Closing; JEDA = BT03 (+ jeda
 // terakhir, sebelum sesi 1). Panitia Mulai/Selesaikan → rev naik → SSE/poll 2 dtk → router.refresh.
 // Sheet BT22/BT21p/BT04/BT05 dibuka lewat `?sheet=` (pushState) supaya back HP menutupnya.
+// N4: sheet hasil foto (?sheet=foto&id=…, dari kamera) & Galeri (?sheet=galeri); antrean foto
+// dikirim dari sini (terkirim → router.refresh → sheet BT07b berubah ke BT07).
 // Offline (S01): toast atas + layar dari data terakhir (snapshot localStorage kalau HTML-nya dari
 // cache SW lebih lama). Layar ini nggak memanggil server sendiri selain LiveRefresh.
 
@@ -35,8 +42,14 @@ const artUrl = (art: string) => `/figma/f3-${art}.webp`;
 const snapKey = (token: string) => `hmd-acara:${token}`;
 const SKEW_KEY = "hmd-acara-skew";
 
-type Preview = { sheet?: SheetKind; sessionId?: string; offline?: boolean };
-type OpenSheet = { kind: SheetKind; sessionId?: string };
+type Preview = {
+  sheet?: SheetKind;
+  sessionId?: string;
+  photoId?: string;
+  offline?: boolean;
+  photo?: { status: NempelStatus; pending?: number; extraToast?: boolean }; // /dev/states/n4
+};
+type OpenSheet = { kind: SheetKind; sessionId?: string; photoId?: string };
 
 // localStorage dibaca lewat useSyncExternalStore (server: null). Tulis tanpa notifikasi: yang
 // ditulis selalu data yang lagi tampil.
@@ -67,12 +80,14 @@ function parseSnapshot(raw: string | null): AcaraView | null {
 export function AcaraScreen({
   token,
   view: fresh,
+  photos,
   serverNow,
   initialSheet,
   preview,
 }: {
   token: string;
   view: AcaraView;
+  photos: GuestPhotos; // N4: foto sendiri + ringkasan tamu lain (sheet foto & galeri)
   serverNow: string;
   initialSheet?: OpenSheet | null; // dari ?sheet=&sesi= (reload / buka ulang)
   preview?: Preview; // /dev/states/f4: tanpa LiveRefresh, jam beku, sheet/offline dipaksa
@@ -80,7 +95,9 @@ export function AcaraScreen({
   const router = useRouter();
   const [online, setOnline] = useState(true);
   const [sheet, setSheet] = useState<OpenSheet | null>(
-    preview?.sheet ? { kind: preview.sheet, sessionId: preview.sessionId } : (initialSheet ?? null),
+    preview?.sheet
+      ? { kind: preview.sheet, sessionId: preview.sessionId, photoId: preview.photoId }
+      : (initialSheet ?? null),
   );
 
   // HTML dari cache SW (offline) bisa lebih lama dari snapshot terakhir → pakai snapshot (rev
@@ -123,7 +140,11 @@ export function AcaraScreen({
     const read = () => {
       const q = new URL(window.location.href).searchParams;
       const kind = q.get("sheet") as SheetKind | null;
-      setSheet(kind ? { kind, sessionId: q.get("sesi") ?? undefined } : null);
+      setSheet(
+        kind
+          ? { kind, sessionId: q.get("sesi") ?? undefined, photoId: q.get("id") ?? undefined }
+          : null,
+      );
     };
     window.addEventListener("popstate", read);
     return () => window.removeEventListener("popstate", read);
@@ -148,8 +169,33 @@ export function AcaraScreen({
     const url = new URL(window.location.href);
     url.searchParams.delete("sheet");
     url.searchParams.delete("sesi");
+    url.searchParams.delete("id");
     history.replaceState(history.state, "", url);
   }, [preview]);
+
+  // N4 · antrean foto (BT07b): satu pengirim untuk layar ini, foto terkirim → data server baru.
+  const outbox = usePhotoOutbox(token, {
+    enabled: !preview,
+    onResult: (r) => r.kind === "sent" && router.refresh(),
+  });
+  const previewQueued = useMemo<QueuedPhoto[]>(
+    () =>
+      Array.from({ length: preview?.photo?.pending ?? 0 }, (_, i) => ({
+        id: i === 0 && preview?.photoId ? preview.photoId : `antre-${i}`,
+        token,
+        photo: new Blob(),
+        thumb: new Blob(),
+        width: 0,
+        height: 0,
+        createdAt: 0,
+      })),
+    [preview, token],
+  );
+  const queued = preview ? previewQueued : outbox.queued;
+  const photoId = sheet?.kind === "foto" ? sheet.photoId : undefined;
+  const photoStatus = photoId
+    ? (preview?.photo?.status ?? nempelStatus(photoId, photos, queued))
+    : null;
 
   const offline = preview?.offline ?? !online;
   const { active, next } = view;
@@ -248,10 +294,10 @@ export function AcaraScreen({
             <ListBullets size={22} />
             <span className="t-caption">Rundown</span>
           </button>
-          <Link href={`/t/${token}/galeri`} className={styles.tile}>
+          <button type="button" className={styles.tile} onClick={() => open("galeri")}>
             <ImageIcon size={22} />
             <span className="t-caption">Galeri</span>
-          </Link>
+          </button>
           {talkshowLive ? (
             <Link href={`/t/${token}/tanya`} className={cx(styles.tile, styles.tileHot)}>
               <ChatCircle size={22} />
@@ -307,6 +353,28 @@ export function AcaraScreen({
         />
       )}
       {sheet?.kind === "tamu" && <TamuSheet token={token} view={view} onClose={close} />}
+      {photoId && photoStatus && (
+        <NempelSheet
+          token={token}
+          data={photos}
+          photoId={photoId}
+          status={photoStatus}
+          queued={queued}
+          onRetry={async () => (await outbox.flush()).some((r) => r.kind === "sent")}
+          onClose={close}
+          preview={preview ? { extraToast: preview.photo?.extraToast } : undefined}
+        />
+      )}
+      {sheet?.kind === "galeri" && (
+        <GaleriSheet
+          token={token}
+          data={photos}
+          queued={queued}
+          onClose={close}
+          onDeleted={() => router.refresh()}
+          preview={!!preview}
+        />
+      )}
 
       {!preview && <LiveRefresh token={token} pollMs={2000} onHealth={setOnline} />}
     </main>

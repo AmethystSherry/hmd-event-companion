@@ -1,5 +1,6 @@
 /* Polaroid: warna tetap (benda fisik) — putih, caption #0F0F0F / #666. */
 .polaroid {
+  position: relative;
   display: flex;
   flex-direction: column;
   margin: 0;
@@ -15,16 +16,22 @@
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
 }
 
-.sm {
-  width: 194px;
-  padding: 12px 12px 16px;
-  gap: 10px;
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.07);
+/* BT07 sheet: foto 150×170, padding 10/10/14. */
+.sheet {
+  width: 170px;
+  padding: 10px 10px 14px;
+  gap: 8px;
+  border-radius: 4px;
+  box-shadow: 0 8px 10px rgba(0, 0, 0, 0.12);
 }
 
-.dim {
-  opacity: 0.7;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+/* BT07d galeri: lebar ikut slot grid, foto 152×170, padding 8/8/10. */
+.grid {
+  width: 100%;
+  padding: 8px 8px 10px;
+  gap: 6px;
+  border-radius: 4px;
+  box-shadow: 0 6px 7px rgba(0, 0, 0, 0.1);
 }
 
 .photo {
@@ -35,8 +42,12 @@
   background: linear-gradient(160deg, #594d42 0%, #1f1c1a 100%);
 }
 
-.sm .photo {
-  aspect-ratio: 170 / 200;
+.sheet .photo {
+  aspect-ratio: 150 / 170;
+}
+
+.grid .photo {
+  aspect-ratio: 152 / 170;
 }
 
 .photo > img,
@@ -50,17 +61,20 @@
 
 .caption {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 8px;
+  min-height: 18px;
   font-size: 13px;
   line-height: 18px;
   letter-spacing: 0.005em;
 }
 
-.sm .caption {
-  font-size: 11px;
-  line-height: 14px;
+.sheet .caption,
+.grid .caption {
+  min-height: 16px;
+  font-size: 12px;
+  line-height: 16px;
 }
 
 .name {
@@ -76,4 +90,47 @@
   flex-shrink: 0;
   color: #666666;
   font-weight: 400;
+}
+
+/* Magnet oranye di tengah atas (BT07): bulatan 16 dengan kilau. */
+.magnet {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  z-index: 1;
+  width: 16px;
+  height: 16px;
+  margin-left: -8px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffb27a 0%, var(--accent) 55%, #c94a00 100%);
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.25);
+}
+
+/* Badge status 30 di pojok kanan atas: ✓ terkirim (hijau) / ⌛ antre (netral). */
+.status {
+  position: absolute;
+  top: -11px;
+  right: -11px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 3px solid var(--card);
+  border-radius: 50%;
+  color: #ffffff;
+}
+
+.status svg {
+  width: 14px;
+  height: 14px;
+}
+
+.sent {
+  background: var(--success-text);
+}
+
+.queued {
+  background: var(--label-3);
 }

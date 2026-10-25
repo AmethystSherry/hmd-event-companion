@@ -1,11 +1,11 @@
-import type { ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import { KontrolScreen } from "@/components/f2/Kontrol";
 import { AcaraScreen } from "@/components/f4/AcaraScreen";
-import type { SheetKind } from "@/components/f4/Sheets";
 import { acaraView } from "@/lib/acara";
 import { HMD_ID, seedData } from "@/lib/data/seed";
 import { createStore, type DataStore } from "@/lib/data/store";
 import { demoEvent, NAMES } from "@/lib/fixtures";
+import { toGuestPhotos, type GuestPhotos } from "@/lib/photo";
 import { rundownView } from "@/lib/rundown";
 import { demoCard } from "./cards";
 
@@ -57,10 +57,12 @@ const s = (store: DataStore, id: "s01" | "s02" | "s03" | "s04", from: string, to
   if (to) store.finishSession(HMD_ID, id, at(to));
 };
 
-function acara(
+// Dipakai juga /dev/states/n4 (BT03 + sheet foto/galeri N4, `photos` diganti data contoh).
+export function acara(
   steps: (s: DataStore) => void,
   now: string,
-  preview: { sheet?: SheetKind; sessionId?: string; offline?: boolean } = {},
+  preview: ComponentProps<typeof AcaraScreen>["preview"] = {},
+  photos?: GuestPhotos,
 ) {
   const store = demoStore(steps);
   const me = store.listGuests(HMD_ID).find((g) => g.ig === "rarawening")!;
@@ -77,14 +79,23 @@ function acara(
     <AcaraScreen
       token="demo-token"
       view={view}
+      photos={
+        photos ??
+        toGuestPhotos({
+          name: "Rara",
+          endsAt: store.getEvent(HMD_ID)!.endsAt,
+          guestId: me.id,
+          photos: store.listPhotos(HMD_ID),
+        })
+      }
       serverNow={at(now)}
-      preview={{ sheet: undefined, ...preview, offline: preview.offline ?? false }}
+      preview={{ sheet: undefined, ...preview, offline: preview?.offline ?? false }}
     />
   );
 }
 
 const openSpace = (st: DataStore) => s(st, "s01", "13:00:00");
-const jeda1 = (st: DataStore) => s(st, "s01", "13:00:00", "13:58:00");
+export const jeda1 = (st: DataStore) => s(st, "s01", "13:00:00", "13:58:00");
 const talkshow = (st: DataStore) => {
   jeda1(st);
   s(st, "s02", "14:00:00");
