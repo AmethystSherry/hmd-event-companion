@@ -5,7 +5,7 @@ import { requireCrew } from "@/lib/server/access";
 
 export const metadata = { title: "Galeri kolase · House Moving Day" };
 
-// Foto (placeholder dari stat tile BP02). Isi layarnya di fase berikutnya.
+// Foto (stat tile BP02) → galeri kolase N4 untuk panitia (placeholder; galeri tamu = BT07d).
 export default function Page({ params }: PageProps<"/panitia/event/[id]/foto">) {
   return (
     <Suspense>
@@ -19,8 +19,8 @@ async function Content({ params }: Pick<PageProps<"/panitia/event/[id]/foto">, "
   const { id } = await params;
   return (
     <CrewPlaceholder eventId={id} title="Galeri kolase" icon={<Camera size={30} />}>
-      Foto tamu udah masuk lewat kulkas polaroid (jumlahnya di Kontrol). Galeri kolase lengkap
-      menyusul di F5.
+      Foto tamu udah masuk lewat kulkas polaroid (jumlahnya di Kontrol). Galeri kolase buat panitia
+      menyusul.
     </CrewPlaceholder>
   );
 }

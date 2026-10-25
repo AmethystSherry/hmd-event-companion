@@ -5,7 +5,7 @@ import { requireCrew } from "@/lib/server/access";
 
 export const metadata = { title: "Pertanyaan · House Moving Day" };
 
-// Tanya (placeholder dari stat tile BP02). Isi layarnya di fase berikutnya.
+// Tanya (stat tile BP02) → tab Tanya N1 (placeholder).
 export default function Page({ params }: PageProps<"/panitia/event/[id]/tanya">) {
   return (
     <Suspense>
@@ -19,7 +19,7 @@ async function Content({ params }: Pick<PageProps<"/panitia/event/[id]/tanya">, 
   const { id } = await params;
   return (
     <CrewPlaceholder eventId={id} title="Pertanyaan" icon={<ChatCircle size={30} />}>
-      Pertanyaan talkshow dari tamu dibangun di F4.
+      Pertanyaan talkshow dari tamu (N1) menyusul.
     </CrewPlaceholder>
   );
 }
