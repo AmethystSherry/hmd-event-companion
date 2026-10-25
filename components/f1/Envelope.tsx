@@ -98,7 +98,8 @@ export function InviteGate({
   );
 }
 
-// T01a · Undangan · amplop tertutup (Figma 4968:27876). Segel lilin di ilustrasi = tombol.
+// T01a · Undangan · amplop tertutup (Figma 4968:27876, v5.1 26 Okt): teks di atas, ilustrasi turun
+// ke y164 dan menimpa bagian kosong di bawah teks. Segel lilin di ilustrasi = tombol.
 export function EnvelopeScreen({
   guestName,
   phase = "closed",
@@ -111,29 +112,31 @@ export function EnvelopeScreen({
   preload(ART, { as: "image", imageSrcSet: ART_SET });
   return (
     <Screen bottom={<Button onClick={onOpen}>Buka undangan</Button>} className={styles.bleed}>
-      <div className={styles.stage}>
-        {/* eslint-disable-next-line @next/next/no-img-element -- ilustrasi statis dari Figma */}
-        <img src={ART} srcSet={ART_SET} alt="" aria-hidden className={styles.art} />
-        <span aria-hidden className={styles.artFade} />
-        <button
-          type="button"
-          className={cx(styles.seal, phase !== "closed" && styles.sealPressed)}
-          aria-label="Buka undangan"
-          onClick={onOpen}
-        >
-          <span aria-hidden className={cx(styles.ring, styles.ringOuter)} />
-          <span aria-hidden className={cx(styles.ring, styles.ringInner)} />
-        </button>
-        <Pill icon={<HandWaving />} className={styles.tapHint}>
-          Tap segelnya
-        </Pill>
-      </div>
-      <div className={styles.envText}>
-        <p className="t-label c-label-2">Undangan pribadi · House Moving Day</p>
-        <h1 className="t-card-title">Ada surat buat kamu, {firstName(guestName)}.</h1>
-        <p className="t-body c-label-2">
-          Potara pindah rumah, dan kamu salah satu tamu pertamanya.
-        </p>
+      <div className={styles.envStage}>
+        <div className={styles.envText}>
+          <p className="t-label c-label-2">Undangan pribadi · House Moving Day</p>
+          <h1 className="t-card-title">Ada surat buat kamu, {firstName(guestName)}.</h1>
+          <p className="t-body c-label-2">
+            Potara pindah rumah, dan kamu salah satu tamu pertamanya.
+          </p>
+        </div>
+        <div className={styles.stage}>
+          {/* eslint-disable-next-line @next/next/no-img-element -- ilustrasi statis dari Figma */}
+          <img src={ART} srcSet={ART_SET} alt="" aria-hidden className={styles.art} />
+          <span aria-hidden className={styles.artFade} />
+          <button
+            type="button"
+            className={cx(styles.seal, phase !== "closed" && styles.sealPressed)}
+            aria-label="Buka undangan"
+            onClick={onOpen}
+          >
+            <span aria-hidden className={cx(styles.ring, styles.ringOuter)} />
+            <span aria-hidden className={cx(styles.ring, styles.ringInner)} />
+          </button>
+          <Pill icon={<HandWaving />} className={styles.tapHint}>
+            Tap segelnya
+          </Pill>
+        </div>
       </div>
     </Screen>
   );
