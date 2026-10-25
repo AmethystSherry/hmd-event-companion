@@ -30,3 +30,15 @@ export function waLink(wa: string, message: string): string {
 export function guestLink(origin: string, token: string, fromWa = false): string {
   return `${origin}/t/${token}${fromWa ? "?dari=wa" : ""}`;
 }
+
+// T01 "4 bagian acara": judul sesi digabung " · "; Talkshow yang punya pembicara ditulis
+// "Talkshow bareng {pembicara}".
+export function rundownLine(
+  sessions: { title: string; type: string; speaker?: { name: string } | null }[],
+): string {
+  return sessions
+    .map((s) =>
+      s.type === "talkshow" && s.speaker?.name ? `Talkshow bareng ${s.speaker.name}` : s.title,
+    )
+    .join(" · ");
+}

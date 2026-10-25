@@ -11,7 +11,11 @@ export type CsvRow = {
   message: string | null;
 };
 
-export type CsvIssueKind = "nama" | "ig-kosong" | "ig-format" | "ig-dobel" | "wa-format";
+export type CsvIssueKind =
+  "nama" | "ig-kosong" | "ig-spasi" | "ig-url" | "ig-format" | "ig-dobel" | "wa-format";
+
+// P04i: masalah username IG (kartu terpisah dari P04c). IG dobel tetap di P04c.
+export const isIgIssue = (i: CsvIssue) => i.kind.startsWith("ig-") && i.kind !== "ig-dobel";
 
 export type CsvIssue = { line: number; kind: CsvIssueKind; title: string; detail: string };
 
@@ -39,7 +43,7 @@ const WA_RE = /^628\d{7,11}$/;
 export function normalizeIg(raw: string): string {
   return raw
     .trim()
-    .replace(/^https?:\/\/(www\.)?instagram\.com\//i, "")
+    .replace(/^(https?:\/\/)?(www\.)?instagram\.com\//i, "")
     .replace(/[/?#].*$/, "")
     .replace(/^@+/, "")
     .toLowerCase();
@@ -154,7 +158,26 @@ export function parseGuestCsv(input: string): CsvResult {
     if (!r.name)
       issue = { line: r.line, kind: "nama", title: "Kosong", detail: "Nama belum diisi" };
     else if (!r.ig)
-      issue = { line: r.line, kind: "ig-kosong", title: "Cek IG", detail: "Username IG kosong" };
+      issue = {
+        line: r.line,
+        kind: "ig-kosong",
+        title: "IG kosong",
+        detail: `${r.name} · nggak bisa diundang lewat DM`,
+      };
+    else if (/[/?]|instagram\.com/i.test(r.igRaw))
+      issue = {
+        line: r.line,
+        kind: "ig-url",
+        title: "Bukan username",
+        detail: `"${r.igRaw.replace(/^https?:\/\/(www\.)?/i, "")}" → cukup ${r.ig}`,
+      };
+    else if (/\s/.test(r.igRaw.trim()))
+      issue = {
+        line: r.line,
+        kind: "ig-spasi",
+        title: "Ada spasi",
+        detail: `"${r.igRaw.trim()}" → maksudnya ${r.ig.replace(/\s+/g, "")}?`,
+      };
     else if (!isValidIg(r.ig))
       issue = {
         line: r.line,
@@ -200,6 +223,13 @@ export function parseGuestCsv(input: string): CsvResult {
 export function csvSummary(r: Extract<CsvResult, { ok: true }>): string {
   if (r.issues.length) return `${r.rows.length} baris · ${r.issues.length} perlu dicek`;
   return `${r.rows.length} baris · 0 error · semua punya IG`;
+}
+
+// Eyebrow P04c/P04i: "23 baris kebaca · 3 perlu dicek" · "… · 3 IG perlu dicek" (cuma masalah IG).
+export function csvEyebrow(r: Extract<CsvResult, { ok: true }>): string {
+  if (!r.issues.length) return `${r.rows.length} baris kebaca · cek dulu sebelum disimpan`;
+  const ig = r.issues.every(isIgIssue) ? "IG " : "";
+  return `${r.rows.length} baris kebaca · ${r.issues.length} ${ig}perlu dicek`;
 }
 
 // Pesan paling umum dari kolom "pesan" jadi template DM event; kosong semua → null (pakai default).

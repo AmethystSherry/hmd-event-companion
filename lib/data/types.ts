@@ -54,6 +54,12 @@ export type Guest = {
   source: "csv" | "manual" | "walkin"; // walkin = ditambah di pintu (P07c)
   createdAt: string;
   card?: GuestCard | null; // F4 · kartu BT05 (N3: diisi tamu sendiri lewat T11, nanti)
+  // T02 · Pekerjaan & Minat (opsional) buat kartu kenalan hari-H (N3). Belum ditampilkan.
+  job?: string | null; // ≤ 40
+  interests?: string | null; // ≤ 60
+  // T02b · titip ucapan (opsional, tamu yang nggak bisa datang). Belum ditampilkan di mana pun.
+  farewellMessage?: string | null; // ≤ 140 huruf
+  farewellAt?: string | null;
 };
 
 // Kartu "Tamu di sini" (BT05): peran + "Tanya soal …" (≤ 3 topik, juga jadi chip Kartu kamu).

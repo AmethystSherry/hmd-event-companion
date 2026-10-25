@@ -17,7 +17,7 @@ export type * from "./types";
 const DIR = join(process.cwd(), ".data");
 const FILE = join(DIR, "store.json");
 
-const g = globalThis as typeof globalThis & { __hmdStoreF34?: DataStore };
+const g = globalThis as typeof globalThis & { __hmdStoreF1v5?: DataStore };
 
 function load(): StoreData {
   try {
@@ -54,7 +54,7 @@ export async function getStore(): Promise<DataStore> {
       },
     });
   }
-  return (g.__hmdStoreF34 ??= createStore(load(), { persist }));
+  return (g.__hmdStoreF1v5 ??= createStore(load(), { persist }));
 }
 
 const MAX_TRIES = 5;

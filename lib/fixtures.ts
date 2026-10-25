@@ -91,7 +91,7 @@ export function demoGuestView(mutate?: (gs: Guest[]) => void) {
   const guests = demoGuests();
   mutate?.(guests);
   return {
-    rows: guests.map((g) => toGuestRow(g, demoEvent, DEMO_ORIGIN)),
+    rows: guests.map((g) => toGuestRow(g, demoEvent, DEMO_ORIGIN, new Date(DEMO_NOW))),
     stats: computeStats(guests),
   };
 }

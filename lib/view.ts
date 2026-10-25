@@ -2,6 +2,7 @@ import type { EventCardData } from "@/components/f1/EventList";
 import type { GuestRowData } from "@/components/f1/GuestManager";
 import { formatWa } from "./csv";
 import type { Event, Guest } from "./data/types";
+import type { BadgeTone } from "@/components/ui/Badge";
 import { dateLong, dayMonth, eventPhase } from "./format";
 import { DEFAULT_DM_TEMPLATE, guestLink } from "./invite";
 
@@ -21,8 +22,39 @@ export function toEventCard(
   };
 }
 
-export function toGuestRow(g: Guest, event: Event, origin: string): GuestRowData {
+// Status baris tamu P04* — satu badge per baris, dipakai juga buat hitungan filter.
+export type GuestStatusKey = "hadir" | "nggak" | "barusan" | "belumJawab" | "belum";
+export const JUST_INVITED_MS = 10 * 60 * 1000;
+const STATUS: Record<GuestStatusKey, { tone: BadgeTone; label: string }> = {
+  hadir: { tone: "success", label: "Hadir" },
+  nggak: { tone: "danger", label: "Nggak bisa" },
+  barusan: { tone: "success", label: "Diundang barusan" },
+  belumJawab: { tone: "crew", label: "Belum jawab" },
+  belum: { tone: "neutral", label: "Belum diundang" },
+};
+
+export function guestStatus(
+  g: Pick<Guest, "inviteStatus" | "invitedAt" | "rsvp">,
+  now: Date,
+): { key: GuestStatusKey; tone: BadgeTone; label: string } {
+  const key: GuestStatusKey =
+    g.rsvp === "hadir"
+      ? "hadir"
+      : g.rsvp === "nggak"
+        ? "nggak"
+        : g.inviteStatus === "belum"
+          ? "belum"
+          : g.invitedAt && now.getTime() - new Date(g.invitedAt).getTime() < JUST_INVITED_MS
+            ? "barusan"
+            : "belumJawab";
+  return { key, ...STATUS[key] };
+}
+
+export const statusBadge = (key: GuestStatusKey) => STATUS[key];
+
+export function toGuestRow(g: Guest, event: Event, origin: string, now: Date): GuestRowData {
   return {
+    status: guestStatus(g, now).key,
     id: g.id,
     name: g.name,
     ig: g.ig,

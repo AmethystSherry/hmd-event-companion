@@ -3,7 +3,7 @@ import { buildIcs } from "@/lib/ics";
 import { guestFromToken } from "@/lib/server/access";
 import { appOrigin } from "@/lib/server/url";
 
-// T03 "Simpan ke kalender": file .ics berisi tanggal, jam, lokasi + pengingat 2 jam sebelumnya.
+// T03 "Simpan ke kalender": file .ics berisi tanggal, jam, lokasi + pengingat 1 jam sebelumnya (T03k).
 export async function GET(_req: Request, ctx: RouteContext<"/t/[token]/kalender">) {
   const { token } = await ctx.params;
   const guest = await guestFromToken(token);

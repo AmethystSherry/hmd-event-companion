@@ -6,8 +6,13 @@ export type ConfirmInput = {
   name: string;
   ig: string;
   wa: string;
+  job: string; // opsional, kartu kenalan hari-H (N3)
+  interests: string; // opsional
   follow: boolean;
 };
+
+export const JOB_MAX = 40;
+export const INTERESTS_MAX = 60;
 
 export type ConfirmResult =
   { ok: true } | { ok: false; fields: Partial<Record<"name" | "ig" | "wa" | "follow", string>> };
@@ -15,7 +20,9 @@ export type ConfirmResult =
 export type ConfirmErrors = Partial<Record<"name" | "ig" | "wa" | "follow", string>>;
 
 // Validasi T02c — sama dengan server (actions.ts). WA wajib untuk Hadir (pengingat H-1).
-export function validateConfirm(v: Omit<ConfirmInput, "rsvp">): ConfirmErrors {
+export function validateConfirm(
+  v: Pick<ConfirmInput, "name" | "ig" | "wa" | "follow">,
+): ConfirmErrors {
   const e: ConfirmErrors = {};
   const ig = normalizeIg(v.ig);
   const wa = normalizeWa(v.wa);
@@ -27,3 +34,6 @@ export function validateConfirm(v: Omit<ConfirmInput, "rsvp">): ConfirmErrors {
   if (!v.follow) e.follow = "Wajib — follow dulu ya, ini syarat hadir";
   return e;
 }
+
+// T02b titip ucapan: batas huruf (form & server).
+export const FAREWELL_MAX = 140;

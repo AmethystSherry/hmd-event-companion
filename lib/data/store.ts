@@ -19,7 +19,6 @@ import type {
   PhotoSummary,
   Rsvp,
   Session,
-  SessionType,
   StoreData,
   Ticket,
 } from "./types";
@@ -50,13 +49,8 @@ export class StoreError extends Error {
   }
 }
 
-export type SessionInput = {
-  title: string;
-  startsAt: string;
-  durationMin: number;
-  type: SessionType;
-  pic: string;
-};
+export type SessionInput = Pick<Session, "title" | "startsAt" | "durationMin" | "type" | "pic"> &
+  Partial<Pick<Session, "room" | "description" | "topic" | "speaker">>;
 
 export type GuestInput = { name: string; ig: string; wa: string | null };
 
@@ -66,6 +60,8 @@ export type RsvpInput = {
   ig: string;
   wa: string | null;
   followConfirmed: boolean;
+  job?: string | null; // kosong = tetap (jawab "Nggak bisa" nggak menghapus isian lama)
+  interests?: string | null;
 };
 
 export type InviteSnapshot = Pick<Guest, "inviteStatus" | "invitedAt">;
@@ -613,6 +609,16 @@ export function createStore(
       commit();
     },
 
+    // T02b: titip ucapan. Sekali kirim (dikirim ulang = isian yang sama, rev tetap).
+    setFarewell(id: string, message: string): boolean {
+      const g = guest(id);
+      if (g.farewellMessage) return false;
+      g.farewellMessage = message;
+      g.farewellAt = now();
+      commit();
+      return true;
+    },
+
     // P04b: pengingat H-1 dikirim manual lewat wa.me.
     markReminderSent(id: string): void {
       guest(id).reminderSentAt = now();
@@ -629,6 +635,8 @@ export function createStore(
       g.ig = input.ig;
       g.wa = input.wa;
       g.followConfirmed = input.followConfirmed;
+      if (input.job !== undefined) g.job = input.job;
+      if (input.interests !== undefined) g.interests = input.interests;
       // Link baru bisa sampai ke tamu yang belum ditandai (mis. diteruskan panitia langsung).
       if (g.inviteStatus === "belum") {
         g.inviteStatus = "diundang";
@@ -927,6 +935,10 @@ export function createStore(
           ig: `tamu${g.keyNo}`,
           wa: null,
           dmTemplate: null,
+          farewellMessage: null,
+          farewellAt: null,
+          job: null,
+          interests: null,
           token: newToken(),
         } satisfies Partial<Guest>);
       }

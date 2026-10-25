@@ -10,16 +10,11 @@ import {
   normalizeWa,
   parseGuestCsv,
 } from "@/lib/csv";
-import {
-  mutateStore,
-  StoreError,
-  type DataStore,
-  type SessionType,
-  type StateAction,
-} from "@/lib/data";
+import { getStore, mutateStore, StoreError, type DataStore, type StateAction } from "@/lib/data";
 import type { InviteSnapshot } from "@/lib/data/store";
 import { LOCATION } from "@/lib/data/seed";
 import { DEFAULT_DM_TEMPLATE } from "@/lib/invite";
+import { cleanSession, type SessionForm } from "@/lib/sessionForm";
 import {
   clientKey,
   endCrewSession,
@@ -97,34 +92,8 @@ export async function deleteEvent(eventId: string): Promise<void> {
   redirect("/panitia");
 }
 
-// ---- Rundown (PE04 / PE04a) ----
-export type SessionForm = {
-  title: string;
-  startsAt: string; // "14:00" atau "14.00"
-  durationMin: number;
-  type: SessionType;
-  pic: string;
-};
-
-function cleanSession(input: SessionForm) {
-  const title = input.title.trim().slice(0, 60);
-  const m = input.startsAt.match(/^(\d{1,2})[.:](\d{2})$/);
-  const duration = Math.round(Number(input.durationMin));
-  if (!title) return { error: "Nama sesi wajib diisi.", field: "title" };
-  if (!m || Number(m[1]) > 23 || Number(m[2]) > 59)
-    return { error: "Jam mulai belum pas.", field: "startsAt" };
-  if (!Number.isFinite(duration) || duration < 5 || duration > 600)
-    return { error: "Durasi 5–600 menit.", field: "durationMin" };
-  return {
-    value: {
-      title,
-      startsAt: `${m[1].padStart(2, "0")}.${m[2]}`,
-      durationMin: duration,
-      type: input.type === "talkshow" ? ("talkshow" as const) : ("info" as const),
-      pic: input.pic.trim().slice(0, 40) || "Tim Acara",
-    },
-  };
-}
+// ---- Rundown (PE04 / PE04a Talkshow / PE04b Info) ----
+export type { SessionForm };
 
 export async function saveSession(
   eventId: string,
@@ -132,8 +101,11 @@ export async function saveSession(
   input: SessionForm,
 ): Promise<FormResult> {
   await requireCrew();
-  const r = cleanSession(input);
-  if (!r.value) return { ok: false, error: r.error!, field: r.field };
+  const prev = sessionId
+    ? (await getStore()).listSessions(eventId).find((s) => s.id === sessionId)
+    : null;
+  const r = cleanSession(input, prev);
+  if (!r.ok) return r;
   await mutateStore((store) =>
     sessionId ? store.updateSession(sessionId, r.value) : store.addSession(eventId, r.value),
   );

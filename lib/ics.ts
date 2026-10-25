@@ -36,7 +36,7 @@ export function buildIcs(opts: {
     `DESCRIPTION:${escapeText(`Tunjukkan tiketmu ke panitia di pintu: ${opts.ticketUrl}`)}`,
     `URL:${opts.ticketUrl}`,
     "BEGIN:VALARM",
-    "TRIGGER:-PT2H",
+    "TRIGGER:-PT1H",
     "ACTION:DISPLAY",
     `DESCRIPTION:${escapeText(`${event.name} mulai ${event.startsAt}`)}`,
     "END:VALARM",
@@ -44,4 +44,17 @@ export function buildIcs(opts: {
     "END:VCALENDAR",
   ];
   return lines.join("\r\n") + "\r\n";
+}
+
+// T03k "Google Calendar": template event Google (jam UTC) + link tiket di deskripsi.
+export function googleCalendarUrl(event: Event, ticketUrl: string): string {
+  const dates = `${utcStamp(eventStart(event.date, event.startsAt))}/${utcStamp(eventStart(event.date, event.endsAt))}`;
+  const q = new URLSearchParams({
+    action: "TEMPLATE",
+    text: `${event.name} · Potara Studio`,
+    dates,
+    details: `Tunjukkan tiketmu ke panitia di pintu: ${ticketUrl}`,
+    location: event.location,
+  });
+  return `https://calendar.google.com/calendar/render?${q}`;
 }

@@ -2,8 +2,15 @@
 
 import { mutateStore, StoreError } from "@/lib/data";
 import { normalizeIg, normalizeWa } from "@/lib/csv";
-import { validateConfirm, type ConfirmInput, type ConfirmResult } from "@/lib/confirm";
+import {
+  INTERESTS_MAX,
+  JOB_MAX,
+  validateConfirm,
+  type ConfirmInput,
+  type ConfirmResult,
+} from "@/lib/confirm";
 import { guestFromToken } from "@/lib/server/access";
+import { FAREWELL_MAX } from "@/lib/confirm";
 
 // T02 → simpan jawaban. Hadir: validasi lengkap T02c (IG, WA wajib, follow). Nggak bisa: cukup nama.
 // Jawaban langsung masuk ke P04 panitia (store memberi tahu SSE).
@@ -32,6 +39,10 @@ export async function submitConfirm(token: string, input: ConfirmInput): Promise
         ig,
         wa: wa ?? guest.wa,
         followConfirmed: !!input.follow,
+        ...(input.rsvp === "hadir" && {
+          job: optional(input.job, JOB_MAX),
+          interests: optional(input.interests, INTERESTS_MAX),
+        }),
       }),
     );
   } catch (err) {
@@ -40,5 +51,27 @@ export async function submitConfirm(token: string, input: ConfirmInput): Promise
     }
     throw err;
   }
+  return { ok: true };
+}
+
+const optional = (v: unknown, max: number) =>
+  String(v ?? "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .slice(0, max) || null;
+
+// T02b · titip ucapan (opsional). Cuma tamu yang jawab "Nggak bisa"; sekali kirim.
+export async function sendFarewell(
+  token: string,
+  message: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const guest = await guestFromToken(token);
+  if (!guest || guest.rsvp !== "nggak") return { ok: false, error: "Link tidak valid" };
+  const text = String(message ?? "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .slice(0, FAREWELL_MAX);
+  if (!text) return { ok: false, error: "Ucapannya masih kosong." };
+  await mutateStore((store) => store.setFarewell(guest.id, text));
   return { ok: true };
 }
