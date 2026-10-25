@@ -55,8 +55,8 @@ async function DevTools() {
       <Card>
         <CardLabel>Uji alur asli (store lokal .data/)</CardLabel>
         <p className="t-label c-label-2">
-          1. Masuk /panitia pakai EVENT_PIN di .env.local · 2. Home event → Unggah CSV · 3. Buka
-          link tamu di HP lain → konfirmasi · 4. Lihat P04 berubah tanpa reload.
+          1. Masuk /panitia pakai EVENT_PIN di .env.local · 2. Home event → Tamu & undangan → Pilih
+          file CSV · 3. Buka link tamu di HP lain → konfirmasi · 4. Lihat P04 berubah tanpa reload.
         </p>
         <div className={styles.links}>
           <a className={`t-label-emph ${styles.link}`} href="/dev/tamu-hmd-dummy.csv" download>
@@ -64,6 +64,9 @@ async function DevTools() {
           </a>
           <a className={`t-label-emph ${styles.link}`} href="/dev/tamu-hmd-error.csv" download>
             <DownloadSimple size={16} /> tamu-hmd-error.csv (3 baris error)
+          </a>
+          <a className={`t-label-emph ${styles.link}`} href="/dev/tamu-hmd-ig.csv" download>
+            <DownloadSimple size={16} /> tamu-hmd-ig.csv (3 IG perlu dicek)
           </a>
         </div>
         <form action={resetDemo}>

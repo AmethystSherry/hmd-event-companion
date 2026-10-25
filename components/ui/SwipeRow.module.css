@@ -1,0 +1,47 @@
+.root {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Panel hapus di belakang baris (P04s / PE04s): merah tetap di kedua mode, teks putih. */
+.panel {
+  position: absolute;
+  inset: 0 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 88px;
+  border: 0;
+  background: var(--danger-fill);
+  color: #ffffff; /* di atas danger-fill, sama di kedua mode */
+  cursor: pointer;
+}
+
+/* Tertutup → panel disembunyikan (tepi merah nggak kelihatan di sela baris). */
+.root:not([data-active]) .panel {
+  visibility: hidden;
+}
+
+.panel:focus-visible {
+  outline: 2px solid var(--label);
+  outline-offset: -4px;
+}
+
+.content {
+  position: relative;
+  background: var(--card);
+  touch-action: pan-y;
+  transition: transform 260ms var(--ease-spring);
+}
+
+.dragging {
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .content {
+    transition: none;
+  }
+}

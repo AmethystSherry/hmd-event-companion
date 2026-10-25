@@ -40,6 +40,11 @@ Web app mobile untuk House Moving Day Potara Studio (Minggu 8 Nov 2026, 13.00–
   di `rekap/`. Semua layar F5 menunggu review.
   12 keputusan F5-deliverables dijawab pakai rekomendasi — lihat "Aturan F5 di kode". Ringkasan
   Claude butuh `ANTHROPIC_API_KEY` di Vercel (tanpa key → P11b).
+- **F1 update 23 + 25 Okt (v5)**: Figma band `4732:12593`, `F1-deliverables.md` v5 — 37 layar.
+  Amplop T01a (ilustrasi Pota, segel = tombol) + T01 kartu kertas & Jejak undangan, T02 Pekerjaan/
+  Minat, T02b titip ucapan, T03k sheet kalender, P04i IG perlu dicek, P04g/h hint filter, swipe hapus
+  P04s/PE04s + 🗑 di judul sheet (Batalkan 5 dtk), P04b Kirim WA per tamu, satu badge per baris,
+  PE04a/PE04b field sesi. Lihat "Aturan F1 di kode". Menunggu review.
 - **F3 + F4 · Selama acara (25 Okt)**: Figma band `4668:4730`, full-size C18 `4899:12734`,
   `F3-F4-deliverables.md` v2. Layar tamu `acara/` dibangun (BT20/21/23/24 · BT03 · sheet BT22/BT21p/
   BT04/BT05 · S01); Kontrol acara dapat BP01 jeda, BP02c, pengingat lewat jam mulai, BP02d. Keputusan
@@ -72,13 +77,13 @@ Web app mobile untuk House Moving Day Potara Studio (Minggu 8 Nov 2026, 13.00–
 ```
 app/
   layout.tsx · page.tsx   root layout (font, noindex) · beranda sementara
-  (tamu)/t/[token]/       T01/T01e/T02b/T03/T03h · konfirmasi/ (T02/T02c/T02d) · kalender/ (.ics) ·
+  (tamu)/t/[token]/       T01a/T01/T01e/T02b/T03/T03k/T03h · konfirmasi/ (T02/T02c/T02d) · kalender/ (.ics) ·
                           acara/ (F4 Sesi/Jeda + sheet) · foto/ (N4 BT06–BT07c) ·
                           selesai/ (F5 BT12) · buku-tamu/ (T14*) · kolase/ (T15*, T14d) ·
                           galeri/ (BT07d) · tanya/ (N1) · kartu/ (T11) = placeholder
   panitia/                P01 + PE01/PE02 · actions.ts (semua server action panitia)
-    event/[id]/           PE03/PE03b (+ sheet PE03e/PE03h) · rundown/ (PE04k/PE04/PE04a) ·
-                          tamu/ (P04k/P04a/P04c/P04/P04b/d/e/f) · kontrol/ (BP02/BP03/BP01b +
+    event/[id]/           PE03/PE03b (+ sheet PE03e/PE03h) · rundown/ (PE04k/PE04/PE04a/PE04b/
+                          PE04s) · tamu/ (P04k/P04a/P04c/P04i/P04/P04b/d/e/f/g/h/s) · kontrol/ (BP02/BP03/BP01b +
                           F5 BP04/BP04b) · rekap/ (F5 P11/P11b/P11c/P11d) ·
                           foto/ · tanya/ (placeholder F3/F4) ·
                           scan/ (P05/P05b/P06/P06b/P06c) · scan/cari/ (P07/P07b/P07c)
@@ -89,7 +94,7 @@ app/
   api/t/[token]/foto/     POST upload foto (N4) · [id] GET gambar / DELETE foto sendiri
   api/t/[token]/buku-tamu POST isian buku tamu (F5 · T14)
   dev/ui/                 preview design system (light & dark)
-  dev/states/f1/          27 layar F1 dengan data contoh + alat uji (link tamu, CSV dummy, reset)
+  dev/states/f1/          37 layar F1 dengan data contoh + alat uji (link tamu, CSV dummy, reset)
   dev/states/f2/          17 layar F2 (BP02/BP02-pre/BP03/BP01b …) + alat uji (jam pura-pura hari-H,
                           data 12 hadir, reset check-in, mulai/selesaikan sesi)
   dev/states/n4/          7 layar N4 + alat uji (check-in semua, 30 foto dummy, hapus semua foto)
@@ -100,7 +105,9 @@ app/
                           link tamu udah/belum masuk)
   tokens.css · globals.css · fonts/
 components/ui/            komponen design system Clean v0.5
-components/f1/            layar F1 presentasional (dipakai route asli & /dev/states/f1)
+components/f1/            layar F1 presentasional (dipakai route asli & /dev/states/f1) · Envelope
+                          (InviteGate + T01a) · InviteTrail (Jejak undangan) · TamuActions (T02b ucapan,
+                          T03k sheet kalender) · invite.module.css (T01a/T01)
 components/f2/            tamu.tsx (T05/T05a/BT02/T03b) · Kontrol (BP02 + dialog) · DoorApp (P05–P07d) ·
                           useDoor (manifest + antrean) · Viewfinder (kamera) · DoorPage (guard route) ·
                           Placeholder (Foto/Tanya)
@@ -122,12 +129,14 @@ lib/server/               env, HMAC (QR & cookie sesi), rate-limit PIN, akses cr
                           summary (Claude, F5) · feedback (hapus H+30 lazy + buat ringkasan)
 lib/                      csv (+ CSV buku tamu) · feedback (aturan buku tamu, tanggal hapus) ·
                           kolase (masonry, tata letak 9:16, filter, foto → KolasePhoto) ·
-                          format · invite · confirm · ics · view · fixtures · clipboard · cx ·
+                          format · invite (+ rundownLine) · confirm · ics (+ googleCalendarUrl) ·
+                          view (guestStatus) · sessionForm (form sesi PE04a/b, sessionForGuest) ·
+                          fixtures · clipboard · cx ·
                           door (logika pintu tanpa secret, jalan di HP) · offline/doorDb (IndexedDB) ·
                           rundown (status sesi + stopwatch, lewat jadwal, countdown) · acara (data layar
                           tamu F4 + BT05) · device (label HP panitia) · photo (crop, batas,
                           kemiringan, URL foto) · offline/photoDb (antrean foto IndexedDB)
-public/                   figma/ · sw.js (tiket & layar pintu offline) · contoh-tamu.csv · dev/*.csv
+public/                   figma/ (+ t01a/t01 ilustrasi @2x/@3x) · sw.js · template-tamu-hmd.csv · dev/*.csv
 next.config.ts            header X-Robots-Tag noindex, allowedDevOrigins (HP di LAN)
 ```
 
@@ -135,10 +144,44 @@ next.config.ts            header X-Robots-Tag noindex, allowedDevOrigins (HP di 
 - Link tamu `/t/{token}`: token acak 22 karakter base64url, disimpan per tamu. `?dari=wa` → T03h.
   Sudah hadir → T03; nggak bisa → T02b; token salah / event lewat 30 hari → T01e.
 - Panitia: PIN 6 digit `EVENT_PIN` (server), 5× salah → kunci 5 menit per IP, cookie httpOnly 24 jam.
-- CSV sekali per event (`csvImportedAt`); baris error dibuang, diperbaiki lewat Tambah tamu.
+- **T01a amplop** (`InviteGate`, `components/f1/Envelope`): cuma kunjungan pertama per token
+  (localStorage `hmd_env_open_{token}`), tamu yang belum jawab. Segel di ilustrasi (tombol transparan
+  posisi persen di atas segel lilin) **dan** "Buka undangan" (primary) sama-sama buka T01: segel
+  mengecil 150 ms → amplop pudar + T01 naik 24px 400 ms; reduced motion = fade 200 ms. Ilustrasi
+  `public/figma/t01a-invitation-closed(@3x).webp` & `t01-invitation-opened(@3x).webp` (crop tengah
+  dari Figma, ≤ 85 KB). Ilustrasi punya latar sendiri (nggak ikut dark mode), dipudarkan ke `--bg`.
+- **T01**: kartu kertas (garis putus accent 35%, prangko rotate 6° "No. {keyNo}"), info 3 kolom
+  (`<dl>`), "{n} bagian acara" = `rundownLine` (Talkshow + pembicara → "Talkshow bareng {nama}"),
+  `InviteTrail` 3 langkah (`<ol>`, langkah 2 `aria-current="step"`), cuma di T01. Sesi ke HP tamu
+  lewat `sessionForGuest` (tanpa PIC).
+- **T02**: Pekerjaan (≤ 40) & Minat (≤ 60) opsional → `Guest.job/interests` (cuma disimpan saat
+  Hadir; jawab "Nggak bisa" nggak menghapus), ikut prefill "Ubah jawaban", belum ditampilkan (N3).
+- **T02b titip ucapan**: chip cepat mengisi field, ≤ 140 huruf, `sendFarewell` → `Guest.farewellMessage/
+  farewellAt`, sekali kirim (store `setFarewell` → false kalau udah ada). Setelah terkirim field
+  read-only + "Ucapanmu udah terkirim. Makasih!" (copy bukan Figma); gagal → Banner, isian tetap.
+  Belum ditampilkan di mana pun. Hapus H+30 ikut menghapus ucapan, pekerjaan, minat.
+- **T03/T03h → T03k**: "Simpan ke kalender" buka Sheet: Google Calendar (`googleCalendarUrl`, jam UTC,
+  link tiket) + "Kalender HP" (.ics, `VALARM -PT1H`).
+- CSV sekali per event (`csvImportedAt`); unggah ulang boleh selama belum disimpan. Baris error (P04c)
+  dan masalah username IG (P04i: IG kosong / ada spasi / URL, dengan saran) **dibuang**, ikut Figma
+  "Simpan 20 tamu dulu" → ditambah manual nanti. `template-tamu-hmd.csv` = "Unduh template CSV".
+- **Status baris tamu** `guestStatus(guest, now)` (lib/view, dihitung di server saat render): Hadir ·
+  Nggak bisa · Diundang barusan (< 10 menit) · Belum jawab · Belum diundang — satu Badge per baris,
+  angka chip filter dari fungsi yang sama (Belum jawab termasuk Diundang barusan). P04g/P04h: hint
+  di atas daftar. Template DM tampil di filter Semua saja.
+- **Hapus tamu/sesi** (🗑 sm destructive iconOnly di kanan judul sheet P04e/PE04a/PE04b, atau swipe
+  kiri `SwipeRow` P04s/PE04s): baris langsung hilang + Toast "{nama} dihapus" Batalkan 5 dtk; hapus
+  di server baru jalan saat toast habis, hapus berikutnya, `pagehide`, atau layar ditutup (jadi
+  Batalkan nggak perlu memulihkan data). Swipe: geser ≥ 44px buka panel 88, satu baris terbuka,
+  gerak vertikal = scroll, Delete/Backspace di baris membuka panel.
 - ✈ salin template + buka `ig.me/m/{ig}`; balik ke tab (visibilitychange/focus) → Diundang + toast
-  Batalkan 5 dtk. Kirim WA → `wa.me` + link `?dari=wa`; "Kirim ke semua" lanjut otomatis saat balik
-  (kalau browser memblokir jendela baru, tombol bawah jadi "Lanjut kirim").
+  Batalkan 5 dtk. **P04b pengingat H-1 manual satu-satu**: "Kirim WA" per baris → `wa.me` + link
+  `?dari=wa`; balik ke tab → `reminderSentAt` → Badge "Terkirim" (tanpa kirim massal / kirim ulang).
+- **Sesi PE04a/PE04b** (`lib/sessionForm`): Nama · Jam + Durasi · Ruang · Tipe · Talkshow: Topik,
+  Pembicara, IG pembicara (`speaker {name, ig, label}`, label lama tetap / "Guest star") · Info: hint
+  "nggak ada kolom Tanya" · Deskripsi (≤ 140) · PIC. Ganti tipe cuma menyembunyikan; simpan sebagai
+  Info → topik & pembicara null. Tombol sheet sticky. Seed sesi tetap dari F4 (`sessionInfo`).
+- Kode Figma **BP02 = BP00** di kode (keputusan 24 Okt), belum di-rename.
 - Realtime: tiap perubahan store menaikkan `rev` → `/api/live` (SSE) → `router.refresh()`.
 - Layar di `components/f1/` tidak memanggil server sendiri: aksi masuk lewat props (kosong = pratinjau).
 
@@ -190,7 +233,7 @@ Keputusan default 22 Okt (jawaban "Keputusan & asumsi" di F2-deliverables; prd.m
   "Kunci #014" (Key) + Pill "Sudah masuk" (Check, copy Figma), "Masuk sekarang", caption 12
   `aria-live`. Tanpa Ticket/cap (sobek cuma di T05a). Ilustrasi di-`preload()` (react-dom) sejak T05.
 - Kamera butuh HTTPS di HP (`npx next dev --experimental-https`); gagal/ditolak → P07b.
-- Store dev ada di `globalThis.__hmdStoreF34`: naikkan kuncinya tiap method store bertambah (server
+- Store dev ada di `globalThis.__hmdStoreF1v5`: naikkan kuncinya tiap method store bertambah (server
   dev yang sedang jalan nggak membuat ulang instance lama saat HMR). Server dev yang sudah jalan
   bisa tetap memakai modul server lama (mis. `store.getPhoto is not a function`) → restart `npm run dev`.
 
@@ -362,7 +405,8 @@ Keputusan 25 Okt (default "Keputusan & asumsi" F3-F4-deliverables, kecuali K3/K8
   Card/CardLabel/InnerBox, StatTile, ListRow/Avatar, Banner/TextAction, HeroState, Field, Toast
   (undo ring), Sheet (bawah / `floating`), TabBar, Ticket (+`torn`)/TicketStub, LogoMark,
   Screen/ScreenHeader/Skeleton, SearchField, Dialog (konfirmasi tengah layar, BP03/BP01b),
-  StarRating (T14), Masonry + PhotoPin (T15, nanti galeri panitia), BarList (P11), TopToast (S01,
+  StarRating (T14), Masonry + PhotoPin (T15, nanti galeri panitia), BarList (P11), SwipeRow (P04s/
+  PE04s, panel hapus `--danger-fill`), TopToast (S01,
   BP02d), JejakAcara · TicketNext (BT03) · GuestCard (BT05), IllustratedScreen (ilustrasi + fade +
   panel `--card`, BT02; pola sama dengan `components/f4/AcaraScreen` yang masih inline). `TextAction`
   bisa `href`.
@@ -401,7 +445,7 @@ Testing dari luar (sementara, sebelum Vercel): `npm run dev` + `cloudflared tunn
 --url http://localhost:3000` → link `https://….trycloudflare.com` (HTTPS, kamera jalan; ganti tiap
 dijalankan ulang; laptop harus nyala). Quick tunnel nggak meneruskan SSE → `LiveRefresh` otomatis
 polling `/api/live?once=1` tiap 4 dtk. Jangan kirim undangan tamu asli dari link tunnel.
-Uji alur: `/dev/states/f1` (pratinjau 27 layar + link tamu + CSV dummy + "Reset data ke awal").
+Uji alur: `/dev/states/f1` (pratinjau 37 layar + link tamu + CSV dummy + "Reset data ke awal").
 F2: `/dev/states/f2` → "Siapkan data uji" → "Pura-pura hari-H" → buka link tamu + /panitia → Scan.
 Sesi: tombol "Mulai sesi 1" / "Selesaikan sesi" di halaman yang sama, atau lewat BP02.
 F5: `/dev/states/f2` → Siapkan data uji → `/dev/states/f5` → "Isi 15 feedback dummy" (check-in,
@@ -427,6 +471,8 @@ menghapus data per orang di store lokal → balikin lewat `/dev/states/f1` Reset
       menunggu review & bucket Supabase
 - [x] F5 (24 Okt) — tutup acara, buku tamu, kolase 9:16, rekap + ringkasan Claude, CSV, hapus H+30;
       16 layar (BT12, T14*, T15*, BP04/BP04b, P11*) — menunggu review & `ANTHROPIC_API_KEY` di Vercel
+- [x] F1 update 23 + 25 Okt (v5) — 37 layar: amplop Pota, T01 baru, T02 kenalan, T02b ucapan,
+      T03k, P04i/g/h/s, PE04b/s, pengingat per tamu — menunggu review
 - [x] F3 + F4 (25 Okt) — layar acara tamu Sesi/Jeda (13 layar/kasus) + Kontrol acara BP01/BP02c/
       BP02d, ilustrasi, offline S01 — menunggu review
 - [ ] N1–N3, BT07d galeri — berikutnya (versi lama: tag `archive-pre-revisi`)

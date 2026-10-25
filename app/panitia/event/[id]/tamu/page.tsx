@@ -7,6 +7,7 @@ import { Screen, Skeleton } from "@/components/ui";
 import { getStore } from "@/lib/data";
 import { addDays, dateMedium } from "@/lib/format";
 import { requireCrew } from "@/lib/server/access";
+import { serverNow } from "@/lib/server/clock";
 import { appOrigin } from "@/lib/server/url";
 import { templateFromCsv, toGuestRow } from "@/lib/view";
 import {
@@ -57,7 +58,7 @@ async function View({
   if (!event.csvImportedAt && guests.length === 0) {
     return <GuestImport eventId={id} eventName={event.name} save={importGuests} />;
   }
-  const origin = await appOrigin();
+  const [origin, now] = await Promise.all([appOrigin(), serverNow()]);
   return (
     <>
       <GuestManager
@@ -65,7 +66,7 @@ async function View({
         reminderDateLabel={dateMedium(addDays(event.date, -1))}
         templateFromCsv={templateFromCsv(event)}
         dmTemplate={event.dmTemplate}
-        guests={guests.map((g) => toGuestRow(g, event, origin))}
+        guests={guests.map((g) => toGuestRow(g, event, origin, now))}
         stats={store.stats(id)}
         actions={actions}
         initialTab={query.tab === "pengingat" ? "pengingat" : "undangan"}

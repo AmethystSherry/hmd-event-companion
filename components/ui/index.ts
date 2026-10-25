@@ -24,6 +24,7 @@ export { Screen, ScreenHeader, Skeleton } from "./Screen";
 export { SearchField } from "./SearchField";
 export { Segmented } from "./Segmented";
 export { Sheet } from "./Sheet";
+export { SwipeRow } from "./SwipeRow";
 export { StarRating } from "./StarRating";
 export { StatTile } from "./StatTile";
 export { TabBar, type CrewTab } from "./TabBar";

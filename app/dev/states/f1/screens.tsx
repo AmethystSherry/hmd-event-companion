@@ -3,6 +3,7 @@ import { join } from "node:path";
 import type { ReactNode } from "react";
 import { ConfirmForm } from "@/components/f1/ConfirmForm";
 import { EventHome } from "@/components/f1/EventHome";
+import { InviteGate } from "@/components/f1/Envelope";
 import { EventList } from "@/components/f1/EventList";
 import { GuestImport } from "@/components/f1/GuestImport";
 import { GuestManager } from "@/components/f1/GuestManager";
@@ -26,10 +27,13 @@ import {
   demoSessions,
 } from "@/lib/fixtures";
 import { addDays, dateMedium } from "@/lib/format";
+import { googleCalendarUrl } from "@/lib/ics";
+import { sessionForGuest } from "@/lib/sessionForm";
 import { toEventCard } from "@/lib/view";
 
-// Registri layar F1 (F1-deliverables.md "Daftar layar" + "Update layar 22 Okt sore") untuk /dev/states/f1/[code].
-// Semua pakai komponen layar yang sama dengan route asli, dengan data contoh & tanpa aksi.
+// Registri layar F1 (F1-deliverables.md v5 "Daftar layar", 37 layar, urutan sama) untuk
+// /dev/states/f1/[code]. Semua pakai komponen layar yang sama dengan route asli, data contoh, tanpa
+// aksi ke server.
 
 export type ScreenDef = {
   code: string;
@@ -41,9 +45,16 @@ export type ScreenDef = {
 
 const csv = (f: string) => readFileSync(join(process.cwd(), "public", "dev", f), "utf8");
 const now = new Date(DEMO_NOW);
-const rara = { name: "Rara Wening", ig: "@rarawening", wa: "0812 3456 7890", follow: true };
+const rara = {
+  name: "Rara Wening",
+  ig: "@rarawening",
+  wa: "0812 3456 7890",
+  job: "",
+  interests: "",
+  follow: true,
+};
 const qr = () => <TicketQr payload="demo-ticket.0000000000000000" label="QR tiket contoh" />;
-const ticket = (variant: "t03" | "t03h") => (
+const ticket = (variant: "t03" | "t03h", calendarOpen = false) => (
   <TicketScreen
     variant={variant}
     guestName="Rara Wening"
@@ -51,7 +62,12 @@ const ticket = (variant: "t03" | "t03h") => (
     keyNo="#014"
     code="HMD-014-7F3K"
     qr={qr()}
-    calendarHref="#"
+    calendar={{
+      event: demoEvent,
+      googleHref: googleCalendarUrl(demoEvent, "https://hmd.example/t/demo"),
+      icsHref: "#",
+      initialOpen: calendarOpen,
+    }}
     now={variant === "t03h" ? DEMO_NOW_H1 : DEMO_NOW}
     frozen
   />
@@ -92,20 +108,33 @@ const filledHome = (initialSheet?: "edit" | "delete") => {
   );
 };
 
+const invitation = () => (
+  <InvitationScreen
+    keyNo="#014"
+    event={demoEvent}
+    sessions={demoSessions.map(sessionForGuest)}
+    confirmHref="/dev/states/f1/T02"
+  />
+);
+
 export const SCREENS: ScreenDef[] = [
   {
-    code: "T01",
-    name: "Undangan",
+    code: "T01a",
+    name: "Amplop tertutup · tap segel / Buka undangan",
     lane: "Tamu",
     kind: "Utama",
     render: () => (
-      <InvitationScreen
-        guestName="Rara Wening"
-        event={demoEvent}
-        sessions={demoSessions}
-        confirmHref="/dev/states/f1/T02"
-      />
+      <InviteGate token="demo" guestName="Rara Wening" preview>
+        {invitation()}
+      </InviteGate>
     ),
+  },
+  {
+    code: "T01",
+    name: "Undangan · kartu kertas, Jejak undangan",
+    lane: "Tamu",
+    kind: "Utama",
+    render: invitation,
   },
   {
     code: "T01e",
@@ -116,17 +145,24 @@ export const SCREENS: ScreenDef[] = [
   },
   {
     code: "T02",
-    name: "Konfirmasi hadir (nomor WA wajib)",
+    name: "Konfirmasi hadir (WA wajib, pekerjaan & minat opsional)",
     lane: "Tamu",
     kind: "Utama",
     render: () => <ConfirmForm backHref="/dev/states/f1/T01" doneHref="#" initial={rara} />,
   },
   {
     code: "T02b",
-    name: "Nggak bisa datang (thank you)",
+    name: "Nggak bisa datang + titip ucapan",
     lane: "Tamu",
     kind: "Kasus lain",
-    render: () => <DeclinedScreen guestName="Rara Wening" event={demoEvent} changeHref="#" />,
+    render: () => (
+      <DeclinedScreen
+        guestName="Rara Wening"
+        event={demoEvent}
+        changeHref="#"
+        farewell={{ initial: "Selamat pindahan! Semoga makin seru di kantor baru", sent: false }}
+      />
+    ),
   },
   {
     code: "T02c",
@@ -137,7 +173,7 @@ export const SCREENS: ScreenDef[] = [
       <ConfirmForm
         backHref="#"
         doneHref="#"
-        initial={{ name: "Rara Wening", ig: "", wa: "", follow: false }}
+        initial={{ ...rara, ig: "", wa: "", follow: false }}
         initialStatus="incomplete"
       />
     ),
@@ -155,6 +191,13 @@ export const SCREENS: ScreenDef[] = [
     lane: "Tamu",
     kind: "Utama",
     render: () => ticket("t03"),
+  },
+  {
+    code: "T03k",
+    name: "Simpan ke kalender (sheet)",
+    lane: "Tamu",
+    kind: "Kasus lain",
+    render: () => ticket("t03", true),
   },
   {
     code: "T03h",
@@ -259,7 +302,7 @@ export const SCREENS: ScreenDef[] = [
   },
   {
     code: "PE04a",
-    name: "Ubah / hapus sesi",
+    name: "Ubah sesi · Talkshow (🗑 di judul)",
     lane: "Panitia",
     kind: "Aksi",
     render: () => (
@@ -268,6 +311,34 @@ export const SCREENS: ScreenDef[] = [
         eventName={demoEvent.name}
         sessions={demoSessions}
         initialEditing="s02"
+      />
+    ),
+  },
+  {
+    code: "PE04b",
+    name: "Ubah sesi · Info",
+    lane: "Panitia",
+    kind: "Aksi",
+    render: () => (
+      <Rundown
+        eventId={demoEvent.id}
+        eventName={demoEvent.name}
+        sessions={demoSessions}
+        initialEditing="s03"
+      />
+    ),
+  },
+  {
+    code: "PE04s",
+    name: "Swipe kiri hapus sesi",
+    lane: "Panitia",
+    kind: "Aksi",
+    render: () => (
+      <Rundown
+        eventId={demoEvent.id}
+        eventName={demoEvent.name}
+        sessions={demoSessions}
+        initialSwiped="s03"
       />
     ),
   },
@@ -305,6 +376,19 @@ export const SCREENS: ScreenDef[] = [
     ),
   },
   {
+    code: "P04i",
+    name: "IG kosong / salah format",
+    lane: "Panitia",
+    kind: "Gagal",
+    render: () => (
+      <GuestImport
+        eventId={demoEvent.id}
+        eventName={demoEvent.name}
+        initialFile={{ name: "tamu-hmd-dummy.csv", text: csv("tamu-hmd-ig.csv") }}
+      />
+    ),
+  },
+  {
     code: "P04",
     name: "Tamu & undangan, undang via DM IG",
     lane: "Panitia",
@@ -323,7 +407,6 @@ export const SCREENS: ScreenDef[] = [
       });
       return manager(
         {
-          initialJustInvited: "g001",
           initialToast: {
             guestId: "g001",
             ig: "yogasap",
@@ -335,6 +418,20 @@ export const SCREENS: ScreenDef[] = [
     },
   },
   {
+    code: "P04g",
+    name: "Filter · Belum jawab (↻ undang lagi)",
+    lane: "Panitia",
+    kind: "Kasus lain",
+    render: () => manager({ initialFilter: "belumJawab" }),
+  },
+  {
+    code: "P04h",
+    name: "Filter · Belum diundang (✈)",
+    lane: "Panitia",
+    kind: "Kasus lain",
+    render: () => manager({ initialFilter: "belum" }),
+  },
+  {
     code: "P04f",
     name: "Tambah tamu manual",
     lane: "Panitia",
@@ -343,14 +440,21 @@ export const SCREENS: ScreenDef[] = [
   },
   {
     code: "P04e",
-    name: "Ubah / hapus tamu",
+    name: "Ubah tamu (🗑 di judul)",
     lane: "Panitia",
     kind: "Aksi",
     render: () => manager({ initialSheet: { kind: "edit", id: "g003" } }),
   },
   {
+    code: "P04s",
+    name: "Swipe kiri hapus tamu",
+    lane: "Panitia",
+    kind: "Aksi",
+    render: () => manager({ initialSwiped: "g002" }),
+  },
+  {
     code: "P04b",
-    name: "Kirim pengingat H-1 via WA",
+    name: "Pengingat H-1 · Kirim WA per tamu",
     lane: "Panitia",
     kind: "Utama",
     render: () =>

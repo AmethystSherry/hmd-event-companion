@@ -24,7 +24,15 @@ import {
   ScreenHeader,
 } from "@/components/ui";
 import type { FormResult } from "@/app/panitia/actions";
-import { commonMessage, csvSummary, parseGuestCsv, type CsvResult } from "@/lib/csv";
+import {
+  commonMessage,
+  csvEyebrow,
+  csvSummary,
+  isIgIssue,
+  parseGuestCsv,
+  type CsvIssue,
+  type CsvResult,
+} from "@/lib/csv";
 import { cx } from "@/lib/cx";
 import { DEFAULT_DM_TEMPLATE } from "@/lib/invite";
 import f1 from "./f1.module.css";
@@ -39,7 +47,8 @@ const COLUMNS = [
   { code: "wa", desc: "Nomor WA, boleh kosong (tamu isi sendiri pas konfirmasi)", required: false },
 ];
 
-// P04k belum ada tamu → pilih CSV → P04a cek & simpan (sekali) · P04c ada baris error.
+// P04k belum ada tamu → pilih CSV → P04a cek & simpan (sekali) · P04c ada baris error ·
+// P04i username IG perlu dicek. Unggah ulang boleh selama belum disimpan.
 // CSV dibaca di HP panitia dulu; baru tersimpan setelah "Simpan". Batal → tidak tersimpan.
 export function GuestImport({
   eventId,
@@ -93,14 +102,7 @@ export function GuestImport({
       <Screen withBack>
         {picker}
         <ScreenHeader
-          leading={
-            <div className={f1.topBar}>
-              <IconButton href={back} label="Kembali ke Home event" icon={<CaretLeft />} />
-              <Button size="sm" icon={<UploadSimple />} onClick={pick}>
-                Unggah CSV
-              </Button>
-            </div>
-          }
+          leading={<IconButton href={back} label="Kembali ke Home event" icon={<CaretLeft />} />}
           eyebrow={`${eventName} · belum ada tamu`}
           title="Undang tamu"
         />
@@ -113,9 +115,19 @@ export function GuestImport({
           icon={<CloudArrowUp />}
           title="Belum ada daftar tamu"
           action={
-            <Button size="sm" icon={<UploadSimple />} onClick={pick}>
-              Pilih file CSV
-            </Button>
+            <>
+              <Button size="sm" icon={<UploadSimple />} onClick={pick}>
+                Pilih file CSV
+              </Button>
+              <a
+                href="/template-tamu-hmd.csv"
+                download
+                className={`t-label-emph ${styles.textLink}`}
+              >
+                <DownloadSimple size={16} />
+                Unduh template CSV
+              </a>
+            </>
           }
         >
           Unggah CSV sekali di awal. Setelah itu tamu ditambah atau diedit manual.
@@ -133,10 +145,6 @@ export function GuestImport({
               )}
             </div>
           ))}
-          <a href="/contoh-tamu.csv" download className={`t-label-emph ${styles.textLink}`}>
-            <DownloadSimple size={16} />
-            Unduh contoh CSV
-          </a>
         </Card>
       </Screen>
     );
@@ -188,11 +196,11 @@ function CsvReview({
       bottom={
         issues.length ? (
           <>
-            <Button disabled={pending || !parsed.valid.length} onClick={onSave}>
-              Simpan {parsed.valid.length} tamu aman
-            </Button>
-            <Button variant="secondary" icon={<UploadSimple />} onClick={onRepick}>
+            <Button icon={<UploadSimple />} onClick={onRepick}>
               Unggah ulang CSV
+            </Button>
+            <Button variant="secondary" disabled={pending || !parsed.valid.length} onClick={onSave}>
+              Simpan {parsed.valid.length} tamu dulu
             </Button>
           </>
         ) : (
@@ -205,7 +213,7 @@ function CsvReview({
       {picker}
       <ScreenHeader
         leading={<IconButton label="Batal, kembali" icon={<CaretLeft />} onClick={onBack} />}
-        eyebrow={`${parsed.rows.length} baris kebaca · cek dulu sebelum disimpan`}
+        eyebrow={csvEyebrow(parsed)}
         title="Cek daftar tamu"
       />
       {error && (
@@ -213,9 +221,12 @@ function CsvReview({
           {error}
         </Banner>
       )}
-      <Banner tone="warning" icon={<Info />} title="CSV cuma bisa diunggah sekali.">
-        Setelah disimpan, tambah atau edit tamu dilakukan manual biar status undangan nggak kereset.
-      </Banner>
+      {!issues.length && (
+        <Banner tone="warning" icon={<Info />} title="CSV cuma bisa diunggah sekali.">
+          Setelah disimpan, tambah atau edit tamu dilakukan manual biar status undangan nggak
+          kereset.
+        </Banner>
+      )}
       <Card>
         <div className={styles.fileRow}>
           <span className={f1.iconBox}>
@@ -235,26 +246,18 @@ function CsvReview({
 
       {issues.length > 0 ? (
         <>
-          <Card>
-            <p className={`t-body-emph ${f1.rowTight}`}>
-              <WarningCircle size={18} className={f1.danger} />
-              {issues.length} baris perlu dicek
-            </p>
-            {issues.map((i) => (
-              <div key={i.line} className={styles.issueRow}>
-                <Badge tone="danger" className={styles.lineTag}>
-                  Baris {i.line}
-                </Badge>
-                <div className={f1.stack}>
-                  <p className="t-body-emph">{i.title}</p>
-                  <p className="t-label c-label-2">{i.detail}</p>
-                </div>
-              </div>
-            ))}
-          </Card>
+          <IssueCard
+            issues={issues.filter((i) => !isIgIssue(i))}
+            title={(n) => `${n} baris perlu dicek`}
+          />
+          <IssueCard
+            issues={issues.filter(isIgIssue)}
+            title={(n) => `${n} username IG perlu dicek`}
+          />
           <Banner tone="neutral" icon={<Info />} title={`${parsed.valid.length} baris lain aman`}>
-            Bisa lanjut simpan {parsed.valid.length} tamu dulu, {issues.length} baris ini diperbaiki
-            nanti lewat Tambah tamu.
+            {issues.every(isIgIssue)
+              ? "Tamu tanpa IG valid nggak bisa diundang lewat DM. Benerin di CSV, atau simpan dulu lalu ubah lewat ✎."
+              : `Simpan ${parsed.valid.length} tamu dulu, ${issues.length} baris ini ditambah manual nanti. Atau benerin CSV-nya lalu unggah ulang.`}
           </Banner>
         </>
       ) : (
@@ -288,6 +291,30 @@ function CsvReview({
         </>
       )}
     </Screen>
+  );
+}
+
+// Kartu masalah P04c (baris error) / P04i (username IG): Badge danger "Baris n" + judul + detail.
+function IssueCard({ issues, title }: { issues: CsvIssue[]; title: (n: number) => string }) {
+  if (!issues.length) return null;
+  return (
+    <Card>
+      <p className={`t-body-emph ${f1.rowTight}`}>
+        <WarningCircle size={18} className={f1.danger} />
+        {title(issues.length)}
+      </p>
+      {issues.map((i) => (
+        <div key={i.line} className={styles.issueRow}>
+          <Badge tone="danger" className={styles.lineTag}>
+            Baris {i.line}
+          </Badge>
+          <div className={f1.stack}>
+            <p className="t-body-emph">{i.title}</p>
+            <p className="t-label c-label-2">{i.detail}</p>
+          </div>
+        </div>
+      ))}
+    </Card>
   );
 }
 
