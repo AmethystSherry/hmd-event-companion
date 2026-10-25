@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import {
   ArrowClockwise,
   ArrowCounterClockwise,
@@ -17,72 +17,103 @@ import {
   CardLabel,
   HeroState,
   LogoMark,
-  NumberedRow,
-  Pill,
   Screen,
   ScreenHeader,
   Ticket,
 } from "@/components/ui";
-import type { Event, Session } from "@/lib/data/types";
+import type { Event } from "@/lib/data/types";
 import { addDays, dateMedium, dateShort, eventStart, firstName } from "@/lib/format";
-import { igDmUrl, igProfileUrl, POTARA_IG } from "@/lib/invite";
+import { igDmUrl, igProfileUrl, POTARA_IG, rundownLine } from "@/lib/invite";
+import type { GuestSession } from "@/lib/sessionForm";
 import f1 from "./f1.module.css";
+import inv from "./invite.module.css";
+import { InviteTrail } from "./InviteTrail";
 import { LiveCountdown } from "./LiveCountdown";
+import { CalendarButton, FarewellCard } from "./TamuActions";
 
 // Layar tamu F1 (presentasional). Data & aksi disuplai route /t/[token] atau /dev/states/f1.
 
-// T01 · Undangan
+// T01 · Undangan (Figma 4992:27429): ilustrasi Pota kebuka, kartu kertas + prangko, info 3 kolom,
+// baris bagian acara, Jejak undangan 1 dari 3.
 export function InvitationScreen({
-  guestName,
+  keyNo,
   event,
   sessions,
   confirmHref,
 }: {
-  guestName: string;
+  keyNo: string;
   event: Event;
-  sessions: Session[];
+  sessions: GuestSession[];
   confirmHref: string;
 }) {
   return (
     <Screen
+      className={inv.bleed}
       bottomHeight={82}
       bottom={
         <>
-          <p className={`t-label c-label-2 ${f1.caption}`}>Syarat hadir: follow @{POTARA_IG}</p>
           <Button href={confirmHref} icon={<Check />}>
             Konfirmasi kehadiran
           </Button>
+          <p className={`t-label c-label-3 ${f1.caption}`}>Syarat hadir: follow @{POTARA_IG}</p>
         </>
       }
     >
-      <ScreenHeader
-        eyebrow={`Undangan pribadi · ${event.name}`}
-        title="Potara pindah rumah. Kamu diundang."
-      />
-      <Card>
-        <CardLabel>Untuk</CardLabel>
-        <p className="t-card-title">{guestName}</p>
-        <div className={f1.pills}>
-          <Pill icon={<CalendarBlank />}>{dateShort(event.date)}</Pill>
-          <Pill icon={<Clock />}>
-            {event.startsAt}–{event.endsAt}
-          </Pill>
-          <Pill icon={<MapPin />}>{event.location}</Pill>
+      <div className={inv.openStage}>
+        {/* eslint-disable-next-line @next/next/no-img-element -- ilustrasi statis dari Figma */}
+        <img
+          src="/figma/t01-invitation-opened.webp"
+          srcSet="/figma/t01-invitation-opened.webp 2x, /figma/t01-invitation-opened@3x.webp 3x"
+          alt=""
+          aria-hidden
+          className={inv.art}
+        />
+        <span aria-hidden className={inv.artFade} />
+      </div>
+      <section className={inv.paper} aria-labelledby="t01-title">
+        <div className={inv.stamp} aria-label={`Nomor kunci ${keyNo}`}>
+          <span className={inv.stampArt}>
+            <LogoMark size={22} title="" />
+          </span>
+          <span className={`t-caption ${inv.accentText}`}>No. {keyNo.replace("#", "")}</span>
         </div>
-      </Card>
-      {sessions.length > 0 && (
-        <Card inset>
-          {sessions.map((s, i) => (
-            <NumberedRow
-              key={s.id}
-              number={i + 1}
-              title={s.title}
-              subtitle={s.tagline ?? `${s.startsAt} · ${s.durationMin} mnt`}
-            />
-          ))}
-        </Card>
-      )}
+        <div className={inv.paperHead}>
+          <p className={`t-label-emph ${inv.accentText}`}>Undangan pribadi</p>
+          <h1 id="t01-title" className="t-card-title">
+            Kamu diundang ke {event.name}!
+          </h1>
+        </div>
+        <hr aria-hidden className={inv.perforation} />
+        <dl className={inv.facts}>
+          <Fact icon={<CalendarBlank size={14} />} label="Kapan" value={dateShort(event.date)} />
+          <Fact
+            icon={<Clock size={14} />}
+            label="Jam"
+            value={`${event.startsAt}–${event.endsAt}`}
+          />
+          <Fact icon={<MapPin size={14} />} label="Di mana" value={event.location} />
+        </dl>
+        {sessions.length > 0 && (
+          <div className={f1.stack}>
+            <p className="t-caption c-label-3">{sessions.length} bagian acara</p>
+            <p className="t-label c-label-2">{rundownLine(sessions)}</p>
+          </div>
+        )}
+      </section>
+      <InviteTrail step={2} />
     </Screen>
+  );
+}
+
+function Fact({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
+  return (
+    <div className={inv.fact}>
+      <dt className={`t-caption ${inv.factLabel}`}>
+        {icon}
+        {label}
+      </dt>
+      <dd className={inv.factValue}>{value}</dd>
+    </div>
   );
 }
 
@@ -121,15 +152,17 @@ export function InvalidLinkScreen({ retryHref }: { retryHref: string }) {
   );
 }
 
-// T02b · Nggak bisa datang
+// T02b · Nggak bisa datang + titip ucapan (Figma 4847:6277).
 export function DeclinedScreen({
   guestName,
   event,
   changeHref,
+  farewell,
 }: {
   guestName: string;
   event: Event;
   changeHref: string;
+  farewell: ComponentProps<typeof FarewellCard>;
 }) {
   return (
     <Screen
@@ -137,7 +170,7 @@ export function DeclinedScreen({
       bottom={
         <>
           <p className={`t-label c-label-2 ${f1.caption}`}>
-            Berubah pikiran? Kamu masih bisa ubah jawaban.
+            Follow @{POTARA_IG} buat lihat kolase foto acaranya.
           </p>
           <Button href={igProfileUrl(POTARA_IG)} target="_blank" rel="noopener noreferrer">
             Follow @{POTARA_IG}
@@ -160,19 +193,13 @@ export function DeclinedScreen({
           berikutnya!
         </p>
       </Card>
-      <Card>
-        <CardLabel>Sambil nunggu</CardLabel>
-        <p className="t-headline">Intip cerita pindahan kami</p>
-        <p className="t-label c-label-2">
-          Kolase foto {event.name} bakal dibagi di @{POTARA_IG} setelah{" "}
-          {dateShort(event.date).split(", ")[1]}.
-        </p>
-      </Card>
+      <FarewellCard {...farewell} />
     </Screen>
   );
 }
 
-// T03 · Tiket + countdown · T03h dibuka dari WA pengingat H-1 (countdown dalam jam)
+// T03 · Tiket + countdown (T03k sheet kalender) · T03h dibuka dari WA pengingat H-1 (countdown
+// dalam jam)
 export function TicketScreen({
   variant,
   guestName,
@@ -180,7 +207,7 @@ export function TicketScreen({
   keyNo,
   code,
   qr,
-  calendarHref,
+  calendar,
   now,
   frozen,
 }: {
@@ -190,24 +217,18 @@ export function TicketScreen({
   keyNo: string;
   code: string;
   qr?: ReactNode;
-  calendarHref: string;
+  calendar: ComponentProps<typeof CalendarButton>;
   now: string;
   frozen?: boolean;
 }) {
   const start = eventStart(event.date, event.startsAt);
   return (
-    <Screen
-      bottom={
-        <Button variant="secondary" href={calendarHref} icon={<CalendarBlank />}>
-          Simpan ke kalender
-        </Button>
-      }
-    >
+    <Screen bottom={<CalendarButton {...calendar} />}>
       <ScreenHeader
         eyebrow={
           variant === "t03h"
             ? `Pengingat H-1 · ${dateMedium(addDays(event.date, -1))}`
-            : "Terkonfirmasi · link ini juga dikirim lewat WA"
+            : "Terkonfirmasi · H-1 link ini kami kirim lagi lewat WA"
         }
         title={`Ini tiketmu, ${firstName(guestName)}.`}
       />

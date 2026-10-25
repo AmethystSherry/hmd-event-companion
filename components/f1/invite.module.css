@@ -1,0 +1,336 @@
+/* T01a amplop + T01 undangan (Figma 4968:27876 · 4992:27429). Ilustrasi Pota full-bleed di atas,
+   ukuran asli 390 lebar; posisi segel/kartu pakai persen supaya ikut lebar layar. */
+
+/* ---- Gate (InviteGate) ---- */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  overflow-y: auto;
+  background: var(--bg);
+}
+
+.overlayOut {
+  animation: fadeOut 400ms var(--ease-spring) forwards;
+  pointer-events: none;
+}
+
+.riseIn {
+  animation: riseIn 400ms var(--ease-spring) both;
+}
+
+@keyframes fadeOut {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes riseIn {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+}
+
+/* Konten layar mulai dari paling atas (ilustrasi di belakang status bar). */
+main.bleed {
+  padding-top: 0;
+}
+
+.art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Ilustrasi memudar ke latar di bagian bawah (teks/kartu di atasnya tetap kebaca). */
+.artFade {
+  position: absolute;
+  inset: auto 0 0;
+  height: 22%;
+  background: linear-gradient(to bottom, transparent, var(--bg));
+}
+
+/* ---- T01a ---- */
+.stage {
+  position: relative;
+  margin: 0 calc(var(--margin) * -1);
+  aspect-ratio: 390 / 640;
+}
+
+/* Segel lilin di ilustrasi: x125 y355, 140×140. */
+.seal {
+  position: absolute;
+  left: 32.05%;
+  top: 55.47%;
+  width: 35.9%;
+  aspect-ratio: 1;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  transition:
+    transform 150ms var(--ease-spring),
+    opacity 150ms linear;
+}
+
+.seal:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.sealPressed {
+  transform: scale(0.9);
+  opacity: 0;
+}
+
+.ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1.5px solid var(--accent);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+.ringOuter {
+  inset: 1.4%;
+  opacity: 0.18;
+}
+
+.ringInner {
+  inset: 12.9%;
+  border-width: 2px;
+  opacity: 0.45;
+  animation-delay: 0.2s;
+}
+
+@keyframes pulse {
+  50% {
+    transform: scale(1.08);
+    opacity: 0.08;
+  }
+}
+
+/* Pill "Tap segelnya" di bawah segel (y489). */
+.tapHint {
+  position: absolute;
+  top: 76.4%;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.envText {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-top: -32px;
+  position: relative;
+  text-align: center;
+}
+
+.envText > p:last-child {
+  max-width: 320px;
+  margin-top: 4px;
+}
+
+/* ---- T01 ---- */
+.openStage {
+  position: relative;
+  margin: 0 calc(var(--margin) * -1);
+  aspect-ratio: 390 / 414;
+}
+
+/* Kartu undangan menimpa ilustrasi (y344 dari 414). */
+.paper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: calc(-12px - min(17.95vw, 70px));
+  padding: 22px;
+  border-radius: var(--radius-card, 24px);
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+}
+
+/* Garis kertas putus-putus. */
+.paper::before {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  border: 1px dashed color-mix(in srgb, var(--accent) 35%, transparent);
+  border-radius: 18px;
+  pointer-events: none;
+}
+
+.paperHead {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-right: 72px;
+}
+
+.accentText {
+  color: var(--accent-text);
+}
+
+.stamp {
+  position: absolute;
+  top: 18px;
+  right: 29px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 58px;
+  height: 70px;
+  padding-top: 6px;
+  border: 1px dashed var(--accent);
+  border-radius: 2px;
+  background: var(--card);
+  transform: rotate(6deg);
+}
+
+.stampArt {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 40px;
+  background: var(--accent-soft);
+}
+
+.perforation {
+  height: 0;
+  margin: 0;
+  border: 0;
+  border-top: 1px dashed var(--separator);
+}
+
+.facts {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.fact {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.factLabel {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--label-3);
+}
+
+.factValue {
+  margin: 0;
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+}
+
+/* ---- Jejak undangan ---- */
+.trail {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 4px 4px 0;
+}
+
+.trailSteps {
+  display: flex;
+  justify-content: space-between;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.trailStep {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+  text-align: center;
+}
+
+/* Garis penghubung antarlangkah. */
+.trailStep + .trailStep::before {
+  content: "";
+  position: absolute;
+  top: 22px;
+  right: calc(50% + 28px);
+  width: calc(100% - 56px);
+  border-top: 1.5px dashed var(--label-3);
+}
+
+.trailStep[data-state="done"] + .trailStep::before {
+  border-top-style: solid;
+  border-color: var(--accent);
+}
+
+.dot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.trailStep[data-state="done"] .dot {
+  background: var(--accent);
+  color: #ffffff; /* ✓ putih di atas oranye, sama di kedua mode */
+}
+
+.trailStep[data-state="active"] .dot {
+  border: 2px solid var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+
+.trailStep[data-state="todo"] .dot {
+  background: var(--card-2);
+  color: var(--label-3);
+}
+
+.trailStep[data-state="todo"] > span:last-child {
+  color: var(--label-3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ring {
+    animation: none;
+  }
+
+  .seal {
+    transition: none;
+  }
+
+  .riseIn {
+    animation: fadeIn 200ms linear both;
+  }
+
+  .overlayOut {
+    animation-duration: 200ms;
+    animation-timing-function: linear;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+}

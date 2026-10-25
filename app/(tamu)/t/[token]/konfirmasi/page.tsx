@@ -34,6 +34,8 @@ async function Form({ params }: Pick<PageProps<"/t/[token]/konfirmasi">, "params
         name: guest.name,
         ig: guest.ig ? `@${guest.ig}` : "",
         wa: guest.wa ? formatWa(guest.wa) : "",
+        job: guest.job ?? "",
+        interests: guest.interests ?? "",
         follow: guest.followConfirmed,
       }}
       submit={submitConfirm.bind(null, token)}

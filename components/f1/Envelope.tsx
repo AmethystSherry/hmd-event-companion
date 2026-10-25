@@ -1,18 +1,21 @@
 "use client";
 
 import { useCallback, useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
-import { Key } from "@/components/icons";
-import { Button, Screen, ScreenHeader } from "@/components/ui";
+import { preload } from "react-dom";
+import { HandWaving } from "@/components/icons";
+import { Button, Pill, Screen } from "@/components/ui";
 import { cx } from "@/lib/cx";
 import { firstName } from "@/lib/format";
-import { MascotStage } from "./Mascot";
 import styles from "./invite.module.css";
 
 type Phase = "closed" | "opening" | "rising" | "done";
 
-const OPEN_MS = 400; // flap kebuka
-const RISE_MS = 500; // undangan naik keluar amplop
+const PRESS_MS = 150; // segel mengecil + pudar
+const RISE_MS = 400; // amplop memudar, undangan naik 24px
 const FADE_MS = 200; // reduced motion
+
+const ART = "/figma/t01a-invitation-closed.webp";
+const ART_SET = `${ART} 2x, /figma/t01a-invitation-closed@3x.webp 3x`;
 
 const storageKey = (token: string) => `hmd_env_open_${token}`;
 const noop = () => () => {};
@@ -26,18 +29,16 @@ function seen(token: string): boolean {
 }
 
 // T01a → T01: amplop cuma muncul di kunjungan pertama per token (localStorage). Tap segel atau
-// "Buka undangan": flap kebuka → undangan (children, T01) naik keluar amplop. `preview` = selalu
-// tampil & tidak menyimpan apa-apa (/dev/states/f1).
+// "Buka undangan": segel mengecil → amplop memudar, undangan (children, T01) naik. `preview` =
+// selalu tampil & tidak menyimpan apa-apa (/dev/states/f1).
 export function InviteGate({
   token,
   guestName,
-  keyNo,
   preview,
   children,
 }: {
   token: string;
   guestName: string;
-  keyNo: string;
   preview?: boolean;
   children: ReactNode;
 }) {
@@ -66,8 +67,8 @@ export function InviteGate({
       return;
     }
     setPhase("opening");
-    setTimeout(() => setPhase("rising"), OPEN_MS);
-    setTimeout(finish, OPEN_MS + RISE_MS);
+    setTimeout(() => setPhase("rising"), PRESS_MS);
+    setTimeout(finish, PRESS_MS + RISE_MS);
   }, [phase, preview, token]);
 
   // Halaman di bawah amplop nggak ikut ke-scroll selama amplop masih tertutup.
@@ -90,62 +91,49 @@ export function InviteGate({
       </div>
       {showEnvelope && (
         <div className={cx(styles.overlay, phase === "rising" && styles.overlayOut)}>
-          <EnvelopeScreen guestName={guestName} keyNo={keyNo} phase={phase} onOpen={open} />
+          <EnvelopeScreen guestName={guestName} phase={phase} onOpen={open} />
         </div>
       )}
     </>
   );
 }
 
-// T01a · Undangan · amplop tertutup (Figma 4920:28510).
+// T01a · Undangan · amplop tertutup (Figma 4968:27876). Segel lilin di ilustrasi = tombol.
 export function EnvelopeScreen({
   guestName,
-  keyNo,
   phase = "closed",
   onOpen,
 }: {
   guestName: string;
-  keyNo: string;
   phase?: Phase;
   onOpen?: () => void;
 }) {
+  preload(ART, { as: "image", imageSrcSet: ART_SET });
   return (
-    <Screen
-      tint
-      bottomHeight={80}
-      bottom={
-        <>
-          <Button icon={<Key />} onClick={onOpen}>
-            Buka undangan
-          </Button>
-          <p className={`t-caption c-label-2 ${styles.caption}`}>atau tap segelnya</p>
-        </>
-      }
-    >
-      <ScreenHeader
-        eyebrow="Undangan pribadi · House Moving Day"
-        title={`Ada surat buat kamu, ${firstName(guestName)}.`}
-      />
-      <div className={styles.envStage}>
-        <MascotStage pose="ngintip" sticker="Psst, ada undangan!" />
-        <div className={cx(styles.envelope, phase !== "closed" && styles.opened)}>
-          <span aria-hidden className={styles.envBody} />
-          <svg aria-hidden className={styles.fold} viewBox="0 0 358 100" preserveAspectRatio="none">
-            <path d="M0 100 L179 0 L358 100" />
-          </svg>
-          <svg aria-hidden className={styles.flap} viewBox="0 0 358 150" preserveAspectRatio="none">
-            <path d="M1 1 H357 L179 149 Z" />
-          </svg>
-          <span aria-hidden className={cx(styles.pulse, styles.pulseOuter)} />
-          <span aria-hidden className={cx(styles.pulse, styles.pulseInner)} />
-          <button type="button" className={styles.seal} aria-label="Buka undangan" onClick={onOpen}>
-            <Key size={34} />
-          </button>
-          <p className={`t-headline ${styles.to}`}>Untuk {guestName}</p>
-          <p className={`t-caption c-label-2 ${styles.from}`}>
-            No. {keyNo.replace("#", "")} · dari Potara Studio
-          </p>
-        </div>
+    <Screen bottom={<Button onClick={onOpen}>Buka undangan</Button>} className={styles.bleed}>
+      <div className={styles.stage}>
+        {/* eslint-disable-next-line @next/next/no-img-element -- ilustrasi statis dari Figma */}
+        <img src={ART} srcSet={ART_SET} alt="" aria-hidden className={styles.art} />
+        <span aria-hidden className={styles.artFade} />
+        <button
+          type="button"
+          className={cx(styles.seal, phase !== "closed" && styles.sealPressed)}
+          aria-label="Buka undangan"
+          onClick={onOpen}
+        >
+          <span aria-hidden className={cx(styles.ring, styles.ringOuter)} />
+          <span aria-hidden className={cx(styles.ring, styles.ringInner)} />
+        </button>
+        <Pill icon={<HandWaving />} className={styles.tapHint}>
+          Tap segelnya
+        </Pill>
+      </div>
+      <div className={styles.envText}>
+        <p className="t-label c-label-2">Undangan pribadi · House Moving Day</p>
+        <h1 className="t-card-title">Ada surat buat kamu, {firstName(guestName)}.</h1>
+        <p className="t-body c-label-2">
+          Potara pindah rumah, dan kamu salah satu tamu pertamanya.
+        </p>
       </div>
     </Screen>
   );

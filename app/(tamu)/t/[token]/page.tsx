@@ -5,6 +5,7 @@ import { GuestDayTicket } from "@/components/f2/tamu";
 import { RefreshAt } from "@/components/RefreshAt";
 import { RegisterOffline } from "@/components/RegisterOffline";
 import { TicketQr } from "@/components/TicketQr";
+import { InviteGate } from "@/components/f1/Envelope";
 import {
   DeclinedScreen,
   InvalidLinkScreen,
@@ -14,14 +15,18 @@ import {
 import { Screen, Skeleton } from "@/components/ui";
 import { getStore } from "@/lib/data";
 import { daysUntil, eventStart, keyLabel, timeWib } from "@/lib/format";
+import { googleCalendarUrl } from "@/lib/ics";
+import { sessionForGuest } from "@/lib/sessionForm";
 import { guestFromToken } from "@/lib/server/access";
 import { isEventDay, serverNow } from "@/lib/server/clock";
 import { ensurePurged } from "@/lib/server/feedback";
 import { secrets } from "@/lib/server/config";
 import { signTicket } from "@/lib/server/crypto";
+import { appOrigin } from "@/lib/server/url";
+import { sendFarewell } from "./actions";
 
 // /t/{token}: layar tamu sesuai jawaban.
-// belum → T01 Undangan · nggak → T02b · hadir → T03 Tiket (T03h kalau dibuka dari WA H-1).
+// belum → T01a Amplop (kunjungan pertama) → T01 Undangan · nggak → T02b · hadir → T03 Tiket (T03h kalau dibuka dari WA H-1).
 // Hari-H (mulai 00.00 WIB): hadir → T05 tiket hari-H → discan → T05a/BT02 → T03b (F2).
 // Token salah / milik event yang sudah lewat 30 hari → T01e. Token tidak pernah ditampilkan.
 const JUST_IN_MS = 10 * 60 * 1000; // baru masuk < 10 menit → BT02 sekali
@@ -104,7 +109,11 @@ async function Router({
           keyNo={keyLabel(guest.keyNo)}
           code={ticket?.shortCode ?? "—"}
           qr={qr}
-          calendarHref={`/t/${token}/kalender`}
+          calendar={{
+            event,
+            googleHref: googleCalendarUrl(event, `${await appOrigin()}/t/${token}`),
+            icsHref: `/t/${token}/kalender`,
+          }}
           now={now.toISOString()}
         />
         <RefreshAt
@@ -118,17 +127,28 @@ async function Router({
   }
   if (guest.rsvp === "nggak") {
     return (
-      <DeclinedScreen guestName={guest.name} event={event} changeHref={`/t/${token}/konfirmasi`} />
+      <DeclinedScreen
+        guestName={guest.name}
+        event={event}
+        changeHref={`/t/${token}/konfirmasi`}
+        farewell={{
+          initial: guest.farewellMessage ?? "",
+          sent: !!guest.farewellMessage,
+          send: sendFarewell.bind(null, token),
+        }}
+      />
     );
   }
   return (
     <>
-      <InvitationScreen
-        guestName={guest.name}
-        event={event}
-        sessions={store.listSessions(event.id)}
-        confirmHref={`/t/${token}/konfirmasi`}
-      />
+      <InviteGate token={token} guestName={guest.name}>
+        <InvitationScreen
+          keyNo={keyLabel(guest.keyNo)}
+          event={event}
+          sessions={store.listSessions(event.id).map(sessionForGuest)}
+          confirmHref={`/t/${token}/konfirmasi`}
+        />
+      </InviteGate>
       {live}
     </>
   );

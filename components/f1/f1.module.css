@@ -171,3 +171,83 @@
 .hiddenInput {
   display: none;
 }
+
+/* T02b titip ucapan: chip cepat (wrap) + kotak pesan card-2 dengan tombol kirim Ink di kanan. */
+.wrapChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.messageBox {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 10px 10px 10px 14px;
+  border-radius: var(--radius-inner);
+  background: var(--card-2);
+}
+
+.messageInput {
+  flex: 1;
+  min-width: 0;
+  min-height: 36px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--label);
+  font: inherit;
+  resize: none;
+  outline: none;
+}
+
+.messageInput::placeholder {
+  color: var(--label-3);
+}
+
+.sendBtn {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--cta);
+  color: var(--on-cta);
+  cursor: pointer;
+}
+
+.sendBtn[aria-disabled="true"] {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.sendBtn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Hint di atas daftar saat filter aktif (P04g / P04h). */
+.hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 0 4px;
+}
+
+.hint svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* Tombol sheet panjang (PE04a/PE04b) tetap nempel di bawah selagi isi sheet di-scroll. */
+.stickyActions {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  margin-bottom: calc(-24px - env(safe-area-inset-bottom));
+  padding: 12px 0 calc(24px + env(safe-area-inset-bottom));
+  background: linear-gradient(to bottom, transparent, var(--card) 12px);
+}

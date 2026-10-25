@@ -14,6 +14,8 @@ import {
   Toggle,
 } from "@/components/ui";
 import {
+  INTERESTS_MAX,
+  JOB_MAX,
   validateConfirm,
   type ConfirmErrors,
   type ConfirmInput,
@@ -22,7 +24,7 @@ import {
 import { POTARA_IG } from "@/lib/invite";
 import f1 from "./f1.module.css";
 
-// T02 Konfirmasi hadir · T02c form belum lengkap · T02d gagal kirim (isian tetap).
+// T02 Konfirmasi hadir (+ Pekerjaan & Minat opsional) · T02c form belum lengkap · T02d gagal kirim (isian tetap).
 export function ConfirmForm({
   backHref,
   doneHref,
@@ -32,7 +34,7 @@ export function ConfirmForm({
 }: {
   backHref: string;
   doneHref: string;
-  initial: { name: string; ig: string; wa: string; follow: boolean };
+  initial: Omit<ConfirmInput, "rsvp">;
   initialStatus?: "idle" | "incomplete" | "error";
   submit?: (input: ConfirmInput) => Promise<ConfirmResult>; // kosong = pratinjau
 }) {
@@ -137,6 +139,22 @@ export function ConfirmForm({
           onChange={(e) => set("wa", e.target.value)}
           onBlur={() => touch("wa")}
           error={shown("wa")}
+        />
+        <Field
+          label="Pekerjaan (opsional)"
+          value={v.job}
+          placeholder="Mis. Product designer"
+          autoComplete="organization-title"
+          maxLength={JOB_MAX}
+          onChange={(e) => set("job", e.target.value)}
+        />
+        <Field
+          label="Minat (opsional)"
+          value={v.interests}
+          placeholder="Mis. UX writing, kopi"
+          maxLength={INTERESTS_MAX}
+          hint="Muncul di kartu kenalan pas hari-H."
+          onChange={(e) => set("interests", e.target.value)}
         />
       </Card>
       <Card>
