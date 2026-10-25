@@ -45,6 +45,8 @@ Web app mobile untuk House Moving Day Potara Studio (Minggu 8 Nov 2026, 13.00–
   Minat, T02b titip ucapan, T03k sheet kalender, P04i IG perlu dicek, P04g/h hint filter, swipe hapus
   P04s/PE04s + 🗑 di judul sheet (Batalkan 5 dtk), P04b Kirim WA per tamu, satu badge per baris,
   PE04a/PE04b field sesi. Lihat "Aturan F1 di kode". Menunggu review.
+- **F1 update 26 Okt (v5.1)**: T01 tanpa Jejak undangan + grid kartu "bagian acara"; T01a teks di
+  atas & ilustrasi/segel turun; header PE01/PE01a/PE02 "Daftar event" + "{n} event". Menunggu review.
 - **F3 + F4 · Selama acara (25 Okt)**: Figma band `4668:4730`, full-size C18 `4899:12734`,
   `F3-F4-deliverables.md` v2. Layar tamu `acara/` dibangun (BT20/21/23/24 · BT03 · sheet BT22/BT21p/
   BT04/BT05 · S01); Kontrol acara dapat BP01 jeda, BP02c, pengingat lewat jam mulai, BP02d. Keputusan
@@ -121,7 +123,7 @@ app/
   tokens.css · globals.css · fonts/
 components/ui/            komponen design system Clean v0.5
 components/f1/            layar F1 presentasional (dipakai route asli & /dev/states/f1) · Envelope
-                          (InviteGate + T01a) · InviteTrail (Jejak undangan) · TamuActions (T02b ucapan,
+                          (InviteGate + T01a) · TamuActions (T02b ucapan,
                           T03k sheet kalender) · invite.module.css (T01a/T01)
 components/f2/            tamu.tsx (T05/T05a/BT02/T03b) · Kontrol (BP02 + dialog) · DoorApp (P05–P07d) ·
                           useDoor (manifest + antrean) · Viewfinder (kamera) · DoorPage (guard route) ·
@@ -148,8 +150,8 @@ lib/                      csv (+ CSV buku tamu) · feedback (aturan buku tamu, t
                           card (N3: cardOf, normalizeCard, splitInterests) ·
                           questions (N1: validasi, talkshowFor, questionsView, nama tampil) ·
                           kolase (masonry, tata letak 9:16, filter, foto → KolasePhoto) ·
-                          format · invite (+ rundownLine) · confirm · ics (+ googleCalendarUrl) ·
-                          view (guestStatus) · sessionForm (form sesi PE04a/b, sessionForGuest) ·
+                          format · invite (+ rundownTiles) · confirm · ics (+ googleCalendarUrl) ·
+                          view (guestStatus, eventCountLabel) · sessionForm (form sesi PE04a/b, sessionForGuest) ·
                           fixtures · clipboard · cx ·
                           door (logika pintu tanpa secret, jalan di HP) · offline/doorDb (IndexedDB) ·
                           rundown (status sesi + stopwatch, lewat jadwal, countdown) · acara (data layar
@@ -169,10 +171,18 @@ next.config.ts            header X-Robots-Tag noindex, allowedDevOrigins (HP di 
   mengecil 150 ms → amplop pudar + T01 naik 24px 400 ms; reduced motion = fade 200 ms. Ilustrasi
   `public/figma/t01a-invitation-closed(@3x).webp` & `t01-invitation-opened(@3x).webp` (crop tengah
   dari Figma, ≤ 85 KB). Ilustrasi punya latar sendiri (nggak ikut dark mode), dipudarkan ke `--bg`.
-- **T01**: kartu kertas (garis putus accent 35%, prangko rotate 6° "No. {keyNo}"), info 3 kolom
-  (`<dl>`), "{n} bagian acara" = `rundownLine` (Talkshow + pembicara → "Talkshow bareng {nama}"),
-  `InviteTrail` 3 langkah (`<ol>`, langkah 2 `aria-current="step"`), cuma di T01. Sesi ke HP tamu
-  lewat `sessionForGuest` (tanpa PIC).
+  v5.1: teks di atas (absolute y128), ilustrasi mulai y164; segel = 370/640 dari atas ilustrasi
+  (y534), chip 470/640 (y634), persen dari kotak ilustrasi. Lebar ilustrasi dibatasi tinggi layar
+  (`(100dvh − 308px) × 0,83`, = 100% di 390×844) dan HP ≤ 740 tinggi teks/ilustrasi naik, supaya
+  segel & chip nggak ketutup tombol (375×667).
+- **T01** (v5.1): kartu kertas y368 (menimpa ilustrasi 46px; garis putus accent 35%, prangko rotate
+  6° "No. {keyNo}"), info 3 kolom (`<dl>`), lalu "{n} bagian acara" + **grid 2 kolom** kartu sesi
+  (`rundownTiles`: semua sesi urut jam, nomor 2 digit, jam, nama lengkap ellipsis 2 baris, tanpa
+  pembicara; `<ol>`, aria "Bagian 2, 14.00, Talkshow"; ganjil = terakhir di kiri). Jejak undangan
+  dihapus. Nama panjang 2 baris bikin kartu lebih tinggi dari Figma → di 390×844 halaman scroll
+  ±25px, tombol tetap di bawah. Sesi ke HP tamu lewat `sessionForGuest` (tanpa PIC).
+- **PE01/PE01a/PE02** (v5.1): toolbar LogoMark 32 + Badge crew "Panitia" | "Keluar"; baris judul
+  "Daftar event" (t-title) + `eventCountLabel` "{n} event" rata baseline. Metadata "Daftar event · Panitia".
 - **T02**: Pekerjaan (≤ 40) & Minat (≤ 60) opsional → `Guest.job/interests` (cuma disimpan saat
   Hadir; jawab "Nggak bisa" nggak menghapus), ikut prefill "Ubah jawaban", belum ditampilkan (N3).
 - **T02b titip ucapan**: chip cepat mengisi field, ≤ 140 huruf, `sendFarewell` → `Guest.farewellMessage/
@@ -588,6 +598,8 @@ menghapus data per orang di store lokal → balikin lewat `/dev/states/f1` Reset
       BT06b 2 tombol — menunggu review
 - [x] F5 (24 Okt) — tutup acara, buku tamu, kolase 9:16, rekap + ringkasan Claude, CSV, hapus H+30;
       16 layar (BT12, T14*, T15*, BP04/BP04b, P11*) — menunggu review & `ANTHROPIC_API_KEY` di Vercel
+- [x] F1 update 26 Okt (v5.1) — T01 grid bagian acara tanpa Jejak undangan, T01a teks di atas,
+      header Daftar event — menunggu review
 - [x] F1 update 23 + 25 Okt (v5) — 37 layar: amplop Pota, T01 baru, T02 kenalan, T02b ucapan,
       T03k, P04i/g/h/s, PE04b/s, pengingat per tamu — menunggu review
 - [x] F3 + F4 (25 Okt) — layar acara tamu Sesi/Jeda (13 layar/kasus) + Kontrol acara BP01/BP02c/

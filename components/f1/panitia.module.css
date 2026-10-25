@@ -214,3 +214,12 @@
 .typeHint {
   margin-top: 4px;
 }
+
+/* PE01 baris judul: "Daftar event" kiri, "{n} event" kanan, rata bawah (baseline). */
+.listHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+}

@@ -229,7 +229,7 @@ export const SCREENS: ScreenDef[] = [
   },
   {
     code: "PE01",
-    name: "Event kamu",
+    name: "Daftar event",
     lane: "Panitia",
     kind: "Utama",
     render: () => <EventList events={cards} />,

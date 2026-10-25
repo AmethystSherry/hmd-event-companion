@@ -71,6 +71,9 @@ export function toGuestRow(g: Guest, event: Event, origin: string, now: Date): G
   };
 }
 
+// PE01/PE01a: "{n} event" di kanan judul "Daftar event".
+export const eventCountLabel = (n: number) => `${n} event`;
+
 export function templateFromCsv(event: Event): boolean {
   return !!event.csvImportedAt && event.dmTemplate !== DEFAULT_DM_TEMPLATE;
 }

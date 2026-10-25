@@ -108,7 +108,7 @@ export function EventHome({
       <ScreenHeader
         leading={
           <div className={f1.topBar}>
-            <IconButton href="/panitia" label="Kembali ke Event kamu" icon={<CaretLeft />} />
+            <IconButton href="/panitia" label="Kembali ke Daftar event" icon={<CaretLeft />} />
             <Badge tone={phase.tone}>{phase.label}</Badge>
           </div>
         }

@@ -10,12 +10,13 @@ import {
   Card,
   Field,
   HeroState,
+  LogoMark,
   Pill,
   Screen,
-  ScreenHeader,
   Sheet,
 } from "@/components/ui";
 import type { FormResult } from "@/app/panitia/actions";
+import { eventCountLabel } from "@/lib/view";
 import f1 from "./f1.module.css";
 import styles from "./panitia.module.css";
 
@@ -28,7 +29,8 @@ export type EventCardData = {
   sessions: number;
 };
 
-// PE01 Event kamu · PE01a belum ada event · PE02 sheet Buat event (nama + tanggal).
+// PE01 Daftar event · PE01a belum ada event · PE02 sheet Buat event (nama + tanggal).
+// Header v5.1 (26 Okt): LogoMark + Badge "Panitia" | Keluar, lalu "Daftar event" + "{n} event".
 export function EventList({
   events,
   logout,
@@ -69,21 +71,26 @@ export function EventList({
       }
     >
       <div className={f1.topBar}>
-        <span />
+        <span className={f1.rowTight}>
+          <LogoMark size={32} />
+          <Badge tone="crew">Panitia</Badge>
+        </span>
         <form action={logout}>
           <Button size="sm" variant="secondary" type="submit">
             Keluar
           </Button>
         </form>
       </div>
-      <ScreenHeader eyebrow="Panitia · Potara Studio" title="Event kamu" />
+      <header className={styles.listHead}>
+        <h1 className="t-title">Daftar event</h1>
+        <p className="t-label c-label-2">{eventCountLabel(events.length)}</p>
+      </header>
       {events.length === 0 ? (
         <HeroState icon={<CalendarBlank size={30} />} title="Belum ada event">
           Bikin event pertama dulu, nanti rundown sama daftar tamunya bisa diisi pelan-pelan.
         </HeroState>
       ) : (
         <>
-          <p className="t-label c-label-2">{events.length} event</p>
           {events.map((e) => {
             const draftEvent = e.guests === 0 && e.sessions === 0;
             return (

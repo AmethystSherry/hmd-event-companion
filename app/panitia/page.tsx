@@ -7,9 +7,9 @@ import { isCrew } from "@/lib/server/access";
 import { toEventCard } from "@/lib/view";
 import { createEvent, loginWithPin, logout } from "./actions";
 
-export const metadata = { title: "Panitia · House Moving Day" };
+export const metadata = { title: "Daftar event · Panitia" };
 
-// /panitia: belum masuk → P01 PIN. Sudah masuk → PE01 Event kamu.
+// /panitia: belum masuk → P01 PIN. Sudah masuk → PE01 Daftar event.
 export default function PanitiaPage() {
   return (
     <Suspense

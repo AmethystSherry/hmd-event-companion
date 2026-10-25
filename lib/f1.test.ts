@@ -6,9 +6,9 @@ import { HMD_ID, seedData } from "./data/seed";
 import { createStore } from "./data/store";
 import type { Guest, Session } from "./data/types";
 import { buildIcs, googleCalendarUrl } from "./ics";
-import { rundownLine } from "./invite";
+import { rundownTiles } from "./invite";
 import { cleanSession, EMPTY_SESSION_FORM, sessionForGuest, sessionToForm } from "./sessionForm";
-import { guestStatus, statusBadge } from "./view";
+import { eventCountLabel, guestStatus, statusBadge } from "./view";
 
 // F1 update 23 & 25 Okt: status baris tamu, CSV IG (P04i), form sesi (PE04a/PE04b), T01, T03k,
 // titip ucapan (T02b), Pekerjaan & Minat (T02).
@@ -155,12 +155,36 @@ describe("form sesi (PE04a Talkshow / PE04b Info)", () => {
   });
 });
 
-describe("T01 · 4 bagian acara", () => {
-  it("talkshow ditulis 'Talkshow bareng {pembicara}'", () => {
-    expect(rundownLine(seedData().sessions)).toBe(
-      "Open space · Talkshow bareng Alfin Ganteng · Tur kantor · Closing & networking",
-    );
-    expect(rundownLine([{ title: "Talkshow", type: "talkshow", speaker: null }])).toBe("Talkshow");
+describe("T01 · grid bagian acara (rundownTiles)", () => {
+  it("semua sesi seed, nomor 2 digit, jam, nama lengkap tanpa pembicara", () => {
+    expect(rundownTiles(seedData().sessions)).toEqual([
+      { no: "01", time: "13.00", name: "Open space" },
+      { no: "02", time: "14.00", name: "Talkshow" },
+      { no: "03", time: "14.45", name: "Tur kantor" },
+      { no: "04", time: "15.30", name: "Closing & networking" },
+    ]);
+  });
+
+  it("urut jam mulai walau masukan acak; jumlah ganjil tetap semua tampil", () => {
+    const tiles = rundownTiles([
+      { title: "C", startsAt: "15.00" },
+      { title: "A", startsAt: "09.30" },
+      { title: "B", startsAt: "13.00" },
+    ]);
+    expect(tiles.map((t) => `${t.no} ${t.time} ${t.name}`)).toEqual([
+      "01 09.30 A",
+      "02 13.00 B",
+      "03 15.00 C",
+    ]);
+    expect(rundownTiles([])).toEqual([]);
+  });
+
+  it("lebih dari 9 sesi tetap 2 digit", () => {
+    const many = Array.from({ length: 10 }, (_, i) => ({
+      title: `S${i}`,
+      startsAt: `${String(10 + i).padStart(2, "0")}.00`,
+    }));
+    expect(rundownTiles(many).at(-1)?.no).toBe("10");
   });
 });
 
@@ -235,5 +259,12 @@ describe("T02 & T02b di store", () => {
       interests: null,
       farewellMessage: null,
     });
+  });
+});
+
+describe("PE01 · header Daftar event", () => {
+  it("angka event di kanan judul", () => {
+    expect(eventCountLabel(0)).toBe("0 event");
+    expect(eventCountLabel(2)).toBe("2 event");
   });
 });

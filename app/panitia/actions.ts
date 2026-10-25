@@ -85,7 +85,7 @@ export async function updateEvent(
   return { ok: true };
 }
 
-// PE03h · hapus event berantai, lalu kembali ke Event kamu (PE01 / PE01a).
+// PE03h · hapus event berantai, lalu kembali ke Daftar event (PE01 / PE01a).
 export async function deleteEvent(eventId: string): Promise<void> {
   await requireCrew();
   await mutateStore((store) => store.deleteEvent(eventId));
