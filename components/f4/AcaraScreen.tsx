@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import {
@@ -16,6 +15,7 @@ import {
 import { LiveRefresh } from "@/components/LiveRefresh";
 import { GaleriSheet } from "@/components/n4/GaleriSheet";
 import { NempelSheet, nempelStatus, type NempelStatus } from "@/components/n4/NempelSheet";
+import { TanyaSheet, type TanyaPreview } from "@/components/n1/TanyaSheet";
 import { usePhotoOutbox } from "@/components/n4/usePhotoOutbox";
 import { Badge, Button, JejakAcara, TicketNext, TopToast } from "@/components/ui";
 import { useServerNow } from "@/components/useServerNow";
@@ -34,6 +34,7 @@ import styles from "./f4.module.css";
 // Sheet BT22/BT21p/BT04/BT05 dibuka lewat `?sheet=` (pushState) supaya back HP menutupnya.
 // N4: sheet hasil foto (?sheet=foto&id=…, dari kamera) & Galeri (?sheet=galeri); antrean foto
 // dikirim dari sini (terkirim → router.refresh → sheet BT07b berubah ke BT07).
+// N1: sheet Tanya pembicara (?sheet=tanya) cuma selagi Talkshow jalan; sesi pindah → sheet nutup.
 // Offline (S01): toast atas + layar dari data terakhir (snapshot localStorage kalau HTML-nya dari
 // cache SW lebih lama). Layar ini nggak memanggil server sendiri selain LiveRefresh.
 
@@ -48,6 +49,7 @@ type Preview = {
   photoId?: string;
   offline?: boolean;
   photo?: { status: NempelStatus; pending?: number; extraToast?: boolean }; // /dev/states/n4
+  tanya?: TanyaPreview; // /dev/states/n1
 };
 type OpenSheet = { kind: SheetKind; sessionId?: string; photoId?: string };
 
@@ -94,6 +96,7 @@ export function AcaraScreen({
 }) {
   const router = useRouter();
   const [online, setOnline] = useState(true);
+  const [talkEnded, setTalkEnded] = useState(false); // N1: kirim ditolak, talkshow keburu selesai
   const [sheet, setSheet] = useState<OpenSheet | null>(
     preview?.sheet
       ? { kind: preview.sheet, sessionId: preview.sessionId, photoId: preview.photoId }
@@ -202,6 +205,23 @@ export function AcaraScreen({
   const talkshowLive = active?.type === "talkshow";
   const art = active ? active.art : offline ? "weak-signal" : "break";
   const total = view.sessions.length;
+  // N1 · talkshow selesai (rev → refresh) pas sheet Tanya kebuka → sheet ikut nutup (state saat
+  // render, ?sheet=tanya dibuang dari URL di efek).
+  if (sheet?.kind === "tanya" && !talkshowLive) setSheet(null);
+  const tanyaOpen = sheet?.kind === "tanya";
+  useEffect(() => {
+    if (preview || talkshowLive) return;
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("sheet") !== "tanya") return;
+    url.searchParams.delete("sheet");
+    history.replaceState(history.state, "", url);
+  }, [preview, talkshowLive]);
+  useEffect(() => {
+    if (!talkEnded) return;
+    const t = setTimeout(() => setTalkEnded(false), 4000);
+    return () => clearTimeout(t);
+  }, [talkEnded]);
+
   const detailOf = (id?: string): SessionView | null =>
     view.sessions.find((s) => s.id === id) ?? active ?? next ?? null;
 
@@ -299,10 +319,14 @@ export function AcaraScreen({
             <span className="t-caption">Galeri</span>
           </button>
           {talkshowLive ? (
-            <Link href={`/t/${token}/tanya`} className={cx(styles.tile, styles.tileHot)}>
+            <button
+              type="button"
+              className={cx(styles.tile, styles.tileHot)}
+              onClick={() => open("tanya")}
+            >
               <ChatCircle size={22} />
               <span className="t-caption">Tanya</span>
-            </Link>
+            </button>
           ) : (
             <span
               role="link"
@@ -353,6 +377,25 @@ export function AcaraScreen({
         />
       )}
       {sheet?.kind === "tamu" && <TamuSheet token={token} view={view} onClose={close} />}
+      {tanyaOpen && active && (
+        <TanyaSheet
+          token={token}
+          session={active}
+          serverNow={serverNow}
+          onClose={close}
+          onEnded={() => {
+            close();
+            setTalkEnded(true);
+            router.refresh();
+          }}
+          preview={preview ? (preview.tanya ?? {}) : undefined}
+        />
+      )}
+      {talkEnded && (
+        <TopToast icon={<ChatCircle size={20} />} title="Sesi talkshow udah selesai">
+          Pertanyaan baru bisa dikirim pas talkshow jalan.
+        </TopToast>
+      )}
       {photoId && photoStatus && (
         <NempelSheet
           token={token}

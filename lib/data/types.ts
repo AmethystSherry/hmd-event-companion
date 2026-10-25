@@ -125,6 +125,20 @@ export type StoreData = {
   tickets: Ticket[];
   photos?: Photo[]; // N4 (opsional: store lama tetap terbaca)
   feedback?: Feedback[]; // F5
+  questions?: Question[]; // N1
+};
+
+// N1 · pertanyaan talkshow (BT08 → P10). clientId = UUID dari HP → kirim ulang (sinyal putus) =
+// pertanyaan yang sama. Nempel ke sesi talkshow yang lagi jalan saat dikirim.
+export type Question = {
+  id: string;
+  clientId: string;
+  eventId: string;
+  guestId: string;
+  sessionId: string;
+  text: string; // di-trim, 1–280 huruf
+  createdAt: string;
+  answeredAt?: string | null; // ditandai moderator (P10), bisa dibatalkan
 };
 
 // N4 · foto kolase polaroid. File gambarnya di Supabase Storage / .data/photos (bukan di store);

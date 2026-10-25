@@ -63,6 +63,7 @@ async function Done({ params }: Pick<PageProps<"/t/[token]/selesai">, "params">)
       <SelesaiScreen
         eyebrow={`${event.closedAt ? `${timeWib(event.closedAt)} · ` : ""}${done} dari ${sessions.length} bagian selesai`}
         photoCount={photos.length}
+        questionCount={store.listQuestions(event.id).length}
         photoGuests={new Set(photos.map((p) => p.guestId)).size}
         guestCount={store.doorStats(event.id).checkedIn}
         latest={photos

@@ -13,8 +13,9 @@ import styles from "./f4.module.css";
 // Sheet layar acara tamu: BT22 Detail sesi · BT21p Profil pembicara · BT04 Rundown · BT05 Tamu di
 // sini (N3). Ilustrasi & panel tetap di belakang backdrop.
 
-// "foto" (hasil jepret BT07/BT07b/BT07e) & "galeri" (BT07d) = sheet N4 di components/n4.
-export type SheetKind = "detail" | "pembicara" | "rundown" | "tamu" | "foto" | "galeri";
+// "foto" (hasil jepret BT07/BT07b/BT07e) & "galeri" (BT07d) = sheet N4 di components/n4;
+// "tanya" (BT08/BT09/BT08b) = sheet N1 di components/n1.
+export type SheetKind = "detail" | "pembicara" | "rundown" | "tamu" | "foto" | "galeri" | "tanya";
 
 const STATE_BADGE = {
   berlangsung: { tone: "live", label: "Lagi jalan" },

@@ -262,3 +262,21 @@ export async function finishSession(
 export async function closeEvent(eventId: string, by: string | null = null): Promise<StateResult> {
   return stateOp(eventId, (store, at) => store.closeEvent(eventId, at, cleanBy(by)));
 }
+
+// N1 · P10 ✓ Tandai dijawab / ↺ Batalkan dijawab. Idempoten: dua moderator tap bareng = sama.
+export async function markAnswered(
+  eventId: string,
+  questionId: string,
+  answered: boolean,
+): Promise<FormResult> {
+  await requireCrew();
+  const at = (await serverNow()).toISOString();
+  try {
+    await mutateStore((store) => store.setQuestionAnswered(eventId, questionId, answered, at));
+    refresh();
+    return { ok: true };
+  } catch (err) {
+    if (err instanceof StoreError) return { ok: false, error: err.message };
+    throw err;
+  }
+}

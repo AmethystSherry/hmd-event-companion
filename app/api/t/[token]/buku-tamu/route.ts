@@ -1,8 +1,9 @@
-import { mutateStore, StoreError } from "@/lib/data";
+import { isStoreError, mutateStore, type StoreError } from "@/lib/data";
 import { parseFeedbackBody, type FeedbackPostResponse } from "@/lib/feedback";
 import { guestFromToken } from "@/lib/server/access";
 import { serverNow } from "@/lib/server/clock";
 import { ensurePurged } from "@/lib/server/feedback";
+import { rateLimiter } from "@/lib/server/rateLimit";
 import { isSameOrigin } from "@/lib/server/url";
 
 // F5 · kirim buku tamu dari HP tamu (T14 → T15). JSON: clientId (UUID dari HP), rating,
@@ -19,18 +20,8 @@ const STATUS: Partial<Record<StoreError["code"], number>> = {
   "data-dihapus": 410,
 };
 
-// Rate-limit sederhana per tamu (per instance server): 10 kiriman / menit.
-const WINDOW_MS = 60_000;
-const MAX_HITS = 10;
-const hits = new Map<string, number[]>();
-
-function limited(guestId: string): boolean {
-  const now = Date.now();
-  const list = (hits.get(guestId) ?? []).filter((t) => now - t < WINDOW_MS);
-  list.push(now);
-  hits.set(guestId, list);
-  return list.length > MAX_HITS;
-}
+// Rate-limit per tamu (per instance server): 10 kiriman / menit.
+const limited = rateLimiter(10);
 
 export async function POST(req: Request, ctx: RouteContext<"/api/t/[token]/buku-tamu">) {
   if (!isSameOrigin(req)) return new Response("forbidden", { status: 403 });
@@ -56,7 +47,7 @@ export async function POST(req: Request, ctx: RouteContext<"/api/t/[token]/buku-
     await mutateStore((s) => s.addFeedback(guest.id, input, at));
     return reply({ ok: true, status: "ok" });
   } catch (err) {
-    if (!(err instanceof StoreError)) throw err;
+    if (!isStoreError(err)) throw err;
     if (err.code === "sudah-isi") return reply({ ok: true, status: "sudah-isi" });
     return reply({ ok: false, error: err.message }, STATUS[err.code] ?? 409);
   }

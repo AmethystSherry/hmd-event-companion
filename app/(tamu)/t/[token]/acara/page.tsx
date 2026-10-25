@@ -11,7 +11,7 @@ import { isPhotoId, toGuestPhotos } from "@/lib/photo";
 import { guestFromToken } from "@/lib/server/access";
 import { serverNow } from "@/lib/server/clock";
 
-const SHEETS: SheetKind[] = ["detail", "pembicara", "rundown", "tamu", "foto", "galeri"];
+const SHEETS: SheetKind[] = ["detail", "pembicara", "rundown", "tamu", "foto", "galeri", "tanya"];
 // ?sheet=&sesi=&id= (reload / back-forward / dari kamera N4) → sheet yang sama kebuka lagi.
 function sheetFrom(sheet: unknown, sesi: unknown, id: unknown) {
   const kind = SHEETS.find((k) => k === sheet);

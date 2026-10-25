@@ -1,26 +1,17 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { GuestPlaceholder } from "@/components/f4/Placeholder";
-import { ChatCircle } from "@/components/icons";
-import { guestFromToken } from "@/lib/server/access";
 
-export const metadata = { title: "Tanya pembicara · House Moving Day" };
-
-// Placeholder N1 Pertanyaan talkshow. Pintasan Tanya cuma aktif pas Talkshow jalan (F4).
+// N1 · Tanya pembicara = sheet di layar acara (?sheet=tanya). Link lama ke sini dialihkan.
+// Bukan talkshow / belum masuk → layar acara yang menangani (sheet nggak dibuka, atau ke tiket).
 export default function Page({ params }: PageProps<"/t/[token]/tanya">) {
   return (
     <Suspense>
-      <Body params={params} />
+      <Go params={params} />
     </Suspense>
   );
 }
 
-async function Body({ params }: Pick<PageProps<"/t/[token]/tanya">, "params">) {
+async function Go({ params }: Pick<PageProps<"/t/[token]/tanya">, "params">): Promise<never> {
   const { token } = await params;
-  if (!(await guestFromToken(token))) redirect(`/t/${token}`);
-  return (
-    <GuestPlaceholder token={token} title="Tanya pembicara" icon={<ChatCircle size={30} />}>
-      Kirim pertanyaan ke pembicara lagi disiapin.
-    </GuestPlaceholder>
-  );
+  redirect(`/t/${token}/acara?sheet=tanya`);
 }

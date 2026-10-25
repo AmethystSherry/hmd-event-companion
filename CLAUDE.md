@@ -49,6 +49,10 @@ Web app mobile untuk House Moving Day Potara Studio (Minggu 8 Nov 2026, 13.00–
   `F3-F4-deliverables.md` v2. Layar tamu `acara/` dibangun (BT20/21/23/24 · BT03 · sheet BT22/BT21p/
   BT04/BT05 · S01); Kontrol acara dapat BP01 jeda, BP02c, pengingat lewat jam mulai, BP02d. Keputusan
   1–12 pakai default kecuali K3/K8/K10 (lihat "Aturan F3 + F4 di kode"). Menunggu review.
+- **N1 · Pertanyaan talkshow (25 Okt)**: Figma section `4669:4888`, `N1-deliverables.md` v1. **Tanpa
+  Claude** — P10 daftar mentah, terbaru di atas (PRD §7 N1 soal pengelompokan diabaikan). Sheet Tanya
+  BT08/BT09/BT08b di `acara/` (`?sheet=tanya`), P10/P10c di `panitia/event/[id]/tanya`, tile
+  Pertanyaan BP02 + BT12 nyala. Lihat "Aturan N1 di kode". Menunggu review.
 
 ## Sumber kebenaran
 - **Figma** `xYZlQ3GjRHHtYcod8rTIZJ`, page DOKSLI SAPI → section "Screen Flow · All Case" → frame
@@ -80,12 +84,13 @@ app/
   (tamu)/t/[token]/       T01a/T01/T01e/T02b/T03/T03k/T03h · konfirmasi/ (T02/T02c/T02d) · kalender/ (.ics) ·
                           acara/ (F4 Sesi/Jeda + sheet) · foto/ (N4 BT06–BT07c) ·
                           selesai/ (F5 BT12) · buku-tamu/ (T14*) · kolase/ (T15*, T14d) ·
-                          galeri/ (→ acara?sheet=galeri) · tanya/ (N1) · kartu/ (T11) = placeholder
+                          galeri/ (→ acara?sheet=galeri) · tanya/ (→ acara?sheet=tanya) ·
+                          kartu/ (T11) = placeholder
   panitia/                P01 + PE01/PE02 · actions.ts (semua server action panitia)
     event/[id]/           PE03/PE03b (+ sheet PE03e/PE03h) · rundown/ (PE04k/PE04/PE04a/PE04b/
                           PE04s) · tamu/ (P04k/P04a/P04c/P04i/P04/P04b/d/e/f/g/h/s) · kontrol/ (BP02/BP03/BP01b +
                           F5 BP04/BP04b) · rekap/ (F5 P11/P11b/P11c/P11d) ·
-                          foto/ · tanya/ (placeholder F3/F4) ·
+                          foto/ (placeholder) · tanya/ (N1 P10/P10c) ·
                           scan/ (P05/P05b/P06/P06b/P06c) · scan/cari/ (P07/P07b/P07c)
   api/live/               SSE: kirim `rev` store tiap ada perubahan (tanpa data tamu)
   api/panitia/            event/[id]/manifest (GET daftar pintu) · checkin (POST antrean op) ·
@@ -93,6 +98,7 @@ app/
                           event/[id]/ringkasan (POST ringkasan Claude, F5)
   api/t/[token]/foto/     POST upload foto (N4) · [id] GET gambar / DELETE foto sendiri
   api/t/[token]/buku-tamu POST isian buku tamu (F5 · T14)
+  api/t/[token]/tanya     POST pertanyaan talkshow (N1 · BT08)
   dev/ui/                 preview design system (light & dark)
   dev/states/f1/          37 layar F1 dengan data contoh + alat uji (link tamu, CSV dummy, reset)
   dev/states/f2/          17 layar F2 (BP02/BP02-pre/BP03/BP01b …) + alat uji (jam pura-pura hari-H,
@@ -100,6 +106,8 @@ app/
   dev/states/n4/          10 layar N4 v2 (BT03 + kamera + sheet) + alat uji (check-in semua, 30 foto dummy, hapus semua foto)
   dev/states/f4/          20 layar F3+F4 (tamu + panitia) + alat uji (jam 13.48/14.03, mulai/selesai sesi
                           sebagai "HP LAIN" → BP02d, isi kartu BT05)
+  dev/states/n1/          8 layar N1 (BT21/BT08/BT09/BT08b/BP02/P10/P10c + link BT21p) + alat uji (mulai
+                          Talkshow, 23 pertanyaan dummy, hapus semua, simulasi gagal kirim)
   dev/states/f5/          17 layar F5 (tamu + panitia) + alat uji (foto dummy, selesaikan semua sesi, tutup/buka
                           lagi, 15 feedback dummy, ringkasan sekarang, reset feedback, loncat ke 8 Des,
                           link tamu udah/belum masuk)
@@ -113,6 +121,7 @@ components/f2/            tamu.tsx (T05/T05a/BT02/T03b) · Kontrol (BP02 + dialo
                           Placeholder (Foto/Tanya)
 components/n4/            KolaseApp (kamera BT06/BT06b) · useCamera · capture (crop+kompres) ·
                           usePhotoOutbox (kirim + antrean) · NempelSheet (BT07/b/c/e) · GaleriSheet (BT07d)
+components/n1/            TanyaSheet (BT08/BT09/BT08b) · Pertanyaan (P10/P10c)
 components/f4/            AcaraScreen (BT20–24/BT03/S01, sheet lewat ?sheet=) · Sheets (BT22/BT21p/BT04/BT05) ·
                           Placeholder (Galeri/Tanya/Kartu)
 components/f5/            Selesai (BT12 + belum masuk) · BukuTamu (T14/b/c) · KolaseKulkas (T15/T15c/
@@ -126,8 +135,10 @@ lib/data/                 tipe, store (logika murni + tes), seed, sessionInfo (i
 lib/server/               env, HMAC (QR & cookie sesi), rate-limit PIN, akses crew/tamu, origin,
                           clock (hari-H + jam palsu dev), door (manifest & terapkan op check-in),
                           photos (file foto: Supabase Storage / .data/photos) · photoResponse ·
-                          summary (Claude, F5) · feedback (hapus H+30 lazy + buat ringkasan)
+                          summary (Claude, F5) · feedback (hapus H+30 lazy + buat ringkasan) ·
+                          rateLimit (in-memory per kunci, buku tamu & tanya)
 lib/                      csv (+ CSV buku tamu) · feedback (aturan buku tamu, tanggal hapus) ·
+                          questions (N1: validasi, talkshowFor, questionsView, nama tampil) ·
                           kolase (masonry, tata letak 9:16, filter, foto → KolasePhoto) ·
                           format · invite (+ rundownLine) · confirm · ics (+ googleCalendarUrl) ·
                           view (guestStatus) · sessionForm (form sesi PE04a/b, sessionForGuest) ·
@@ -233,7 +244,7 @@ Keputusan default 22 Okt (jawaban "Keputusan & asumsi" di F2-deliverables; prd.m
   "Kunci #014" (Key) + Pill "Sudah masuk" (Check, copy Figma), "Masuk sekarang", caption 12
   `aria-live`. Tanpa Ticket/cap (sobek cuma di T05a). Ilustrasi di-`preload()` (react-dom) sejak T05.
 - Kamera butuh HTTPS di HP (`npx next dev --experimental-https`); gagal/ditolak → P07b.
-- Store dev ada di `globalThis.__hmdStoreF1v5`: naikkan kuncinya tiap method store bertambah (server
+- Store dev ada di `globalThis.__hmdStoreN1`: naikkan kuncinya tiap method store bertambah (server
   dev yang sedang jalan nggak membuat ulang instance lama saat HMR). Server dev yang sudah jalan
   bisa tetap memakai modul server lama (mis. `store.getPhoto is not a function`) → restart `npm run dev`.
 
@@ -306,7 +317,7 @@ Keputusan 24 Okt (rekomendasi atas "Keputusan & asumsi" + "Temuan" di F5-deliver
    (respons `{ok:true,status:"sudah-isi"}` → T14d). Rate-limit 10/menit per tamu (per instance).
 7. Link WA terima kasih **di luar F5** — tamu pakai link `/t/[token]` yang sama.
 8. T15: IconButton unduh di header dihapus; TextAction "Follow @potarastudio". T14b/T14c ada back.
-   Tile "Pertanyaan" disembunyikan sampai N1 jadi. Kolase 9:16 = JPEG 0,9 `kolase-hmd.jpg`, maks 12 foto.
+   Tile "pertanyaan" BT12 nyala sejak N1 (semua pertanyaan event). Kolase 9:16 = JPEG 0,9 `kolase-hmd.jpg`, maks 12 foto.
 9. **Rekap** `feedbackRecap`: rata-rata 1 desimal, paling seru semua sesi urut terbanyak (seri =
    urutan rundown), jawaban "perbaiki" bernomor urut jawaban ("Tamu #04"), tanpa nama.
 10. **Ringkasan Claude** (`lib/server/summary.ts`): server saja, `ANTHROPIC_API_KEY` (+
@@ -348,7 +359,7 @@ Keputusan 24 Okt (rekomendasi atas "Keputusan & asumsi" + "Temuan" di F5-deliver
     "Jeda terakhir" (Closing selesai = `endedAt` sesi terakhir) + "Tutup acara & buka buku tamu" →
     Sheet BP04b (jumlah HP tamu = check-in, "Semua sesi udah selesai · x/n", tombol "Menutup acara…"
     selagi jalan). Rundown: sesi selesai = ikon cek di lingkaran success-soft + "Selesai", kepala
-    "{x} dari {n} selesai". Tile Pertanyaan tetap "0" sebelum ditutup (sama BP02).
+    "{x} dari {n} selesai". Tile Pertanyaan = jumlah asli sebelum ditutup (N1).
 18. **BP02 setelah ditutup** (TODO desain, belum ada di Figma): carousel diganti kartu "Acara udah
     ditutup · Ditutup {jam}" + "Lihat rekap buku tamu" → `rekap/`; tile ke-3 = "Mengisi x/n".
     Scan tiket tetap ada.
@@ -380,8 +391,8 @@ Keputusan 25 Okt (default "Keputusan & asumsi" F3-F4-deliverables, kecuali K3/K8
    sisa layar di atas panel + 32 (flex, min 160; HP pendek = halaman scroll).
 5. **Countdown** kartu tiket Berikutnya: menit ke jam mulai **terjadwal** dibulatkan ke atas, tick
    15 dtk dari jam server (`useServerNow`). ≤ 0 → "Sebentar lagi · mulai"; > 99 mnt → "{j} jam · lagi".
-6. **Tanya** aktif (accent-soft) cuma saat sesi `type: talkshow` jalan → `/t/[token]/tanya`
-   (placeholder N1); selain itu opacity 0,4 + `aria-disabled`, tap diam.
+6. **Tanya** aktif (accent-soft) cuma saat sesi `type: talkshow` jalan → sheet N1 `?sheet=tanya`;
+   selain itu opacity 0,4 + `aria-disabled`, tap diam.
 7. Galeri → `/t/[token]/galeri` (placeholder BT07d). FAB = `Button` primary icon-only 54 (bukan
    komponen baru) → `/t/[token]/foto` di Sesi & Jeda.
 8. **K8 · BT05 Tamu di sini**: cuma tamu RSVP hadir **atau** udah check-in. Data ke HP tamu: nama, IG,
@@ -415,6 +426,41 @@ Keputusan 25 Okt (default "Keputusan & asumsi" F3-F4-deliverables, kecuali K3/K8
   Berikutnya), `GuestCard` (BT05). Kartu kamu (tiket gelap `--cta`) di `components/f4/Sheets`.
 - Server action dari browser pane Claude ditolak Next (origin `null`) → uji tombol dev di browser biasa.
 
+## Aturan N1 di kode
+Keputusan 25 Okt (prompt N1 + default "Keputusan & asumsi"/"Temuan" N1-deliverables):
+1. **Tanpa Claude** (T1 ikut Figma): P10 = daftar mentah talkshow, belum dijawab terbaru dulu, udah
+   dijawab = terakhir dijawab di atas. Nama tampil = nama depan; nama depan dobel di event → + inisial
+   belakang ("Rara S.", `displayNames`). Tanpa opsi anonim.
+2. **Data** `Question {id, clientId, eventId, guestId, sessionId, text, createdAt, answeredAt?}` di
+   `StoreData.questions?`. `addQuestion` (idempoten per clientId, rev tetap; clientId sama dari tamu lain
+   → isian-tidak-valid), `setQuestionAnswered` (✓/↺ idempoten → false), ikut terhapus di hapus tamu /
+   hapus event / H+30. `seedQuestions`/`clearQuestions` = dev.
+3. **Kirim** `POST /api/t/[token]/tanya` `{clientId, text}`: cuma tamu udah check-in (403), sesi yang
+   **jalan** harus `type: talkshow` & acara belum ditutup (409 `{error:"bukan-talkshow"}`), teks trim
+   1–280 (400), rate-limit 10/menit per tamu per instance (429, `lib/server/rateLimit`). Respons
+   `{ok, question:{id,text,createdAt}}`. Dev: cookie `hmd_tanya_fail=1` → disimpan tapi dijawab 503.
+4. **Route handler pakai `isStoreError`** (cek `name` + `code`), bukan `instanceof StoreError`: di dev
+   store global dibuat modul layer halaman, jadi kelasnya beda instance di route handler (dulu → 500).
+   Diterapkan juga di buku-tamu, foto, foto/[id], door. Server action tetap boleh `instanceof`.
+5. **Sheet Tanya** (`components/n1/TanyaSheet`, `?sheet=tanya`, pola pushState F4): kartu pembicara
+   accent-soft (avatar 52), stopwatch hh:mm:ss tiap detik (`elapsedMs`, jam server sendiri), textarea
+   auto-grow (border 1,5 accent saat fokus/ada isi), Kirim disabled kalau kosong/spasi atau > 280,
+   counter "{n}/280" mulai 240. Placeholder "Ada pertanyaan lain?" setelah kirim (Figma BT09); sebelum
+   kirim pertama "Tulis pertanyaanmu" (copy bukan Figma). BT09: kartu Terkirim cuma pertanyaan
+   terakhir. Talkshow selesai pas sheet kebuka → sheet nutup (state saat render + URL dibersihkan).
+6. **Gagal** (BT08b): nggak ada antrean otomatis. Draft + clientId + teks percobaan di `sessionStorage`
+   `hmd-tanya:{token}`; "Kirim lagi" / ikon ↻ TopToast pakai clientId yang sama selama teksnya sama
+   (diubah → clientId baru). Timeout 8 dtk. 429 → copy "Kebanyakan nanya barengan…" (bukan Figma).
+   409 → sheet nutup + TopToast "Sesi talkshow udah selesai" 4 dtk.
+7. **P10/P10c** (`components/n1/Pertanyaan`, `panitia/event/[id]/tanya`): sesi = `talkshowFor` (jalan →
+   terakhir dimulai → berikutnya), jadi tetap bisa dibuka setelah talkshow selesai. ✓/↺ = server action
+   `markAnswered` + `useOptimistic` (gagal → balik sendiri + Toast 4 dtk). ↻ = `router.refresh()`.
+   `LiveRefresh pollMs={2000}`, tanpa TabBar. Kartu disembunyikan kalau kosong; 0 total → P10c
+   (HeroState lingkaran `--card`, subjudul "Talkshow · 0 masuk · mulai {jam}").
+8. **Tile** BP02 Pertanyaan = total pertanyaan talkshow, `StatTile highlight` (border 1,5 accent) cuma
+   kalau ada yang belum dijawab (T7). BT12: tile "pertanyaan" = semua pertanyaan event.
+9. Belum: sembunyikan pertanyaan iseng (T8); BP02p nggak ada di /dev/states (cek lewat BP02 interaktif).
+
 ## Design system (Clean v0.5)
 - Token: `app/tokens.css` — warna semantik light (utama) + dark (`prefers-color-scheme`, atau paksa
   dengan `data-theme="light|dark"` di `html` atau elemen mana pun), radius, spacing, shadow, motion,
@@ -425,7 +471,7 @@ Keputusan 25 Okt (default "Keputusan & asumsi" F3-F4-deliverables, kecuali K3/K8
 - Komponen: `components/ui/*` (satu `.tsx` + `.module.css`), ekspor lewat `@/components/ui`.
   Button, IconButton, PinPad (P01), Countdown (T03), NumberedRow (T01/PE04), Dropzone (P04k),
   Toggle, Segmented, Badge, Pill/Chip/AddChip,
-  Card/CardLabel/InnerBox, StatTile, ListRow/Avatar, Banner/TextAction, HeroState, Field, Toast
+  Card/CardLabel/InnerBox, StatTile (+`highlight`), ListRow/Avatar, Banner/TextAction, HeroState, Field, Toast
   (undo ring), Sheet (bawah / `floating`), TabBar, Ticket (+`torn`)/TicketStub, LogoMark,
   Screen/ScreenHeader/Skeleton, SearchField, Dialog (konfirmasi tengah layar, BP03/BP01b),
   StarRating (T14), Masonry + PhotoPin (T15, nanti galeri panitia), BarList (P11), SwipeRow (P04s/
@@ -447,8 +493,8 @@ Keputusan 25 Okt (default "Keputusan & asumsi" F3-F4-deliverables, kecuali K3/K8
 - `IconButton` = khusus tombol back/close 44 di toolbar (gaya secondary, varian `glass` di kamera).
 - `Screen`: `withBack` (konten mulai 8px), `bottom` + `bottomHeight` (1 tombol 54, 2 tombol 118,
   +caption 28) → fade scroll-edge otomatis di atas aksi bawah.
-- `TabBar` pakai prop `eventId` → `/panitia/event/{id}/kontrol|tamu|tanya|scan` (Tanya belum ada →
-  404); tanpa `eventId` (pratinjau /dev/ui) semua ke `/panitia`. `Ticket` tanpa QR = placeholder.
+- `TabBar` pakai prop `eventId` → `/panitia/event/{id}/kontrol|tamu|tanya|scan` (Tanya = P10 N1;
+  bukan 404 lagi); tanpa `eventId` (pratinjau /dev/ui) semua ke `/panitia`. `Ticket` tanpa QR = placeholder.
 - Ikon: hanya lewat `@/components/icons` (ukuran via prop `size`, warna `currentColor`).
 - Bentuk yang ikut tema (lekukan, gerigi, tepi sobek tiket) digambar CSS/SVG inline dengan `var(--bg)`.
 - Jangan pakai warna hex di komponen; pakai token. Pengecualian tetap di kedua mode:
@@ -471,6 +517,8 @@ polling `/api/live?once=1` tiap 4 dtk. Jangan kirim undangan tamu asli dari link
 Uji alur: `/dev/states/f1` (pratinjau 37 layar + link tamu + CSV dummy + "Reset data ke awal").
 F2: `/dev/states/f2` → "Siapkan data uji" → "Pura-pura hari-H" → buka link tamu + /panitia → Scan.
 Sesi: tombol "Mulai sesi 1" / "Selesaikan sesi" di halaman yang sama, atau lewat BP02.
+N1: `/dev/states/f2` → Siapkan data uji → check-in → `/dev/states/n1` "Mulai Talkshow" → layar
+acara tamu → Tanya; P10 di tab lain. "Simulasi gagal kirim" (cookie browser itu) → BT08b.
 F5: `/dev/states/f2` → Siapkan data uji → `/dev/states/f5` → "Isi 15 feedback dummy" (check-in,
 selesaikan sesi, tutup acara otomatis) → "Buat ringkasan sekarang" / Unduh CSV. "Loncat ke 8 Des"
 menghapus data per orang di store lokal → balikin lewat `/dev/states/f1` Reset data.
@@ -500,4 +548,6 @@ menghapus data per orang di store lokal → balikin lewat `/dev/states/f1` Reset
       T03k, P04i/g/h/s, PE04b/s, pengingat per tamu — menunggu review
 - [x] F3 + F4 (25 Okt) — layar acara tamu Sesi/Jeda (13 layar/kasus) + Kontrol acara BP01/BP02c/
       BP02d, ilustrasi, offline S01 — menunggu review
-- [ ] N1–N3, BT07d galeri — berikutnya (versi lama: tag `archive-pre-revisi`)
+- [x] N1 (25 Okt) — pertanyaan talkshow tanpa Claude: sheet BT08/BT09/BT08b, P10/P10c, tile BP02/BT12 —
+      menunggu review
+- [ ] N2–N3, BT07d galeri — berikutnya (versi lama: tag `archive-pre-revisi`)

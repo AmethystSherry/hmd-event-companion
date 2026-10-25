@@ -151,6 +151,7 @@ export const SCREENS: ScreenDef[] = [
       <SelesaiScreen
         eyebrow="17.02 · 4 dari 4 bagian selesai"
         photoCount={48}
+        questionCount={23}
         photoGuests={20}
         guestCount={20}
         latest={PHOTOS.slice(0, 4).map((p) => ({ id: p.id, tone: p.tone }))}

@@ -5,6 +5,7 @@ import { LiveRefresh } from "@/components/LiveRefresh";
 import { Screen, Skeleton } from "@/components/ui";
 import { getStore } from "@/lib/data";
 import { eventPhase } from "@/lib/format";
+import { questionsView, talkshowFor } from "@/lib/questions";
 import { rundownView } from "@/lib/rundown";
 import { requireCrew } from "@/lib/server/access";
 import { isEventDay, serverNow } from "@/lib/server/clock";
@@ -49,13 +50,21 @@ async function Kontrol({ params }: Pick<PageProps<"/panitia/event/[id]/kontrol">
   const eventDay = isEventDay(event.date, now);
   const recap = store.feedbackRecap(id);
   const last = sessions.at(-1); // listSessions urut jam
+  const rundown = rundownView(event, sessions);
+  // N1: tile Pertanyaan = semua pertanyaan talkshow ("23 masuk"), border kalau ada yang belum dijawab.
+  const asked = questionsView(
+    store.listQuestions(id),
+    [],
+    talkshowFor(rundown.sessions)?.id ?? null,
+  );
   return (
     <>
       <KontrolScreen
         event={event}
-        rundown={rundownView(event, sessions)}
+        rundown={rundown}
         checkIn={store.doorStats(id)}
         photos={store.photoCount(id)}
+        questions={{ total: asked.total, open: asked.open.length }}
         eventDay={eventDay}
         phaseLabel={eventDay ? "Hari-H · Live" : eventPhase(event.date, now).label}
         backHref={eventDay ? "/panitia" : `/panitia/event/${id}`}

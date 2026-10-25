@@ -1,4 +1,4 @@
-import { getStore, mutateStore, StoreError } from "@/lib/data";
+import { getStore, isStoreError, mutateStore } from "@/lib/data";
 import {
   isJpeg,
   isPhotoId,
@@ -70,7 +70,7 @@ export async function POST(req: Request, ctx: RouteContext<"/api/t/[token]/foto"
     });
     return reply({ ok: true, id, ...summary });
   } catch (err) {
-    if (!(err instanceof StoreError)) throw err;
+    if (!isStoreError(err)) throw err;
     if (!known) await deletePhotoFiles(guest.eventId, id).catch(() => {});
     const code = err.code === "foto-penuh" || err.code === "acara-ditutup" ? err.code : undefined;
     return reply({ ok: false, code, error: err.message }, 409);

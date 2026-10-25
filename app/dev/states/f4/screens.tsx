@@ -25,7 +25,7 @@ const at = (hhmm: string) => `2026-11-08T${hhmm}+07:00`;
 const back = "/dev/states/f4";
 
 // Store contoh: 20 tamu hadir (Rara = pemilik HP, #014 seperti Figma), 18 udah masuk.
-function demoStore(steps: (s: DataStore) => void): DataStore {
+export function demoStore(steps: (s: DataStore) => void): DataStore {
   const store = createStore(seedData(new Date(at("09:00:00"))), {
     now: () => new Date(at("09:00:00")),
   });
@@ -96,15 +96,20 @@ export function acara(
 
 const openSpace = (st: DataStore) => s(st, "s01", "13:00:00");
 export const jeda1 = (st: DataStore) => s(st, "s01", "13:00:00", "13:58:00");
-const talkshow = (st: DataStore) => {
+export const talkshow = (st: DataStore) => {
   jeda1(st);
   s(st, "s02", "14:00:00");
 };
 
-function kontrol(
+// Dipakai juga /dev/states/n1 (BP02 dengan tile Pertanyaan).
+export function kontrol(
   steps: (s: DataStore) => void,
   now: string,
-  opts: { confirm?: "finish" | "start"; conflict?: string } = {},
+  opts: {
+    confirm?: "finish" | "start";
+    conflict?: string;
+    questions?: { total: number; open: number };
+  } = {},
 ) {
   const store = demoStore(steps);
   const event = store.getEvent(HMD_ID)!;
@@ -114,6 +119,7 @@ function kontrol(
       event={demoEvent}
       rundown={rundown}
       checkIn={store.doorStats(HMD_ID)}
+      questions={opts.questions}
       eventDay
       phaseLabel="Hari-H · Live"
       backHref={back}

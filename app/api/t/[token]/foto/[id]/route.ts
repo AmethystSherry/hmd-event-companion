@@ -1,4 +1,4 @@
-import { getStore, mutateStore, StoreError } from "@/lib/data";
+import { getStore, isStoreError, mutateStore } from "@/lib/data";
 import { guestFromToken } from "@/lib/server/access";
 import { serverNow } from "@/lib/server/clock";
 import { deletePhotoFiles } from "@/lib/server/photos";
@@ -26,7 +26,7 @@ export async function DELETE(req: Request, ctx: RouteContext<"/api/t/[token]/fot
     const deleted = await mutateStore((s) => s.deletePhoto(guest.id, id, at));
     if (!deleted) return new Response("not found", { status: 404 });
   } catch (err) {
-    if (err instanceof StoreError) return new Response(err.message, { status: 409 });
+    if (isStoreError(err)) return new Response(err.message, { status: 409 });
     throw err;
   }
   await deletePhotoFiles(guest.eventId, id).catch(() => {});

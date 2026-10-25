@@ -79,6 +79,7 @@ export function KontrolScreen({
   rundown,
   checkIn,
   photos = 0,
+  questions = { total: 0, open: 0 },
   eventDay,
   phaseLabel,
   backHref,
@@ -97,6 +98,7 @@ export function KontrolScreen({
   rundown: RundownView;
   checkIn: { checkedIn: number; expected: number };
   photos?: number; // N4: jumlah foto kolase (realtime lewat rev)
+  questions?: { total: number; open: number }; // N1: pertanyaan talkshow (tile → P10)
   eventDay: boolean; // sebelum hari-H: sesi belum bisa dimulai, Scan belum ada
   phaseLabel: string; // "Hari-H · Live" / "Persiapan · H-17"
   backHref: string;
@@ -270,9 +272,10 @@ export function KontrolScreen({
         ) : (
           <StatTile
             icon={<ChatCircle size={18} />}
-            value="0"
+            value={String(questions.total)}
             label="Pertanyaan"
             href={`${base}/tanya`}
+            highlight={questions.open > 0}
           />
         )}
       </div>

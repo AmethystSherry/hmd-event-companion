@@ -2,7 +2,7 @@ import type { DataStore } from "../data";
 import type { DoorManifest, DoorOp, DoorOpResult } from "../door";
 import { cleanWalkIn } from "../door";
 import { maskWa } from "../format";
-import { StoreError } from "../data/store";
+import { isStoreError } from "../data/store";
 import { secrets } from "./config";
 import { verifyTicket } from "./crypto";
 
@@ -77,7 +77,7 @@ export function applyDoorOp(
         return { kind: "gagal", error: "Aksi nggak dikenal" };
     }
   } catch (err) {
-    if (err instanceof StoreError) return { kind: "gagal", error: err.message };
+    if (isStoreError(err)) return { kind: "gagal", error: err.message };
     throw err;
   }
 }

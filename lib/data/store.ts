@@ -3,6 +3,7 @@ import type { CsvRow } from "../csv";
 import { MAX_IMPROVE, summaryDue } from "../feedback";
 import { toMinutes } from "../format";
 import { MAX_PHOTOS_PER_GUEST } from "../photo";
+import { MAX_QUESTION } from "../questions";
 import { backfillSessionInfo } from "./sessionInfo";
 import type {
   CheckInMethod,
@@ -18,6 +19,7 @@ import type {
   GuestStats,
   Photo,
   PhotoSummary,
+  Question,
   Rsvp,
   Session,
   StoreData,
@@ -43,11 +45,24 @@ export class StoreError extends Error {
       | "belum-masuk"
       | "sudah-isi"
       | "isian-tidak-valid"
-      | "data-dihapus",
+      | "data-dihapus"
+      | "bukan-talkshow"
+      | "pertanyaan-tidak-ada",
     message: string,
   ) {
     super(message);
+    this.name = "StoreError"; // tetap terbaca walau kelasnya di-minify / beda instance modul
   }
+}
+
+// Dev: store global bisa dibuat modul dari layer lain (halaman vs route handler), jadi
+// `instanceof StoreError` di route bisa false. Cek name + code.
+export function isStoreError(err: unknown): err is StoreError {
+  return (
+    err instanceof Error &&
+    err.name === "StoreError" &&
+    typeof (err as StoreError).code === "string"
+  );
 }
 
 export type SessionInput = Pick<Session, "title" | "startsAt" | "durationMin" | "type" | "pic"> &
@@ -392,6 +407,7 @@ export function createStore(
       data.sessions = data.sessions.filter((s) => s.eventId !== id);
       if (data.photos) data.photos = data.photos.filter((p) => p.eventId !== id);
       if (data.feedback) data.feedback = data.feedback.filter((f) => f.eventId !== id);
+      if (data.questions) data.questions = data.questions.filter((q) => q.eventId !== id);
       commit();
     },
 
@@ -591,6 +607,7 @@ export function createStore(
       data.tickets = data.tickets.filter((t) => t.guestId !== id);
       if (data.photos) data.photos = data.photos.filter((p) => p.guestId !== id);
       if (data.feedback) data.feedback = data.feedback.filter((f) => f.guestId !== id);
+      if (data.questions) data.questions = data.questions.filter((q) => q.guestId !== id);
       commit();
     },
 
@@ -916,6 +933,71 @@ export function createStore(
       commit();
     },
 
+    // ---- N1 · Pertanyaan talkshow (BT08 → P10) ----
+    // Cuma tamu yang udah masuk, selagi sesi type talkshow jalan. Kirim ulang clientId yang sama →
+    // pertanyaan yang sama (created false, rev tetap), juga kalau sesinya keburu selesai.
+    addQuestion(
+      guestId: string,
+      input: { clientId: string; text: string },
+      at: string,
+    ): { question: Question; created: boolean } {
+      const g = guest(guestId);
+      const e = event(g.eventId);
+      const same = data.questions?.find((q) => q.clientId === input.clientId);
+      if (same) {
+        if (same.guestId !== g.id) {
+          throw new StoreError("isian-tidak-valid", "Pertanyaannya bentrok");
+        }
+        return { question: same, created: false };
+      }
+      if (e.purgedAt) throw new StoreError("data-dihapus", "Data acara ini udah dihapus");
+      if (data.tickets.find((t) => t.guestId === g.id)?.status !== "dipakai") {
+        throw new StoreError("belum-masuk", "Tanya pembicara buat tamu yang udah datang");
+      }
+      const live = sessionsOf(e.id).find((s) => s.status === "berlangsung");
+      if (e.mode === "closed" || live?.type !== "talkshow") {
+        throw new StoreError("bukan-talkshow", "Sesi talkshow udah selesai");
+      }
+      const text = input.text.trim();
+      if (!text || text.length > MAX_QUESTION) {
+        throw new StoreError("isian-tidak-valid", "Pertanyaannya belum pas");
+      }
+      const question: Question = {
+        id: randomUUID(),
+        clientId: input.clientId,
+        eventId: e.id,
+        guestId: g.id,
+        sessionId: live.id,
+        text,
+        createdAt: at,
+        answeredAt: null,
+      };
+      (data.questions ??= []).push(question);
+      commit();
+      return { question, created: true };
+    },
+    // P10 ✓ / ↺. Idempoten: udah dalam keadaan itu (dua moderator tap bareng) → false, rev tetap.
+    setQuestionAnswered(eventId: string, id: string, answered: boolean, at: string): boolean {
+      const q = data.questions?.find((x) => x.id === id && x.eventId === eventId);
+      if (!q) throw new StoreError("pertanyaan-tidak-ada", "Pertanyaannya nggak ketemu");
+      if (Boolean(q.answeredAt) === answered) return false;
+      q.answeredAt = answered ? at : null;
+      commit();
+      return true;
+    },
+    listQuestions(eventId: string): Question[] {
+      return (data.questions ?? []).filter((q) => q.eventId === eventId);
+    },
+    // Dev (/dev/states/n1): isi pertanyaan dummy / hapus semua.
+    seedQuestions(list: Question[]): void {
+      (data.questions ??= []).push(...list);
+      commit();
+    },
+    clearQuestions(eventId: string): void {
+      data.questions = (data.questions ?? []).filter((q) => q.eventId !== eventId);
+      commit();
+    },
+
     // ---- F5 · Hapus data per orang H+30 (P11d, prd §8) ----
     // Simpan rekap tanpa nama dulu, lalu hapus isian per tamu, nama/IG/WA tamu (diganti
     // "Tamu #nn", link lama mati karena token diganti), dan metadata foto. Kembalikan id foto
@@ -930,6 +1012,7 @@ export function createStore(
       const photoIds = (data.photos ?? []).filter((p) => p.eventId === eventId).map((p) => p.id);
       if (data.photos) data.photos = data.photos.filter((p) => p.eventId !== eventId);
       if (data.feedback) data.feedback = data.feedback.filter((f) => f.eventId !== eventId);
+      if (data.questions) data.questions = data.questions.filter((q) => q.eventId !== eventId);
       for (const g of guestsOf(eventId)) {
         Object.assign(g, {
           name: `Tamu #${String(g.keyNo).padStart(2, "0")}`,

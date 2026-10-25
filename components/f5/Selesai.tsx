@@ -3,6 +3,7 @@ import {
   BookOpen,
   Camera,
   CaretRight,
+  ChatCircle,
   Image as ImageIcon,
   InstagramLogo,
   Users,
@@ -20,10 +21,11 @@ import { cx } from "@/lib/cx";
 import s from "./f5.module.css";
 
 // BT12 · Acara selesai: layar akar setelah panitia tutup acara (tanpa back). Semua HP tamu
-// pindah ke sini lewat rev → SSE. Tile "Pertanyaan" disembunyikan sampai N1 jadi (keputusan F5).
+// pindah ke sini lewat rev → SSE. Tile "pertanyaan" (N1) = semua pertanyaan talkshow acara ini.
 export function SelesaiScreen({
   eyebrow,
   photoCount,
+  questionCount,
   photoGuests,
   guestCount,
   latest,
@@ -32,6 +34,7 @@ export function SelesaiScreen({
 }: {
   eyebrow: string; // "17.02 · 4 dari 4 bagian selesai"
   photoCount: number;
+  questionCount: number;
   photoGuests: number; // tamu yang punya foto
   guestCount: number; // tamu yang udah masuk
   latest: { id: string; src?: string; tone: number }[]; // 4 foto terbaru
@@ -55,6 +58,7 @@ export function SelesaiScreen({
       <ScreenHeader eyebrow={eyebrow} title="Makasih udah mampir ke rumah baru!" />
       <div className={s.tiles}>
         <StatTile icon={<Camera />} value={photoCount} label="foto kolase" />
+        <StatTile icon={<ChatCircle />} value={questionCount} label="pertanyaan" />
         <StatTile icon={<Users />} value={guestCount} label="tamu" />
       </div>
       <Link href={kolaseHref} className={s.cardLink}>

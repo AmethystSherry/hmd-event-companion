@@ -4,17 +4,20 @@ import { cx } from "@/lib/cx";
 import styles from "./StatTile.module.css";
 
 // Clean/StatTile (4587:320): ikon 18 → angka Number M → label. Bisa tappable (mis. → P03).
+// `highlight` = border 1,5 --accent (N1: tile Pertanyaan BP02 selagi ada yang belum dijawab).
 export function StatTile({
   icon,
   value,
   label,
   href,
+  highlight,
   className,
 }: {
   icon: ReactNode;
   value: ReactNode;
   label: string;
   href?: string;
+  highlight?: boolean;
   className?: string;
 }) {
   const body = (
@@ -27,10 +30,13 @@ export function StatTile({
   );
   if (href) {
     return (
-      <Link href={href} className={cx(styles.tile, styles.link, className)}>
+      <Link
+        href={href}
+        className={cx(styles.tile, styles.link, highlight && styles.highlight, className)}
+      >
         {body}
       </Link>
     );
   }
-  return <div className={cx(styles.tile, className)}>{body}</div>;
+  return <div className={cx(styles.tile, highlight && styles.highlight, className)}>{body}</div>;
 }
