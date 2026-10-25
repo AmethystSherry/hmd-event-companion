@@ -39,7 +39,6 @@ export {
   PencilSimple,
   Plus,
   Play,
-  Printer,
   QrCode,
   Scroll,
   ShareNetwork,
