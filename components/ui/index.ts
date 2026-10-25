@@ -10,6 +10,7 @@ export { Field } from "./Field";
 export { GuestCard } from "./GuestCard";
 export { HeroState } from "./HeroState";
 export { IconButton } from "./IconButton";
+export { IllustratedScreen } from "./IllustratedScreen";
 export { JejakAcara, type Stamp } from "./JejakAcara";
 export { Avatar, ListRow } from "./ListRow";
 export { LogoMark } from "./Logo";

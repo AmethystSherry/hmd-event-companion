@@ -38,6 +38,7 @@ import {
   Dropzone,
   Field,
   HeroState,
+  IllustratedScreen,
   IconButton,
   InnerBox,
   ListRow,
@@ -532,6 +533,19 @@ export function Gallery() {
         <Ticket data={TICKET} state="aktif" />
         <Ticket data={TICKET} state="sobek" stamp={{ time: "13.04", guestNo: 9, total: 20 }} />
         <TicketStub code={TICKET.code} />
+      </Section>
+
+      <Section title="IllustratedScreen · ilustrasi + fade + panel (BT02)">
+        <div className={styles.illustrated}>
+          <IllustratedScreen
+            src="/figma/bt02-welcome-at-door.webp"
+            className={styles.illustratedInner}
+          >
+            <p className="t-label c-label-2">Masuk 13.04 · tamu ke-10 dari 20</p>
+            <p className="t-title">Selamat datang di rumah baru, Rara!</p>
+            <Button>Masuk sekarang</Button>
+          </IllustratedScreen>
+        </div>
       </Section>
 
       <Section title="Tab bar panitia">

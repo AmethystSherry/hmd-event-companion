@@ -2,8 +2,19 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
-import { QrCode, Sun } from "@/components/icons";
-import { Badge, Button, Card, Screen, ScreenHeader, Ticket, TicketStub } from "@/components/ui";
+import { preload } from "react-dom";
+import { Check, Key, QrCode, Sun } from "@/components/icons";
+import {
+  Badge,
+  Button,
+  Card,
+  IllustratedScreen,
+  Pill,
+  Screen,
+  ScreenHeader,
+  Ticket,
+  TicketStub,
+} from "@/components/ui";
 import type { Event } from "@/lib/data/types";
 import { dateShort, firstName } from "@/lib/format";
 import { POTARA_IG } from "@/lib/invite";
@@ -29,6 +40,7 @@ type TicketProps = {
 const TEAR_MS = 900; // design.md "Animasi sobek"
 const HOLD_MS = 700; // jeda di T05a sebelum BT02
 const WELCOME_SEC = 3;
+export const BT02_ART = "/figma/bt02-welcome-at-door.webp";
 
 export function DayTicketScreen({
   phase,
@@ -111,25 +123,21 @@ export function DayTicketScreen({
     ? `Masuk ${stamp.time}${stamp.guestNo ? ` · tamu ke-${stamp.guestNo} dari ${stamp.total}` : ""}`
     : "Udah masuk";
 
+  // BT02 (Figma 4961:7021): Pota di pintu + panel. Tiket sobek cuma di T05a.
   if (phase === "bt02") {
     return (
-      <Screen
-        bottomHeight={82}
-        bottom={
-          <>
-            <p className={`t-label c-label-2 ${f1.caption}`} aria-live="polite">
-              Otomatis lanjut ke acara dalam {countdown} detik
-            </p>
-            <Button onClick={onEnter}>Masuk sekarang</Button>
-          </>
-        }
-      >
-        <ScreenHeader
-          eyebrow={stampText}
-          title={`Selamat datang di rumah baru, ${firstName(guestName)}!`}
-        />
-        <Ticket state="sobek" data={data} stamp={stamp ?? undefined} className={s.stampIn} />
-      </Screen>
+      <IllustratedScreen src={BT02_ART} priority>
+        <p className="t-label c-label-2">{stampText}</p>
+        <h1 className="t-title">Selamat datang di rumah baru, {firstName(guestName)}!</h1>
+        <div className={s.pills}>
+          <Pill icon={<Key />}>Kunci {keyNo}</Pill>
+          <Pill icon={<Check />}>Sudah masuk</Pill>
+        </div>
+        <Button onClick={onEnter}>Masuk sekarang</Button>
+        <p className={`t-caption c-label-2 ${f1.caption}`} aria-live="polite">
+          Otomatis lanjut ke acara dalam {countdown} detik
+        </p>
+      </IllustratedScreen>
     );
   }
 
@@ -242,6 +250,8 @@ export function GuestDayTicket({
   status: "aktif" | "dipakai";
   justCheckedIn: boolean; // check-in < 10 menit lalu (dari server) → tampilkan BT02 sekali
 }) {
+  // Ilustrasi BT02 diunduh sejak T05 tampil → muncul tanpa kedip tepat setelah T05a.
+  preload(BT02_ART, { as: "image", fetchPriority: "high" });
   const [phase, setPhase] = useState<DayPhase>(
     status === "aktif" ? "t05" : justCheckedIn ? "bt02" : "t03b",
   );

@@ -1,0 +1,70 @@
+/* Figma BT02 4961:7021 (390×844): ilustrasi 390×584 · fade 110 di y474 · panel y552 radius 32. */
+
+.screen {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: var(--screen-width);
+  min-height: 100dvh;
+  margin: 0 auto;
+  background: var(--card);
+}
+
+/* Tinggi = sisa layar di atas panel + 32 (panel menimpa 32). Minimal 160: HP pendek → halaman
+   scroll, panel tetap utuh. */
+.art {
+  position: relative;
+  flex: 1 0 auto;
+  min-height: 160px;
+  margin-bottom: -32px;
+  overflow: hidden;
+  background: var(--card);
+}
+
+.img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Fade 110 ke warna panel (token, bukan putih) → 55% di tengah. */
+.fade {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 110px;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    color-mix(in srgb, var(--card) 55%, transparent) 55%,
+    var(--card)
+  );
+}
+
+.panel {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 24px 20px calc(env(safe-area-inset-bottom) + 30px);
+  border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
+  background: var(--card);
+  animation: panel-in 200ms ease-out;
+}
+
+@keyframes panel-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel {
+    animation: none;
+  }
+}

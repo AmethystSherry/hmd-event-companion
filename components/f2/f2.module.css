@@ -91,26 +91,16 @@
   }
 }
 
-/* BT02: cap "Masuk" muncul scale 1.2 → 1. */
-.stampIn :global(.stamp) {
-  animation: stamp-in 420ms var(--ease-spring) both;
-}
-
-@keyframes stamp-in {
-  from {
-    transform: rotate(10deg) scale(1.2);
-    opacity: 0;
-  }
-  to {
-    transform: rotate(10deg) scale(1);
-    opacity: 1;
-  }
+/* BT02: baris Pill "Kunci #014" + "Sudah masuk" (gap 8). */
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 /* Reduce motion: crossfade 200 ms. */
 @media (prefers-reduced-motion: reduce) {
-  .tearHead,
-  .stampIn :global(.stamp) {
+  .tearHead {
     animation: none;
   }
   .tearStub {
