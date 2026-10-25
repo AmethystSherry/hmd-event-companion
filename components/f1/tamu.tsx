@@ -23,18 +23,17 @@ import {
 } from "@/components/ui";
 import type { Event } from "@/lib/data/types";
 import { addDays, dateMedium, dateShort, eventStart, firstName } from "@/lib/format";
-import { igDmUrl, igProfileUrl, POTARA_IG, rundownLine } from "@/lib/invite";
+import { igDmUrl, igProfileUrl, POTARA_IG, rundownTiles } from "@/lib/invite";
 import type { GuestSession } from "@/lib/sessionForm";
 import f1 from "./f1.module.css";
 import inv from "./invite.module.css";
-import { InviteTrail } from "./InviteTrail";
 import { LiveCountdown } from "./LiveCountdown";
 import { CalendarButton, FarewellCard } from "./TamuActions";
 
 // Layar tamu F1 (presentasional). Data & aksi disuplai route /t/[token] atau /dev/states/f1.
 
 // T01 · Undangan (Figma 4992:27429): ilustrasi Pota kebuka, kartu kertas + prangko, info 3 kolom,
-// baris bagian acara, Jejak undangan 1 dari 3.
+// grid bagian acara (v5.1, 26 Okt: Jejak undangan dihapus, pembicara nggak ditampilkan).
 export function InvitationScreen({
   keyNo,
   event,
@@ -94,13 +93,30 @@ export function InvitationScreen({
           <Fact icon={<MapPin size={14} />} label="Di mana" value={event.location} />
         </dl>
         {sessions.length > 0 && (
-          <div className={f1.stack}>
-            <p className="t-caption c-label-3">{sessions.length} bagian acara</p>
-            <p className="t-label c-label-2">{rundownLine(sessions)}</p>
+          <div className={inv.parts}>
+            <p id="t01-bagian" className="t-caption c-label-2">
+              {sessions.length} bagian acara
+            </p>
+            <ol className={inv.tiles} aria-labelledby="t01-bagian">
+              {rundownTiles(sessions).map((t) => (
+                <li
+                  key={t.no}
+                  className={inv.tile}
+                  aria-label={`Bagian ${Number(t.no)}, ${t.time}, ${t.name}`}
+                >
+                  <span aria-hidden className={inv.tileNo}>
+                    {t.no}
+                  </span>
+                  <span aria-hidden className={inv.tileText}>
+                    <span className={inv.tileTime}>{t.time}</span>
+                    <span className={inv.tileName}>{t.name}</span>
+                  </span>
+                </li>
+              ))}
+            </ol>
           </div>
         )}
       </section>
-      <InviteTrail step={2} />
     </Screen>
   );
 }

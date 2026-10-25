@@ -31,14 +31,12 @@ export function guestLink(origin: string, token: string, fromWa = false): string
   return `${origin}/t/${token}${fromWa ? "?dari=wa" : ""}`;
 }
 
-// T01 "4 bagian acara": judul sesi digabung " · "; Talkshow yang punya pembicara ditulis
-// "Talkshow bareng {pembicara}".
-export function rundownLine(
-  sessions: { title: string; type: string; speaker?: { name: string } | null }[],
-): string {
-  return sessions
-    .map((s) =>
-      s.type === "talkshow" && s.speaker?.name ? `Talkshow bareng ${s.speaker.name}` : s.title,
-    )
-    .join(" · ");
+// T01 grid "{n} bagian acara": semua sesi urut jam mulai, nomor 2 digit, jam, nama sesi lengkap
+// (tanpa pembicara; nama panjang dipotong 2 baris di UI).
+export function rundownTiles(
+  sessions: { title: string; startsAt: string }[],
+): { no: string; time: string; name: string }[] {
+  return [...sessions]
+    .sort((a, b) => a.startsAt.localeCompare(b.startsAt))
+    .map((s, i) => ({ no: String(i + 1).padStart(2, "0"), time: s.startsAt, name: s.title }));
 }
