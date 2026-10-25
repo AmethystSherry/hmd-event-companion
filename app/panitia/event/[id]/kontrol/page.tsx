@@ -13,7 +13,7 @@ import { closeEvent, finishSession, startSession } from "../../../actions";
 
 export const metadata = { title: "Kontrol acara · House Moving Day" };
 
-// BP00 Kontrol acara: kartu sesi (Mulai/Selesaikan → BP00b/BP00a), stat, rundown, Scan tiket.
+// BP02 Kontrol acara: kartu sesi (Mulai/Selesaikan → BP01b/BP03), stat, rundown, Scan tiket.
 // F5: semua sesi selesai → kartu BP04 "Jeda terakhir" + sheet BP04b; setelah ditutup → rekap.
 // Hanya bisa dibuka kalau tamu & rundown terisi; kalau belum, kembali ke Home event (PE03b).
 // Hari-H: Home event otomatis pindah ke sini. Realtime antar-HP panitia lewat SSE (remote: poll

@@ -12,7 +12,7 @@ function view(fn?: (s: ReturnType<typeof createStore>) => void) {
   return rundownView(store.getEvent("hmd-2026")!, store.listSessions("hmd-2026"));
 }
 
-describe("rundown hari-H (BP00)", () => {
+describe("rundown hari-H (BP02)", () => {
   it("belum ada yang mulai → sesi 1 berikutnya, carousel di kartu 1", () => {
     const v = view();
     expect(v.sessions.map((s) => s.state)).toEqual(["berikutnya", "nanti", "nanti", "nanti"]);

@@ -44,8 +44,8 @@ import {
 } from "@/lib/rundown";
 import s from "./f2.module.css";
 
-// BP00 · Kontrol acara (home hari-H panitia, Figma 4897:6694; F3: BP02 sesi berjalan · BP01 jeda):
-// carousel kartu sesi dengan stopwatch + Mulai/Selesaikan (dialog BP01b/BP03, di kode BP00b/BP00a),
+// BP02 · Kontrol acara (home hari-H panitia, Figma 4897:6694 · F3: BP02 sesi berjalan · BP01 jeda):
+// carousel kartu sesi dengan stopwatch + Mulai/Selesaikan (dialog BP01b/BP03),
 // stat, rundown, "Scan tiket" di bawah. Stopwatch dihitung dari startedAt server + jam server (HP
 // cuma memutar detiknya). F3: waktu lewat (BP02c), pengingat lewat jam mulai, toast BP02d kalau
 // state diubah HP panitia lain.
@@ -200,7 +200,7 @@ export function KontrolScreen({
       />
 
       {closedAt ? (
-        // TODO desain: BP00 setelah acara ditutup belum ada di Figma (temuan F5-deliverables).
+        // TODO desain: BP02 setelah acara ditutup belum ada di Figma (temuan F5-deliverables).
         <Card className={s.finaleCard}>
           <p className="t-label c-label-2">Layar tamu sekarang</p>
           <p className="t-title">Acara udah ditutup</p>

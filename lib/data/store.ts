@@ -424,7 +424,7 @@ export function createStore(
       commit();
     },
 
-    // ---- Kontrol acara hari-H (BP00 / BP00a / BP00b, prd.md §6) ----
+    // ---- Kontrol acara hari-H (BP02 / BP03 / BP01b, prd.md §6) ----
     // Mulai sesi N: mode=sesi, N berlangsung (startedAt). Sesi lain yang masih jalan ikut selesai.
     // Mulai sesi yang sudah jalan = tidak berubah (dobel tap / dua HP panitia) → false, rev tetap
     // (K10: aksi yang sama → HP pertama menang; stopwatch nggak ke-reset). Aksi beda = berurutan.

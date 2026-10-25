@@ -5,7 +5,7 @@ import { requireCrew } from "@/lib/server/access";
 
 export const metadata = { title: "Pertanyaan · House Moving Day" };
 
-// Tanya (placeholder dari stat tile BP00). Isi layarnya di fase berikutnya.
+// Tanya (placeholder dari stat tile BP02). Isi layarnya di fase berikutnya.
 export default function Page({ params }: PageProps<"/panitia/event/[id]/tanya">) {
   return (
     <Suspense>

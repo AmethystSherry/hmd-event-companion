@@ -423,7 +423,7 @@ export function Gallery() {
           </div>
         </Sheet>
         <Button variant="secondary" onClick={() => setDialog(true)}>
-          Buka dialog konfirmasi (BP00a)
+          Buka dialog konfirmasi (BP03)
         </Button>
         <Dialog
           open={dialog}

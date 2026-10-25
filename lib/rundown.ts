@@ -1,7 +1,7 @@
 import type { Event, Session, SessionArt, SessionType, Speaker } from "./data/types";
 import { eventStart, fromMinutes, toMinutes } from "./format";
 
-// Tampilan rundown hari-H (BP00 + layar tamu): status per sesi diturunkan dari state acara
+// Tampilan rundown hari-H (BP02 + layar tamu): status per sesi diturunkan dari state acara
 // (prd.md §6). Logika murni — dipakai server, klien & /dev/states/f2.
 
 export type SessionState = "berlangsung" | "selesai" | "berikutnya" | "nanti";
@@ -31,7 +31,7 @@ export type RundownView = {
   sessions: SessionView[];
   active: SessionView | null;
   next: SessionView | null;
-  focusIndex: number; // kartu yang dibuka pertama di carousel BP00
+  focusIndex: number; // kartu yang dibuka pertama di carousel BP02
   done: number; // jumlah sesi selesai (Jejak acara "1 dari 4 selesai")
 };
 

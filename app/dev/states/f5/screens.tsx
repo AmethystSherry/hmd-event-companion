@@ -75,7 +75,7 @@ const bukuTamu = (preview: Parameters<typeof BukuTamuScreen>[0]["preview"]) => (
 
 const FILLED = { rating: 4, highlight: "s02", improve: "", invite: "mau" as const };
 
-// ---- Panitia: BP04 = BP00 dengan semua sesi selesai; P11 = contoh Figma (15 dari 18) ----
+// ---- Panitia: BP04 = BP02 dengan semua sesi selesai; P11 = contoh Figma (15 dari 18) ----
 const DONE_SESSIONS: Session[] = demoSessions.map((x, i) => ({
   ...x,
   status: "selesai",

@@ -59,7 +59,7 @@ const rara = demoGuests.find((g) => g.ig === "rarawening")!;
 const laras = demoGuests.find((g) => g.ig === "laraspt")!;
 const counts = doorCounts(demoGuests);
 
-// BP00: sesi 1 (Open space) lagi jalan sejak 13.00, sekarang 13.12.34 → stopwatch 00:12:34.
+// BP02: sesi 1 (Open space) lagi jalan sejak 13.00, sekarang 13.12.34 → stopwatch 00:12:34.
 const runningSessions: Session[] = demoSessions.map((x, i) =>
   i === 0 ? { ...x, status: "berlangsung", startedAt: "2026-11-08T13:00:00+07:00" } : x,
 );
@@ -150,28 +150,28 @@ export const SCREENS: ScreenDef[] = [
     render: () => ticket("t03b"),
   },
   {
-    code: "BP00",
+    code: "BP02",
     name: "Kontrol acara · sesi 1 lagi jalan",
     lane: "Panitia",
     kind: "Utama",
     render: () => kontrol({ running: true }),
   },
   {
-    code: "BP00-pre",
+    code: "BP02-pre",
     name: "Kontrol acara · belum ada sesi jalan",
     lane: "Panitia",
     kind: "Kasus lain",
     render: () => kontrol(),
   },
   {
-    code: "BP00a",
+    code: "BP03",
     name: "Konfirmasi selesaikan sesi",
     lane: "Panitia",
     kind: "Kasus lain",
     render: () => kontrol({ running: true, confirm: "finish" }),
   },
   {
-    code: "BP00b",
+    code: "BP01b",
     name: "Konfirmasi mulai sesi (sesi lain jalan)",
     lane: "Panitia",
     kind: "Kasus lain",

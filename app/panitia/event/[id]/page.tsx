@@ -9,7 +9,7 @@ import { isEventDay, serverNow } from "@/lib/server/clock";
 import { deleteEvent, updateEvent } from "../../actions";
 
 // PE03 Home event (kosong) · PE03b udah terisi · PE03e ubah detail · PE03h hapus event.
-// Hari-H (F2): kalau tamu & rundown udah siap, langsung ke BP00 Kontrol acara.
+// Hari-H (F2): kalau tamu & rundown udah siap, langsung ke BP02 Kontrol acara.
 export default function EventPage({ params }: PageProps<"/panitia/event/[id]">) {
   return (
     <Suspense

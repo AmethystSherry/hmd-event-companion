@@ -77,7 +77,7 @@ async function DevTools() {
         </p>
         <p className="t-label c-label-2">
           Hari-H mulai 00.00 WIB {dateLong(event.date)}. Geser jam supaya tiket tamu jadi T05 dan
-          Home event jadi BP00. HP lain tetap pakai jam asli, kecuali tombol ini ditap di HP itu.
+          Home event jadi BP02. HP lain tetap pakai jam asli, kecuali tombol ini ditap di HP itu.
         </p>
         <div className={styles.links}>
           <form action={setFakeNow.bind(null, DAY_OPEN)}>

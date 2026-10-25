@@ -5,7 +5,7 @@ import { requireCrew } from "@/lib/server/access";
 
 export const metadata = { title: "Galeri kolase · House Moving Day" };
 
-// Foto (placeholder dari stat tile BP00). Isi layarnya di fase berikutnya.
+// Foto (placeholder dari stat tile BP02). Isi layarnya di fase berikutnya.
 export default function Page({ params }: PageProps<"/panitia/event/[id]/foto">) {
   return (
     <Suspense>

@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { daysUntil } from "../format";
 
 // Jam server F2. Hari-H mulai 00.00 WIB di tanggal event (keputusan 22 Okt): tamu T03 → T05,
-// panitia PE03b → BP00. Untuk uji coba (dev saja) jam bisa digeser lewat cookie `hmd_now`
+// panitia PE03b → BP02. Untuk uji coba (dev saja) jam bisa digeser lewat cookie `hmd_now`
 // (dipasang dari /dev/states/f2) atau env HMD_FAKE_NOW. Waktu tetap berjalan dari titik itu.
 export const FAKE_NOW_COOKIE = "hmd_now";
 

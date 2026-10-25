@@ -115,7 +115,7 @@ export function mmss(totalSec: number): string {
   return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 }
 
-// Stopwatch sesi "00:12:34" (BP00) · "12:34" (rundown).
+// Stopwatch sesi "00:12:34" (BP02) · "12:34" (rundown).
 export function hms(ms: number): string {
   const s = Math.max(0, Math.floor(ms / 1000));
   const p = (n: number) => String(n).padStart(2, "0");

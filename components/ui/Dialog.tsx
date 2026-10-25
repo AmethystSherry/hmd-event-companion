@@ -4,7 +4,7 @@ import { useEffect, useId, useRef, type ReactNode } from "react";
 import { cx } from "@/lib/cx";
 import styles from "./Dialog.module.css";
 
-// Dialog konfirmasi di tengah layar + backdrop (BP00a Selesaikan sesi, BP00b Mulai sesi).
+// Dialog konfirmasi di tengah layar + backdrop (BP03 Selesaikan sesi, BP01b Mulai sesi).
 // Pola sama dengan Sheet: dirender di tempat (tanpa portal), Esc / tap backdrop = onClose (Batal),
 // fokus dikunci di dalam dialog selama terbuka lalu kembali ke pemicu.
 export function Dialog({

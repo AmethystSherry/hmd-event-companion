@@ -56,7 +56,7 @@ export async function resetCheckIns(): Promise<void> {
   refresh();
 }
 
-// Simulasi BP00 dari halaman dev: mulai sesi pertama / selesaikan sesi yang lagi jalan.
+// Simulasi BP02 dari halaman dev: mulai sesi pertama / selesaikan sesi yang lagi jalan.
 export async function devStartFirstSession(): Promise<void> {
   devOnly();
   const at = (await serverNow()).toISOString();

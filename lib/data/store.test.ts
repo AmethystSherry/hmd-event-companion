@@ -239,7 +239,7 @@ describe("check-in di pintu (F2)", () => {
   });
 });
 
-describe("kontrol acara: mulai & selesaikan sesi (BP00a/BP00b, prd §6)", () => {
+describe("kontrol acara: mulai & selesaikan sesi (BP03/BP01b, prd §6)", () => {
   const t = (hhmm: string) => `2026-11-08T${hhmm}:00+07:00`;
 
   it("mulai sesi 1 → mode sesi, berikutnya sesi 2; dobel tap idempoten (rev tetap)", () => {

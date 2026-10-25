@@ -16,10 +16,13 @@ Web app mobile untuk House Moving Day Potara Studio (Minggu 8 Nov 2026, 13.00–
 - **F2 · Check-in di pintu sudah dibangun** (22 Okt malam; Figma band `4667:4654`,
   `F2-deliverables.md`). 12 keputusan terbuka di deliverables dijawab pakai default — lihat
   "Aturan F2 di kode". F3–F5 & N1–N3 belum; kerjakan lewat `HANDOFF-CLAUDE-CODE.md`.
-- **F2 v2 (23 Okt, Prompt E)**: Button primary oranye; BP00 dirombak (carousel kartu sesi +
-  stopwatch + Mulai/Selesaikan lewat Dialog BP00a/BP00b, state acara prd §6 di store); layar scan
+- **F2 v2 (23 Okt, Prompt E)**: Button primary oranye; BP02 dirombak (carousel kartu sesi +
+  stopwatch + Mulai/Selesaikan lewat Dialog BP03/BP01b, state acara prd §6 di store); layar scan
   tanpa TabBar ("Lihat daftar tamu"); P06 baru; P07 tanpa badge "Belum masuk" + P07d Profil tamu.
   Layar tamu Sesi/Jeda & Foto/Tanya panitia masih placeholder (F3/F4).
+- **F2 v3 (25 Okt, Prompt F)**: BT02 baru (ilustrasi Pota di pintu + panel, Figma `4961:7021`,
+  komponen `IllustratedScreen`); kode layar panitia disatukan dengan F3: BP00 = **BP02**, BP00a =
+  **BP03**, BP00b = **BP01b** (label & komentar saja, file `Kontrol.tsx` tetap).
 - Repo GitHub private `AmethystSherry/hmd-event-companion` (tag `f2-done`, `archive-pre-revisi`;
   branch `archive/pre-revisi` sengaja tetap lokal).
 - **Deploy (24 Okt)**: Vercel Hobby project `hmd-event-companion` (tim alfin100605-9544's projects),
@@ -75,7 +78,7 @@ app/
                           galeri/ (BT07d) · tanya/ (N1) · kartu/ (T11) = placeholder
   panitia/                P01 + PE01/PE02 · actions.ts (semua server action panitia)
     event/[id]/           PE03/PE03b (+ sheet PE03e/PE03h) · rundown/ (PE04k/PE04/PE04a) ·
-                          tamu/ (P04k/P04a/P04c/P04/P04b/d/e/f) · kontrol/ (BP00/BP00a/BP00b +
+                          tamu/ (P04k/P04a/P04c/P04/P04b/d/e/f) · kontrol/ (BP02/BP03/BP01b +
                           F5 BP04/BP04b) · rekap/ (F5 P11/P11b/P11c/P11d) ·
                           foto/ · tanya/ (placeholder F3/F4) ·
                           scan/ (P05/P05b/P06/P06b/P06c) · scan/cari/ (P07/P07b/P07c)
@@ -87,7 +90,8 @@ app/
   api/t/[token]/buku-tamu POST isian buku tamu (F5 · T14)
   dev/ui/                 preview design system (light & dark)
   dev/states/f1/          27 layar F1 dengan data contoh + alat uji (link tamu, CSV dummy, reset)
-  dev/states/f2/          13 layar F2 + alat uji (jam pura-pura hari-H, data 12 hadir, reset check-in)
+  dev/states/f2/          17 layar F2 (BP02/BP02-pre/BP03/BP01b …) + alat uji (jam pura-pura hari-H,
+                          data 12 hadir, reset check-in, mulai/selesaikan sesi)
   dev/states/n4/          7 layar N4 + alat uji (check-in semua, 30 foto dummy, hapus semua foto)
   dev/states/f4/          20 layar F3+F4 (tamu + panitia) + alat uji (jam 13.48/14.03, mulai/selesai sesi
                           sebagai "HP LAIN" → BP02d, isi kartu BT05)
@@ -97,7 +101,7 @@ app/
   tokens.css · globals.css · fonts/
 components/ui/            komponen design system Clean v0.5
 components/f1/            layar F1 presentasional (dipakai route asli & /dev/states/f1)
-components/f2/            tamu.tsx (T05/T05a/BT02/T03b) · Kontrol (BP00 + dialog) · DoorApp (P05–P07d) ·
+components/f2/            tamu.tsx (T05/T05a/BT02/T03b) · Kontrol (BP02 + dialog) · DoorApp (P05–P07d) ·
                           useDoor (manifest + antrean) · Viewfinder (kamera) · DoorPage (guard route) ·
                           Placeholder (Foto/Tanya)
 components/n4/            KolaseApp (BT06/BT06b/BT07/BT07b/BT07c) · useCamera · capture (crop+kompres) ·
@@ -141,7 +145,7 @@ next.config.ts            header X-Robots-Tag noindex, allowedDevOrigins (HP di 
 ## Aturan F2 di kode
 Keputusan default 22 Okt (jawaban "Keputusan & asumsi" di F2-deliverables; prd.md §7 F2 belum diubah):
 1. Hari-H mulai **00.00 WIB** tanggal event (`lib/server/clock` → `isEventDay`); scan boleh sebelum
-   13.00. Tamu T03 → T05, panitia PE03b → BP00 otomatis. Dev: cookie `hmd_now` / env `HMD_FAKE_NOW`
+   13.00. Tamu T03 → T05, panitia PE03b → BP02 otomatis. Dev: cookie `hmd_now` / env `HMD_FAKE_NOW`
    (diabaikan di production), dipasang dari `/dev/states/f2`.
 2. "Kecerahan maks" = QR layar penuh latar putih + Wake Lock (browser nggak bisa atur brightness).
 3. Walk-in P07c dibangun: nama wajib, IG opsional, langsung "Udah masuk" (`source: "walkin"`).
@@ -163,10 +167,10 @@ Keputusan default 22 Okt (jawaban "Keputusan & asumsi" di F2-deliverables; prd.m
   dan `finishSession` (mode jeda, berikutnya = sesi sesudahnya yang belum selesai) idempoten:
   dobel tap / dua HP → `false`, `rev` tetap. Server action `startSession`/`finishSession` pakai
   `serverNow()`. Status per sesi & stopwatch diturunkan di `lib/rundown.ts`; stopwatch = jam server
-  − `startedAt` (HP cuma memutar detiknya). Sesi yang sudah selesai bisa dimulai lagi (BP00b).
-- BP00: carousel scroll-snap dibuka di sesi yang jalan (atau berikutnya); "Scan tiket" = tombol
+  − `startedAt` (HP cuma memutar detiknya). Sesi yang sudah selesai bisa dimulai lagi (BP01b).
+- BP02: carousel scroll-snap dibuka di sesi yang jalan (atau berikutnya); "Scan tiket" = tombol
   bawah, tanpa TabBar. Konfirmasi pakai `Dialog` (tengah layar), bukan Sheet.
-- Scan (P05–P06c): back → BP00, tombol bawah "Lihat daftar tamu" → P07, tanpa TabBar. P05b = Toast
+- Scan (P05–P06c): back → BP02, tombol bawah "Lihat daftar tamu" → P07, tanpa TabBar. P05b = Toast
   di bawah baris back (ikut alur, nggak nutupin back/judul). Nomor "tamu ke-n dari N" di P06,
   header, dan BT02 dari sumber sama (hasil server + pembagi RSVP hadir setelah check-in ini).
 - P07: baris = tombol (→ P07d) + ✓ / Badge "Udah masuk" bersebelahan (bukan tombol bersarang).
@@ -180,6 +184,11 @@ Keputusan default 22 Okt (jawaban "Keputusan & asumsi" di F2-deliverables; prd.m
 - HP tamu: check-in → `rev` naik → SSE → `router.refresh()` → status tiket berubah selagi terbuka
   → T05a (sobek ±900 ms) → BT02 (3 dtk, sekali per tiket via localStorage) → T03b. HP tamu offline →
   refresh saat `online`/tab terlihat lagi. Dibuka > 10 menit setelah masuk → langsung T03b.
+- **BT02 v3** (Figma `4961:7021`): `IllustratedScreen` dengan `/figma/bt02-welcome-at-door.webp`
+  (raw layer `4961:7022`, 1179×1650, webp 86, 55 KB; `object-fit: cover` di kotak ±390×584) + panel:
+  eyebrow "Masuk {jam} · tamu ke-n dari N" (stamp kosong → "Udah masuk"), judul `t-title`, Pill
+  "Kunci #014" (Key) + Pill "Sudah masuk" (Check, copy Figma), "Masuk sekarang", caption 12
+  `aria-live`. Tanpa Ticket/cap (sobek cuma di T05a). Ilustrasi di-`preload()` (react-dom) sejak T05.
 - Kamera butuh HTTPS di HP (`npx next dev --experimental-https`); gagal/ditolak → P07b.
 - Store dev ada di `globalThis.__hmdStoreF34`: naikkan kuncinya tiap method store bertambah (server
   dev yang sedang jalan nggak membuat ulang instance lama saat HMR). Server dev yang sudah jalan
@@ -214,7 +223,7 @@ Keputusan default 24 Okt (jawaban "Keputusan & asumsi" + "Temuan" di N4-delivera
     Ditolak server (4xx) → dibuang + toast. Terkirim selagi BT07b terbuka → layar pindah ke BT07.
 13. Hapus foto sendiri: `DELETE /api/t/[token]/foto/[id]` (soft delete `deletedAt` + file dihapus),
     UI di F5 (T15b). Hapus otomatis H+30: lihat "Aturan F5 di kode".
-14. Tile "Foto" BP00 = `photoCount` (realtime lewat `rev`).
+14. Tile "Foto" BP02 = `photoCount` (realtime lewat `rev`).
 
 ## Aturan F5 di kode
 Keputusan 24 Okt (rekomendasi atas "Keputusan & asumsi" + "Temuan" di F5-deliverables, disetujui):
@@ -226,7 +235,7 @@ Keputusan 24 Okt (rekomendasi atas "Keputusan & asumsi" + "Temuan" di F5-deliver
    Hapus foto sendiri boleh sampai H+30 (aturan N4 no. 1 direvisi).
 3. Pembagi "dari N" di BT12/BP04b/P11 = tamu **udah check-in** (`feedbackRecap.expected`).
 4. "Mau diundang lagi?" **nggak terpilih dari awal** (opsional); % dihitung dari yang menjawab.
-5. BP04 = kartu terakhir carousel BP00 ("Jeda terakhir"), tanpa TabBar. BP04b = **Sheet** (Figma).
+5. BP04 = kartu terakhir carousel BP02 ("Jeda terakhir"), tanpa TabBar. BP04b = **Sheet** (Figma).
    Setelah ditutup, kartu hero "Acara udah ditutup · {jam}" + "Lihat rekap buku tamu" (Prompt D).
 6. Buku tamu cuma tamu udah check-in & acara closed; **1 isian per tamu, nggak bisa diubah**.
    `POST /api/t/[token]/buku-tamu` (JSON `clientId` UUID, rating 1–5 wajib, `highlightSessionId`,
@@ -276,8 +285,8 @@ Keputusan 24 Okt (rekomendasi atas "Keputusan & asumsi" + "Temuan" di F5-deliver
     "Jeda terakhir" (Closing selesai = `endedAt` sesi terakhir) + "Tutup acara & buka buku tamu" →
     Sheet BP04b (jumlah HP tamu = check-in, "Semua sesi udah selesai · x/n", tombol "Menutup acara…"
     selagi jalan). Rundown: sesi selesai = ikon cek di lingkaran success-soft + "Selesai", kepala
-    "{x} dari {n} selesai". Tile Pertanyaan tetap "0" sebelum ditutup (sama BP00).
-18. **BP00 setelah ditutup** (TODO desain, belum ada di Figma): carousel diganti kartu "Acara udah
+    "{x} dari {n} selesai". Tile Pertanyaan tetap "0" sebelum ditutup (sama BP02).
+18. **BP02 setelah ditutup** (TODO desain, belum ada di Figma): carousel diganti kartu "Acara udah
     ditutup · Ditutup {jam}" + "Lihat rekap buku tamu" → `rekap/`; tile ke-3 = "Mengisi x/n".
     Scan tiket tetap ada.
 19. **P11** (`/panitia/event/[id]/rekap`, sesi PIN, sebelum ditutup = P11c): angka & `BarList` dari
@@ -352,9 +361,11 @@ Keputusan 25 Okt (default "Keputusan & asumsi" F3-F4-deliverables, kecuali K3/K8
   Toggle, Segmented, Badge, Pill/Chip/AddChip,
   Card/CardLabel/InnerBox, StatTile, ListRow/Avatar, Banner/TextAction, HeroState, Field, Toast
   (undo ring), Sheet (bawah / `floating`), TabBar, Ticket (+`torn`)/TicketStub, LogoMark,
-  Screen/ScreenHeader/Skeleton, SearchField, Dialog (konfirmasi tengah layar, BP00a/BP00b),
+  Screen/ScreenHeader/Skeleton, SearchField, Dialog (konfirmasi tengah layar, BP03/BP01b),
   StarRating (T14), Masonry + PhotoPin (T15, nanti galeri panitia), BarList (P11), TopToast (S01,
-  BP02d), JejakAcara · TicketNext (BT03) · GuestCard (BT05). `TextAction` bisa `href`.
+  BP02d), JejakAcara · TicketNext (BT03) · GuestCard (BT05), IllustratedScreen (ilustrasi + fade +
+  panel `--card`, BT02; pola sama dengan `components/f4/AcaraScreen` yang masih inline). `TextAction`
+  bisa `href`.
 - **Button** (`Clean/Button` 4587:316, 12 varian): `size` `lg` (54, lebar penuh) | `sm` (36, lebar
   hug, area tap 44) × `variant` `primary` | `secondary` | `destructive` × `iconOnly` (+ `label` wajib
   untuk aria-label). Aturan pakai:
@@ -392,7 +403,7 @@ dijalankan ulang; laptop harus nyala). Quick tunnel nggak meneruskan SSE → `Li
 polling `/api/live?once=1` tiap 4 dtk. Jangan kirim undangan tamu asli dari link tunnel.
 Uji alur: `/dev/states/f1` (pratinjau 27 layar + link tamu + CSV dummy + "Reset data ke awal").
 F2: `/dev/states/f2` → "Siapkan data uji" → "Pura-pura hari-H" → buka link tamu + /panitia → Scan.
-Sesi: tombol "Mulai sesi 1" / "Selesaikan sesi" di halaman yang sama, atau lewat BP00.
+Sesi: tombol "Mulai sesi 1" / "Selesaikan sesi" di halaman yang sama, atau lewat BP02.
 F5: `/dev/states/f2` → Siapkan data uji → `/dev/states/f5` → "Isi 15 feedback dummy" (check-in,
 selesaikan sesi, tutup acara otomatis) → "Buat ringkasan sekarang" / Unduh CSV. "Loncat ke 8 Des"
 menghapus data per orang di store lokal → balikin lewat `/dev/states/f1` Reset data.
@@ -410,7 +421,8 @@ menghapus data per orang di store lokal → balikin lewat `/dev/states/f1` Reset
 - [x] Phase 1 — design system (`/dev/ui`)
 - [x] F1 — undangan & konfirmasi (27 layar, store lokal, realtime SSE) — menunggu review
 - [x] F2 — check-in di pintu (13 layar, scan QR, antrean offline, tiket sobek realtime) — menunggu review
-- [x] F2 v2 (23 Okt) — BP00 kartu sesi + Mulai/Selesaikan, scan/P06/P07/P07d baru — menunggu review
+- [x] F2 v2 (23 Okt) — BP02 kartu sesi + Mulai/Selesaikan, scan/P06/P07/P07d baru — menunggu review
+- [x] F2 v3 (25 Okt) — BT02 ilustrasi + panel, kode BP02/BP03/BP01b — menunggu review
 - [x] N4 (24 Okt) — foto kolase polaroid (5 layar + 2 kasus, kompres di HP, antrean offline) —
       menunggu review & bucket Supabase
 - [x] F5 (24 Okt) — tutup acara, buku tamu, kolase 9:16, rekap + ringkasan Claude, CSV, hapus H+30;

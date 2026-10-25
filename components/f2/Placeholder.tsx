@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { CaretLeft } from "@/components/icons";
 import { HeroState, IconButton, Screen, ScreenHeader } from "@/components/ui";
 
-// Layar panitia yang dibangun di fase berikutnya (Foto F3, Tanya F4): tautan dari BP00 tetap
+// Layar panitia yang dibangun di fase berikutnya (Foto F3, Tanya F4): tautan dari BP02 tetap
 // mendarat di halaman, bukan 404.
 export function CrewPlaceholder({
   eventId,
