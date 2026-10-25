@@ -7,6 +7,7 @@ import {
   Camera,
   CaretRight,
   ChatCircle,
+  Check,
   Image as ImageIcon,
   ListBullets,
   Users,
@@ -16,12 +17,14 @@ import { LiveRefresh } from "@/components/LiveRefresh";
 import { GaleriSheet } from "@/components/n4/GaleriSheet";
 import { NempelSheet, nempelStatus, type NempelStatus } from "@/components/n4/NempelSheet";
 import { TanyaSheet, type TanyaPreview } from "@/components/n1/TanyaSheet";
+import { KartuSheet, type KartuPreview } from "@/components/n3/KartuSheet";
 import { usePhotoOutbox } from "@/components/n4/usePhotoOutbox";
 import { Badge, Button, JejakAcara, TicketNext, TopToast } from "@/components/ui";
 import { useServerNow } from "@/components/useServerNow";
 import { stampsOf, type AcaraView } from "@/lib/acara";
 import { cx } from "@/lib/cx";
 import { initials, timeWib } from "@/lib/format";
+import type { GuestCard } from "@/lib/data/types";
 import type { QueuedPhoto } from "@/lib/offline/photoDb";
 import type { GuestPhotos } from "@/lib/photo";
 import { countdownParts, minutesUntil, type SessionView } from "@/lib/rundown";
@@ -35,6 +38,8 @@ import styles from "./f4.module.css";
 // N4: sheet hasil foto (?sheet=foto&id=…, dari kamera) & Galeri (?sheet=galeri); antrean foto
 // dikirim dari sini (terkirim → router.refresh → sheet BT07b berubah ke BT07).
 // N1: sheet Tanya pembicara (?sheet=tanya) cuma selagi Talkshow jalan; sesi pindah → sheet nutup.
+// N3: sheet Kartu kamu (?sheet=kartu) dibuka dari BT05; back/tutup → balik ke BT05, simpan → BT05 +
+// toast gelap T11s (kartu baru langsung tampil sebelum data server masuk).
 // Offline (S01): toast atas + layar dari data terakhir (snapshot localStorage kalau HTML-nya dari
 // cache SW lebih lama). Layar ini nggak memanggil server sendiri selain LiveRefresh.
 
@@ -50,6 +55,7 @@ type Preview = {
   offline?: boolean;
   photo?: { status: NempelStatus; pending?: number; extraToast?: boolean }; // /dev/states/n4
   tanya?: TanyaPreview; // /dev/states/n1
+  kartu?: KartuPreview & { saved?: boolean; query?: string }; // /dev/states/n3 (T11s, BT05b)
 };
 type OpenSheet = { kind: SheetKind; sessionId?: string; photoId?: string };
 
@@ -165,6 +171,32 @@ export function AcaraScreen({
     },
     [preview],
   );
+  // N3 · T11 di atas BT05: dari BT05 = pushState (back HP balik ke BT05); dibuka langsung (link
+  // /kartu, reload) → tutup = ganti URL ke ?sheet=tamu.
+  const openKartu = useCallback(() => {
+    setSheet({ kind: "kartu" });
+    if (preview) return;
+    const url = new URL(window.location.href);
+    url.searchParams.set("sheet", "kartu");
+    history.pushState({ ...history.state, hmdSheet: true, hmdFromTamu: true }, "", url);
+  }, [preview]);
+  const backToTamu = useCallback(() => {
+    setSheet({ kind: "tamu" });
+    if (preview) return;
+    if (history.state?.hmdFromTamu) return history.back();
+    const url = new URL(window.location.href);
+    url.searchParams.set("sheet", "tamu");
+    history.replaceState({ ...history.state, hmdFromTamu: false }, "", url);
+  }, [preview]);
+  // Kartu yang baru disimpan dipakai selama data server masih rev lama.
+  const [savedCard, setSavedCard] = useState<{ card: GuestCard; rev: number } | null>(null);
+  const [cardToast, setCardToast] = useState(!!preview?.kartu?.saved);
+  useEffect(() => {
+    if (!cardToast || preview) return;
+    const t = setTimeout(() => setCardToast(false), 3000);
+    return () => clearTimeout(t);
+  }, [cardToast, preview]);
+
   const close = useCallback(() => {
     setSheet(null);
     if (preview) return;
@@ -221,6 +253,8 @@ export function AcaraScreen({
     const t = setTimeout(() => setTalkEnded(false), 4000);
     return () => clearTimeout(t);
   }, [talkEnded]);
+
+  const me = savedCard && savedCard.rev === view.rev ? { ...view.me, ...savedCard.card } : view.me;
 
   const detailOf = (id?: string): SessionView | null =>
     view.sessions.find((s) => s.id === id) ?? active ?? next ?? null;
@@ -341,7 +375,8 @@ export function AcaraScreen({
         </nav>
       </section>
 
-      {offline && (
+      {/* N3: di sheet Kartu kamu toast gagal simpan yang tampil (posisi sama). */}
+      {offline && sheet?.kind !== "kartu" && (
         <TopToast
           icon={<WifiSlash size={20} />}
           title="Sinyal lagi lemah"
@@ -376,7 +411,40 @@ export function AcaraScreen({
           }}
         />
       )}
-      {sheet?.kind === "tamu" && <TamuSheet token={token} view={view} onClose={close} />}
+      {sheet?.kind === "tamu" && (
+        <TamuSheet
+          view={view}
+          me={me}
+          onClose={close}
+          onEdit={openKartu}
+          initialQuery={preview?.kartu?.query}
+        />
+      )}
+      {sheet?.kind === "kartu" && (
+        <KartuSheet
+          token={token}
+          me={me}
+          onClose={backToTamu}
+          onSaved={(card) => {
+            setSavedCard({ card, rev: view.rev });
+            backToTamu();
+            setCardToast(true);
+            router.refresh();
+          }}
+          onEventClosed={() => {
+            close();
+            router.refresh(); // acara ditutup → server mengalihkan ke BT12
+          }}
+          preview={preview?.kartu}
+        />
+      )}
+      {cardToast && (
+        <TopToast
+          tone="dark"
+          icon={<Check size={18} />}
+          title="Kartu kamu kesimpan. Tamu lain bisa lihat sekarang."
+        />
+      )}
       {tanyaOpen && active && (
         <TanyaSheet
           token={token}

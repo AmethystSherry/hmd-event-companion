@@ -60,3 +60,18 @@
     animation: none;
   }
 }
+
+/* N3 · T11s: toast gelap di atas (top 56 di 844, samping 16, radius 14, gap 10, ikon 18). */
+.dark {
+  gap: 10px;
+  width: min(calc(var(--screen-width) - 32px), calc(100% - 32px));
+  border-color: transparent;
+  border-radius: 14px;
+  background: var(--cta);
+  box-shadow: var(--shadow-card);
+  color: var(--on-cta);
+}
+
+.dark .action {
+  color: var(--on-cta);
+}

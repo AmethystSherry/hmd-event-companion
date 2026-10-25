@@ -1,4 +1,5 @@
 import type { Event, Guest, Session, Ticket } from "./data/types";
+import { cardOf } from "./card";
 import { rundownView, type SessionView } from "./rundown";
 
 // F4 · data layar acara tamu (/t/[token]/acara): SESI ⇄ JEDA dari state acara + BT05 Tamu di
@@ -51,8 +52,7 @@ export function acaraView({ event, sessions, guests, tickets, me, now, rev }: In
       id: g.id,
       name: g.name,
       ig: g.ig,
-      role: g.card?.role ?? null,
-      askAbout: (g.card?.askAbout ?? []).slice(0, 3),
+      ...cardOf(g), // N3: role + askAbout (kartu T11, atau turunan isian T02)
       here,
       arrivedAt: here ? (t?.checkedInAt ?? null) : null,
     };

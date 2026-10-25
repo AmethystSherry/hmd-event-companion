@@ -1,0 +1,134 @@
+/* Kartu kamu: tiket gelap (--cta), takik kiri-kanan di garis sobek, logo mark samar miring 14°. */
+.card {
+  position: relative;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 20px;
+  background: var(--cta);
+  color: var(--on-cta);
+  box-shadow: var(--shadow-card);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px 10px;
+}
+
+.eyebrow {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.72;
+}
+
+.no {
+  color: var(--accent);
+}
+
+.tear {
+  display: block;
+  margin: 0 14px;
+  border-top: 1.5px dashed color-mix(in srgb, var(--on-cta) 40%, transparent);
+}
+
+.body {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 18px 18px;
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.avatar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border: 3px solid var(--accent);
+  border-radius: 28px;
+  background: var(--card);
+  color: var(--accent-text);
+  font-size: 17px;
+  font-weight: 500;
+}
+
+.name {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.name > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.name > span:last-child {
+  opacity: 0.72;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chips li {
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--on-cta) 14%, transparent);
+}
+
+.logo {
+  position: absolute;
+  top: 108px;
+  right: -4px;
+  opacity: 0.08;
+  transform: rotate(14deg);
+  filter: brightness(0) invert(1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .logo {
+    filter: brightness(0);
+  }
+}
+
+:root[data-theme="dark"] .logo {
+  filter: brightness(0);
+}
+
+.notch {
+  position: absolute;
+  top: 33px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--card);
+}
+
+.notchL {
+  left: -8px;
+}
+
+.notchR {
+  right: -8px;
+}

@@ -4,7 +4,6 @@ import { refresh } from "next/cache";
 import { mutateStore } from "@/lib/data";
 import { HMD_ID } from "@/lib/data/seed";
 import { serverNow } from "@/lib/server/clock";
-import { demoCard } from "./cards";
 
 // Dev saja: alat uji F3 + F4 di store lokal. Tidak tersedia di production.
 function devOnly() {
@@ -14,15 +13,6 @@ function devOnly() {
 // "HP lain": aksi Kontrol acara atas nama label HP lain → HP panitia yang lagi buka Kontrol dapat
 // toast BP02d.
 const OTHER_HP = "HP LAIN";
-
-// Kartu BT05 dummy untuk semua tamu (N3 nanti diisi tamu sendiri lewat T11).
-export async function devSeedCards(): Promise<void> {
-  devOnly();
-  await mutateStore((store) => {
-    store.listGuests(HMD_ID).forEach((g, i) => store.setGuestCard(g.id, demoCard(g.ig, i)));
-  });
-  refresh();
-}
 
 // Mulai sesi berikutnya (yang belum selesai) / selesaikan sesi yang jalan, atas nama HP lain.
 export async function devStartNext(): Promise<void> {

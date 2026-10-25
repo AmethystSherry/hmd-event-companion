@@ -1,5 +1,6 @@
 import { randomBytes, randomUUID } from "node:crypto";
 import type { CsvRow } from "../csv";
+import { cardOf, sameCard } from "../card";
 import { MAX_IMPROVE, summaryDue } from "../feedback";
 import { toMinutes } from "../format";
 import { MAX_PHOTOS_PER_GUEST } from "../photo";
@@ -47,7 +48,8 @@ export class StoreError extends Error {
       | "isian-tidak-valid"
       | "data-dihapus"
       | "bukan-talkshow"
-      | "pertanyaan-tidak-ada",
+      | "pertanyaan-tidak-ada"
+      | "belum-rsvp",
     message: string,
   ) {
     super(message);
@@ -536,10 +538,30 @@ export function createStore(
     },
 
     // ---- Tamu & undangan (P04*) ----
-    // F4 · kartu BT05 (sekarang cuma dari data uji /dev/states; N3 nanti lewat T11).
+    // F4 · kartu BT05 apa adanya (data uji /dev/states). Tamu sendiri lewat saveGuestCard.
     setGuestCard(id: string, card: GuestCard | null): void {
       guest(id).card = card;
       commit();
+    },
+    // N3 · T11 Simpan kartu: tamu RSVP hadir / udah masuk, acara belum ditutup. job & interests
+    // ikut disinkronkan supaya "Ubah jawaban" T02 ter-prefill sama. Isi sama = false, rev tetap.
+    saveGuestCard(id: string, card: GuestCard): boolean {
+      const g = guest(id);
+      const e = event(g.eventId);
+      if (e.purgedAt) throw new StoreError("data-dihapus", "Data acara ini udah dihapus");
+      if (e.mode === "closed") throw new StoreError("acara-ditutup", "Acaranya udah ditutup");
+      const inside = data.tickets.find((t) => t.guestId === g.id)?.status === "dipakai";
+      if (g.rsvp !== "hadir" && !inside) {
+        throw new StoreError("belum-rsvp", "Kartu kenalan buat tamu yang hadir");
+      }
+      const interests = card.askAbout.join(", ") || null;
+      const synced = (g.job ?? null) === card.role && (g.interests ?? null) === interests;
+      if (sameCard(g.card, card) && synced) return false;
+      g.card = { role: card.role, askAbout: [...card.askAbout] };
+      g.job = card.role;
+      g.interests = interests;
+      commit();
+      return true;
     },
     listGuests(eventId: string): Guest[] {
       return guestsOf(eventId).sort((a, b) => a.keyNo - b.keyNo);
@@ -655,6 +677,10 @@ export function createStore(
       g.followConfirmed = input.followConfirmed;
       if (input.job !== undefined) g.job = input.job;
       if (input.interests !== undefined) g.interests = input.interests;
+      // N3: isian T02 langsung jadi kartu BT05 (minat dipecah koma, maks 3).
+      if (input.job !== undefined || input.interests !== undefined) {
+        g.card = cardOf({ card: null, job: g.job, interests: g.interests });
+      }
       // Link baru bisa sampai ke tamu yang belum ditandai (mis. diteruskan panitia langsung).
       if (g.inviteStatus === "belum") {
         g.inviteStatus = "diundang";
@@ -1023,6 +1049,7 @@ export function createStore(
           farewellAt: null,
           job: null,
           interests: null,
+          card: null,
           token: newToken(),
         } satisfies Partial<Guest>);
       }

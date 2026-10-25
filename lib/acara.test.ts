@@ -87,6 +87,27 @@ describe("layar acara tamu (F4)", () => {
     expect(filterGuests(v.guests, "wening")).toHaveLength(1);
   });
 
+  it("BT05 (N3): tanpa card → kartu dari isian T02; cari tetap nama/@ig, bukan minat", () => {
+    const { store, budi, citra } = withGuests();
+    store.setRsvp(citra.id, {
+      rsvp: "hadir",
+      name: citra.name,
+      ig: citra.ig,
+      wa: "6281234567890",
+      followConfirmed: true,
+      job: "Motion designer",
+      interests: "Rive, film horor",
+    });
+    const v = view(store, budi.id);
+    expect(v.guests[0]).toMatchObject({
+      name: "Citra Ayu",
+      role: "Motion designer",
+      askAbout: ["Rive", "film horor"],
+    });
+    expect(filterGuests(v.guests, "rive")).toEqual([]);
+    expect(filterGuests(v.guests, "citra")).toHaveLength(1);
+  });
+
   it("subjudul rundown BT04", () => {
     const store = createStore(seedData());
     store.startSession(HMD_ID, "s01", t("13:00"));

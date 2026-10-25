@@ -53,6 +53,10 @@ Web app mobile untuk House Moving Day Potara Studio (Minggu 8 Nov 2026, 13.00–
   Claude** — P10 daftar mentah, terbaru di atas (PRD §7 N1 soal pengelompokan diabaikan). Sheet Tanya
   BT08/BT09/BT08b di `acara/` (`?sheet=tanya`), P10/P10c di `panitia/event/[id]/tanya`, tile
   Pertanyaan BP02 + BT12 nyala. Lihat "Aturan N1 di kode". Menunggu review.
+- **N3 · Kenalan antartamu (26 Okt)**: Figma section `4670:4888`, `N3-deliverables.md` v1. Satu sumber kartu
+  (`cardOf`, lib/card): `Guest.card` atau turunan isian T02. Sheet T11/T11e di `acara/` (`?sheet=kartu`,
+  `/kartu` = redirect), toast gelap T11s, BT05b empty state, `POST /api/t/[token]/kartu`. Lihat "Aturan N3
+  di kode". Menunggu review.
 
 ## Sumber kebenaran
 - **Figma** `xYZlQ3GjRHHtYcod8rTIZJ`, page DOKSLI SAPI → section "Screen Flow · All Case" → frame
@@ -85,7 +89,7 @@ app/
                           acara/ (F4 Sesi/Jeda + sheet) · foto/ (N4 BT06–BT07c) ·
                           selesai/ (F5 BT12) · buku-tamu/ (T14*) · kolase/ (T15*, T14d) ·
                           galeri/ (→ acara?sheet=galeri) · tanya/ (→ acara?sheet=tanya) ·
-                          kartu/ (T11) = placeholder
+                          kartu/ (→ acara?sheet=kartu, N3)
   panitia/                P01 + PE01/PE02 · actions.ts (semua server action panitia)
     event/[id]/           PE03/PE03b (+ sheet PE03e/PE03h) · rundown/ (PE04k/PE04/PE04a/PE04b/
                           PE04s) · tamu/ (P04k/P04a/P04c/P04i/P04/P04b/d/e/f/g/h/s) · kontrol/ (BP02/BP03/BP01b +
@@ -99,6 +103,7 @@ app/
   api/t/[token]/foto/     POST upload foto (N4) · [id] GET gambar / DELETE foto sendiri
   api/t/[token]/buku-tamu POST isian buku tamu (F5 · T14)
   api/t/[token]/tanya     POST pertanyaan talkshow (N1 · BT08)
+  api/t/[token]/kartu     POST kartu kenalan (N3 · T11)
   dev/ui/                 preview design system (light & dark)
   dev/states/f1/          37 layar F1 dengan data contoh + alat uji (link tamu, CSV dummy, reset)
   dev/states/f2/          17 layar F2 (BP02/BP02-pre/BP03/BP01b …) + alat uji (jam pura-pura hari-H,
@@ -108,6 +113,8 @@ app/
                           sebagai "HP LAIN" → BP02d, isi kartu BT05)
   dev/states/n1/          8 layar N1 (BT21/BT08/BT09/BT08b/BP02/P10/P10c + link BT21p) + alat uji (mulai
                           Talkshow, 23 pertanyaan dummy, hapus semua, simulasi gagal kirim)
+  dev/states/n3/          8 layar N3 (BT03/BT05/BT05b/BT05c/T11/T11e/T11s/T11f) + alat uji (kartu dummy, kosongkan
+                          kartu Rara, cuma 2 yang datang, reset kartu)
   dev/states/f5/          17 layar F5 (tamu + panitia) + alat uji (foto dummy, selesaikan semua sesi, tutup/buka
                           lagi, 15 feedback dummy, ringkasan sekarang, reset feedback, loncat ke 8 Des,
                           link tamu udah/belum masuk)
@@ -122,8 +129,8 @@ components/f2/            tamu.tsx (T05/T05a/BT02/T03b) · Kontrol (BP02 + dialo
 components/n4/            KolaseApp (kamera BT06/BT06b) · useCamera · capture (crop+kompres) ·
                           usePhotoOutbox (kirim + antrean) · NempelSheet (BT07/b/c/e) · GaleriSheet (BT07d)
 components/n1/            TanyaSheet (BT08/BT09/BT08b) · Pertanyaan (P10/P10c)
+components/n3/            KartuSheet (T11/T11e + gagal simpan) · InterestChips (chip minat + tambah di tempat)
 components/f4/            AcaraScreen (BT20–24/BT03/S01, sheet lewat ?sheet=) · Sheets (BT22/BT21p/BT04/BT05) ·
-                          Placeholder (Galeri/Tanya/Kartu)
 components/f5/            Selesai (BT12 + belum masuk) · BukuTamu (T14/b/c) · KolaseKulkas (T15/T15c/
                           T15d/T14d) · FotoDetail (T15b) · kolaseCanvas (gambar 9:16) · saveImage ·
                           Rekap (P11/P11b/P11c/P11d)
@@ -138,6 +145,7 @@ lib/server/               env, HMAC (QR & cookie sesi), rate-limit PIN, akses cr
                           summary (Claude, F5) · feedback (hapus H+30 lazy + buat ringkasan) ·
                           rateLimit (in-memory per kunci, buku tamu & tanya)
 lib/                      csv (+ CSV buku tamu) · feedback (aturan buku tamu, tanggal hapus) ·
+                          card (N3: cardOf, normalizeCard, splitInterests) ·
                           questions (N1: validasi, talkshowFor, questionsView, nama tampil) ·
                           kolase (masonry, tata letak 9:16, filter, foto → KolasePhoto) ·
                           format · invite (+ rundownLine) · confirm · ics (+ googleCalendarUrl) ·
@@ -244,7 +252,7 @@ Keputusan default 22 Okt (jawaban "Keputusan & asumsi" di F2-deliverables; prd.m
   "Kunci #014" (Key) + Pill "Sudah masuk" (Check, copy Figma), "Masuk sekarang", caption 12
   `aria-live`. Tanpa Ticket/cap (sobek cuma di T05a). Ilustrasi di-`preload()` (react-dom) sejak T05.
 - Kamera butuh HTTPS di HP (`npx next dev --experimental-https`); gagal/ditolak → P07b.
-- Store dev ada di `globalThis.__hmdStoreN1`: naikkan kuncinya tiap method store bertambah (server
+- Store dev ada di `globalThis.__hmdStoreN3`: naikkan kuncinya tiap method store bertambah (server
   dev yang sedang jalan nggak membuat ulang instance lama saat HMR). Server dev yang sudah jalan
   bisa tetap memakai modul server lama (mis. `store.getPhoto is not a function`) → restart `npm run dev`.
 
@@ -398,8 +406,8 @@ Keputusan 25 Okt (default "Keputusan & asumsi" F3-F4-deliverables, kecuali K3/K8
 8. **K8 · BT05 Tamu di sini**: cuma tamu RSVP hadir **atau** udah check-in. Data ke HP tamu: nama, IG,
    `Guest.card {role, askAbout ≤ 3}`, udah datang + jam datang — **tanpa WA, token, nomor kunci**
    (kecuali kartu sendiri). Urut: baru datang di depan, belum datang paling belakang (nama). Cari =
-   filter lokal nama/@ig. "Ubah" → `/t/[token]/kartu` (placeholder T11). `setGuestCard` di store
-   (sekarang cuma dari /dev/states/f4).
+   filter lokal nama/@ig. "Ubah" → sheet T11 (N3). Kartu = `cardOf(guest)`; diisi tamu lewat T11
+   (`saveGuestCard`) / T02 (`setRsvp`), `setGuestCard` apa adanya cuma dari /dev/states.
 9. BT22 durasi: jalan "60 mnt · udah jalan 12 mnt", selesai "Selesai · 62 mnt", belum "45 mnt";
    deskripsi kosong → topik. BT04 subjudul: Selesai · "Lagi jalan · {ruang}" · "Berikutnya ·
    {pembicara ?? ruang}" · ruang. Tap baris rundown → BT22 sesi itu.
@@ -461,6 +469,42 @@ Keputusan 25 Okt (prompt N1 + default "Keputusan & asumsi"/"Temuan" N1-deliverab
    kalau ada yang belum dijawab (T7). BT12: tile "pertanyaan" = semua pertanyaan event.
 9. Belum: sembunyikan pertanyaan iseng (T8); BP02p nggak ada di /dev/states (cek lewat BP02 interaktif).
 
+## Aturan N3 di kode
+Keputusan 26 Okt (prompt N3 + usulan "Temuan" N3-deliverables T1–T13):
+1. **Satu sumber kartu** (T1): `cardOf(guest)` (lib/card) = `Guest.card` kalau ada (kosong pun menang),
+   kalau nggak diturunkan dari T02: `job` → role (≤ 40), `interests` dipecah koma/";" → maks 3 minat,
+   tiap ≤ 20 huruf, trim, dobel (huruf besar-kecil) dibuang. `acaraView` & BT05 pakai `cardOf`.
+2. **Simpan T11** `POST /api/t/[token]/kartu` `{role, askAbout}` → `{ok, card}`. `normalizeCard` menolak
+   (400, bukan memotong) role > 40, > 3 minat, minat > 20. Tamu RSVP hadir **atau** udah check-in (403
+   `belum-rsvp`), acara closed → 409 `{error:"acara-selesai"}`, purge → 410, rate-limit 20/menit per tamu
+   (429). Store `saveGuestCard`: tulis `card` + sinkron `job = role`, `interests = askAbout.join(", ")`
+   (prefill "Ubah jawaban" T02 sama); isi sama → `false`, rev tetap (Simpan lagi aman). Rev naik →
+   kartu tampil di HP tamu lain lewat LiveRefresh 2 dtk.
+3. **T02** (`setRsvp` dengan job/interests, cuma Hadir) ikut mengisi `card` lewat `cardOf`. Copy & batas
+   T02 nggak berubah (minat tetap teks bebas ≤ 60, dipecah saat disimpan). Jawab "Nggak bisa" = kartu tetap.
+4. Hapus H+30 ikut mengosongkan `card`. Data ke HP tamu lain tetap tanpa WA/token/nomor kunci (K8).
+5. **Sheet T11** (`components/n3/KartuSheet`, `Sheet strong`): "Kartu kamu" + `MyCard` live preview + `Field`
+   "Pekerjaan (opsional)" (label --label Medium) + `InterestChips` + "Simpan kartu" (aktif walau kosong).
+   Prefill dari `cardOf(me)`; tutup tanpa simpan = dibuang (T4).
+6. **Navigasi**: "Ubah" BT05 → `pushState ?sheet=kartu` (`hmdFromTamu`); back HP / backdrop / Esc →
+   `history.back()` ke BT05. Dibuka langsung (link `/kartu` → redirect, reload) → tutup = `replaceState
+   ?sheet=tamu`. Simpan berhasil → balik ke BT05 + TopToast `tone="dark"` Check "Kartu kamu kesimpan. Tamu
+   lain bisa lihat sekarang." 3 dtk + `router.refresh()`; kartu baru dipakai (`savedCard`) selama data
+   server masih rev lama.
+7. **Gagal** (T6, copy usulan): `navigator.onLine` false / error / timeout 8 dtk → isian tetap, tombol
+   "Simpan lagi", TopToast WifiSlash "Kartu kamu belum kesimpan" + "Sinyal lagi putus. Isiannya aman,
+   tinggal tap Simpan lagi." Nggak diantre. Toast S01 disembunyikan selagi sheet kartu kebuka (posisi
+   sama). 409 acara-selesai → sheet nutup + refresh (redirect BT12).
+8. **InterestChips** (T3): chip accent-soft + "×" (aria "Hapus {minat}"); < 3 → "+ Tambah minat" dashed →
+   input kecil (autofocus, "Mis. Kopi"). Enter / blur = tambah, Esc = batal (nggak nutup sheet), koma /
+   ";" di `onChange` (keyboard HP sering kirim key "Unidentified", juga tempel teks) = tambah & lanjut
+   ketik, dobel diabaikan. Counter "{n} dari 3".
+9. **BT05**: "Kartu kamu" = `MyCard` (components/ui, dipindah dari f4/Sheets), role kosong → "@ig · belum isi
+   pekerjaan" (T8). Saat cari, Kartu kamu disembunyikan; nggak ketemu → BT05b `HeroState size="sm"`
+   "Nggak ada tamu bernama “{q}”" + "Coba nama lain atau @instagram-nya.", judul hasil disembunyikan,
+   sheet ikut isi. Cari tetap nama/@ig (T10). GuestCard tinggi tetap 228.
+10. Dev: `/dev/states/n3` (alat uji pindah dari f4; f4 link ke sini). Store dev `__hmdStoreN3`.
+
 ## Design system (Clean v0.5)
 - Token: `app/tokens.css` — warna semantik light (utama) + dark (`prefers-color-scheme`, atau paksa
   dengan `data-theme="light|dark"` di `html` atau elemen mana pun), radius, spacing, shadow, motion,
@@ -471,12 +515,12 @@ Keputusan 25 Okt (prompt N1 + default "Keputusan & asumsi"/"Temuan" N1-deliverab
 - Komponen: `components/ui/*` (satu `.tsx` + `.module.css`), ekspor lewat `@/components/ui`.
   Button, IconButton, PinPad (P01), Countdown (T03), NumberedRow (T01/PE04), Dropzone (P04k),
   Toggle, Segmented, Badge, Pill/Chip/AddChip,
-  Card/CardLabel/InnerBox, StatTile (+`highlight`), ListRow/Avatar, Banner/TextAction, HeroState, Field, Toast
+  Card/CardLabel/InnerBox, StatTile (+`highlight`), ListRow/Avatar, Banner/TextAction, HeroState (+`size="sm"`), Field, Toast
   (undo ring), Sheet (bawah / `floating`), TabBar, Ticket (+`torn`)/TicketStub, LogoMark,
   Screen/ScreenHeader/Skeleton, SearchField, Dialog (konfirmasi tengah layar, BP03/BP01b),
   StarRating (T14), Masonry + PhotoPin (T15, nanti galeri panitia), BarList (P11), SwipeRow (P04s/
   PE04s, panel hapus `--danger-fill`), TopToast (S01,
-  BP02d), JejakAcara · TicketNext (BT03) · GuestCard (BT05), IllustratedScreen (ilustrasi + fade +
+  BP02d, `tone="dark"` T11s), JejakAcara · TicketNext (BT03) · GuestCard (BT05) · MyCard (BT05/T11), IllustratedScreen (ilustrasi + fade +
   panel `--card`, BT02; pola sama dengan `components/f4/AcaraScreen` yang masih inline). `TextAction`
   bisa `href`.
 - **Button** (`Clean/Button` 4587:316, 12 varian): `size` `lg` (54, lebar penuh) | `sm` (36, lebar
@@ -550,4 +594,6 @@ menghapus data per orang di store lokal → balikin lewat `/dev/states/f1` Reset
       BP02d, ilustrasi, offline S01 — menunggu review
 - [x] N1 (25 Okt) — pertanyaan talkshow tanpa Claude: sheet BT08/BT09/BT08b, P10/P10c, tile BP02/BT12 —
       menunggu review
-- [ ] N2–N3, BT07d galeri — berikutnya (versi lama: tag `archive-pre-revisi`)
+- [x] N3 (26 Okt) — kenalan antartamu: sheet T11/T11e/T11s, BT05b, satu sumber kartu (T02 ↔ T11),
+      POST kartu, realtime — menunggu review
+- [ ] N2, BT07d galeri — berikutnya (versi lama: tag `archive-pre-revisi`)

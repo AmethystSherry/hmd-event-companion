@@ -7,7 +7,8 @@ import { createStore, type DataStore } from "@/lib/data/store";
 import { demoEvent, NAMES } from "@/lib/fixtures";
 import { toGuestPhotos, type GuestPhotos } from "@/lib/photo";
 import { rundownView } from "@/lib/rundown";
-import { demoCard } from "./cards";
+import type { GuestCard } from "@/lib/data/types";
+import { demoCard } from "../n3/cards";
 
 // Registri layar F3 + F4 (F3-F4-deliverables.md "Daftar layar", Figma C18 4899:12734) untuk
 // /dev/states/f4/[code]. Komponen sama dengan route asli, data contoh dari store di memori
@@ -25,7 +26,14 @@ const at = (hhmm: string) => `2026-11-08T${hhmm}+07:00`;
 const back = "/dev/states/f4";
 
 // Store contoh: 20 tamu hadir (Rara = pemilik HP, #014 seperti Figma), 18 udah masuk.
-export function demoStore(steps: (s: DataStore) => void): DataStore {
+// /dev/states/n3: `here` (siapa yang udah masuk) & `card` (kartu per tamu, null = kosong) bisa diganti.
+export type DemoOpts = {
+  here?: (name: string, i: number) => boolean;
+  card?: (name: string, i: number) => GuestCard | null;
+};
+export function demoStore(steps: (s: DataStore) => void, opts: DemoOpts = {}): DataStore {
+  const here = opts.here ?? ((_: string, i: number) => i < 18);
+  const card = opts.card ?? demoCard;
   const store = createStore(seedData(new Date(at("09:00:00"))), {
     now: () => new Date(at("09:00:00")),
   });
@@ -38,8 +46,8 @@ export function demoStore(steps: (s: DataStore) => void): DataStore {
       wa: "6281234567890",
       followConfirmed: true,
     });
-    store.setGuestCard(g.id, demoCard(ig, i));
-    if (i < 18) {
+    store.setGuestCard(g.id, card(name, i));
+    if (here(name, i)) {
       const t = `12:${String(40 + i).padStart(2, "0")}:00`;
       store.checkIn(
         HMD_ID,
@@ -63,8 +71,9 @@ export function acara(
   now: string,
   preview: ComponentProps<typeof AcaraScreen>["preview"] = {},
   photos?: GuestPhotos,
+  opts?: DemoOpts,
 ) {
-  const store = demoStore(steps);
+  const store = demoStore(steps, opts);
   const me = store.listGuests(HMD_ID).find((g) => g.ig === "rarawening")!;
   const view = acaraView({
     event: store.getEvent(HMD_ID)!,

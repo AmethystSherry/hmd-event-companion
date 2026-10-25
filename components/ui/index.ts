@@ -15,6 +15,7 @@ export { JejakAcara, type Stamp } from "./JejakAcara";
 export { Avatar, ListRow } from "./ListRow";
 export { LogoMark } from "./Logo";
 export { Masonry, PhotoPin } from "./Masonry";
+export { MyCard } from "./MyCard";
 export { NumberedRow } from "./NumberedRow";
 export { AddChip, Chip, Pill } from "./Pill";
 export { PhotoStrip } from "./PhotoStrip";

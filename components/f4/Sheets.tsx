@@ -1,11 +1,20 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
-import { Badge, Button, GuestCard, ListRow, LogoMark, SearchField, Sheet } from "@/components/ui";
+import { MagnifyingGlass } from "@/components/icons";
+import {
+  Badge,
+  Button,
+  GuestCard,
+  HeroState,
+  ListRow,
+  MyCard,
+  SearchField,
+  Sheet,
+} from "@/components/ui";
 import { filterGuests, rundownSubtitle, type AcaraView } from "@/lib/acara";
 import { cx } from "@/lib/cx";
-import { initials, keyLabel } from "@/lib/format";
+import { initials } from "@/lib/format";
 import { igProfileUrl } from "@/lib/invite";
 import { actualMin, elapsedMs, roomLabel, type SessionView } from "@/lib/rundown";
 import styles from "./f4.module.css";
@@ -14,8 +23,9 @@ import styles from "./f4.module.css";
 // sini (N3). Ilustrasi & panel tetap di belakang backdrop.
 
 // "foto" (hasil jepret BT07/BT07b/BT07e) & "galeri" (BT07d) = sheet N4 di components/n4;
-// "tanya" (BT08/BT09/BT08b) = sheet N1 di components/n1.
-export type SheetKind = "detail" | "pembicara" | "rundown" | "tamu" | "foto" | "galeri" | "tanya";
+// "tanya" (BT08/BT09/BT08b) = sheet N1 di components/n1; "kartu" (T11/T11e) = sheet N3 di components/n3.
+export type SheetKind =
+  "detail" | "pembicara" | "rundown" | "tamu" | "kartu" | "foto" | "galeri" | "tanya";
 
 const STATE_BADGE = {
   berlangsung: { tone: "live", label: "Lagi jalan" },
@@ -144,19 +154,28 @@ export function RundownSheet({
 }
 
 export function TamuSheet({
-  token,
   view,
+  me,
   onClose,
+  onEdit,
+  initialQuery = "",
 }: {
-  token: string;
   view: AcaraView;
+  me: AcaraView["me"]; // kartu kamu (bisa versi baru setelah T11 sebelum data server masuk)
   onClose: () => void;
+  onEdit: () => void; // "Ubah" → T11 (N3, ?sheet=kartu)
+  initialQuery?: string; // /dev/states/n3 BT05b
 }) {
-  const [q, setQ] = useState("");
+  const [q, setQ] = useState(initialQuery);
   const list = filterGuests(view.guests, q);
-  const me = view.me;
+  const searching = !!q.trim();
   return (
-    <Sheet open onClose={onClose} title="Tamu di sini" className={cx(styles.sheet, styles.tamu)}>
+    <Sheet
+      open
+      onClose={onClose}
+      title="Tamu di sini"
+      className={cx(styles.sheet, styles.tamu, searching && !list.length && styles.short)}
+    >
       <div className={styles.sheetHead}>
         <p aria-hidden className="t-card-title">
           Tamu di sini
@@ -173,59 +192,33 @@ export function TamuSheet({
         className={styles.search}
       />
 
-      {!q && (
+      {!searching && (
         <>
           <div className={styles.rowHead}>
             <span className="t-label-emph">Kartu kamu</span>
-            <Link href={`/t/${token}/kartu`} className={cx("t-label-emph", styles.link)}>
+            <button type="button" onClick={onEdit} className={cx("t-label-emph", styles.link)}>
               Ubah
-            </Link>
+            </button>
           </div>
-          <article className={styles.myCard} aria-label="Kartu kamu">
-            <div className={styles.myHead}>
-              <span className={styles.myEyebrow}>House Moving Day · Tamu</span>
-              <span className={cx("t-label-emph", styles.myNo)}>{keyLabel(me.keyNo)}</span>
-            </div>
-            <span aria-hidden className={styles.myTear} />
-            <div className={styles.myBody}>
-              <div className={styles.myTop}>
-                <span aria-hidden className={styles.myAvatar}>
-                  {initials(me.name)}
-                </span>
-                <span className={styles.myName}>
-                  <span className="t-headline">{me.name}</span>
-                  <span className="t-label">
-                    @{me.ig}
-                    {me.role && ` · ${me.role}`}
-                  </span>
-                </span>
-              </div>
-              {me.askAbout.length > 0 && (
-                <ul className={styles.chips} aria-label="Tanya aku soal">
-                  {me.askAbout.map((a) => (
-                    <li key={a} className="t-caption">
-                      {a}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-            <span aria-hidden className={styles.myLogo}>
-              <LogoMark size={84} title="" />
-            </span>
-            <span aria-hidden className={cx(styles.myNotch, styles.myNotchL)} />
-            <span aria-hidden className={cx(styles.myNotch, styles.myNotchR)} />
-          </article>
+          <MyCard
+            name={me.name}
+            ig={me.ig}
+            keyNo={me.keyNo}
+            role={me.role}
+            askAbout={me.askAbout}
+          />
         </>
       )}
 
-      <div className={styles.rowHead}>
-        <span className="t-label-emph">
-          {q ? `Hasil · ${list.length}` : `Semua tamu · ${view.guests.length}`}
-        </span>
-        {list.length > 2 && <span className="t-caption c-label-3">geser →</span>}
-      </div>
-      {list.length ? (
+      {list.length > 0 && (
+        <div className={styles.rowHead}>
+          <span className="t-label-emph">
+            {searching ? `Hasil · ${list.length}` : `Semua tamu · ${view.guests.length}`}
+          </span>
+          {list.length > 2 && <span className="t-caption c-label-3">geser →</span>}
+        </div>
+      )}
+      {list.length > 0 ? (
         <div className={styles.carousel}>
           {list.map((g) => (
             <GuestCard
@@ -238,10 +231,17 @@ export function TamuSheet({
             />
           ))}
         </div>
+      ) : searching ? (
+        // BT05b · cari nggak ketemu
+        <HeroState
+          size="sm"
+          icon={<MagnifyingGlass />}
+          title={`Nggak ada tamu bernama “${q.trim()}”`}
+        >
+          Coba nama lain atau @instagram-nya.
+        </HeroState>
       ) : (
-        <p className={cx("t-label c-label-2", styles.empty)}>
-          {q ? "Nggak ada tamu dengan nama itu." : "Belum ada tamu lain."}
-        </p>
+        <p className="t-label c-label-2">Belum ada tamu lain.</p>
       )}
     </Sheet>
   );

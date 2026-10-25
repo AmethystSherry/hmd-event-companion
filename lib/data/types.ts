@@ -53,8 +53,8 @@ export type Guest = {
   reminderSentAt: string | null;
   source: "csv" | "manual" | "walkin"; // walkin = ditambah di pintu (P07c)
   createdAt: string;
-  card?: GuestCard | null; // F4 · kartu BT05 (N3: diisi tamu sendiri lewat T11, nanti)
-  // T02 · Pekerjaan & Minat (opsional) buat kartu kenalan hari-H (N3). Belum ditampilkan.
+  card?: GuestCard | null; // N3 · kartu BT05: dari T11 / T02 (baca lewat cardOf, lib/card)
+  // T02 · Pekerjaan & Minat (opsional), disinkronkan dengan `card` (N3) buat prefill T02.
   job?: string | null; // ≤ 40
   interests?: string | null; // ≤ 60
   // T02b · titip ucapan (opsional, tamu yang nggak bisa datang). Belum ditampilkan di mana pun.

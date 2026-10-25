@@ -8,7 +8,7 @@ import { dateLong, timeWib, wibDate } from "@/lib/format";
 import { serverNow } from "@/lib/server/clock";
 import { setFakeNow } from "../f2/actions";
 import styles from "../f1/states.module.css";
-import { devFinishActive, devSeedCards, devStartNext } from "./actions";
+import { devFinishActive, devStartNext } from "./actions";
 import { SCREENS } from "./screens";
 
 export const metadata = { title: "F3+F4 states · dev" };
@@ -111,11 +111,9 @@ async function DevTools() {
               Selesaikan sesi (HP lain)
             </Button>
           </form>
-          <form action={devSeedCards}>
-            <Button size="sm" variant="secondary" type="submit" icon={<Users />}>
-              Isi kartu tamu BT05
-            </Button>
-          </form>
+          <Button size="sm" variant="secondary" href="/dev/states/n3" icon={<Users />}>
+            Kartu tamu BT05 (N3)
+          </Button>
         </div>
         <CardLabel>Link</CardLabel>
         <div className={styles.links}>

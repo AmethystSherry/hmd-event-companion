@@ -315,143 +315,18 @@
 }
 
 .link {
+  min-height: 44px;
+  margin: -12px -8px;
+  padding: 0 8px;
+  border: 0;
+  background: none;
   color: var(--accent-text);
-  text-decoration: none;
+  cursor: pointer;
 }
 
-/* Kartu kamu: tiket gelap (--cta), takik kiri-kanan di garis sobek, logo mark samar miring 14°. */
-.myCard {
-  position: relative;
-  flex-shrink: 0;
-  overflow: hidden;
-  border-radius: 20px;
-  background: var(--cta);
-  color: var(--on-cta);
-  box-shadow: var(--shadow-card);
-}
-
-.myHead {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 18px 10px;
-}
-
-.myEyebrow {
-  font-size: 12px;
-  line-height: 16px;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  opacity: 0.72;
-}
-
-.myNo {
-  color: var(--accent);
-}
-
-.myTear {
-  display: block;
-  margin: 0 14px;
-  border-top: 1.5px dashed color-mix(in srgb, var(--on-cta) 40%, transparent);
-}
-
-.myBody {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 16px 18px 18px;
-}
-
-.myTop {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.myAvatar {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  width: 56px;
-  height: 56px;
-  border: 3px solid var(--accent);
-  border-radius: 28px;
-  background: var(--card);
-  color: var(--accent-text);
-  font-size: 17px;
-  font-weight: 500;
-}
-
-.myName {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.myName > span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.myName > span:last-child {
-  opacity: 0.72;
-}
-
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.chips li {
-  padding: 4px 10px;
-  border-radius: var(--radius-pill);
-  background: color-mix(in srgb, var(--on-cta) 14%, transparent);
-}
-
-.myLogo {
-  position: absolute;
-  top: 108px;
-  right: -4px;
-  opacity: 0.08;
-  transform: rotate(14deg);
-  filter: brightness(0) invert(1);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .myLogo {
-    filter: brightness(0);
-  }
-}
-
-:root[data-theme="dark"] .myLogo {
-  filter: brightness(0);
-}
-
-.myNotch {
-  position: absolute;
-  top: 33px;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--card);
-}
-
-.myNotchL {
-  left: -8px;
-}
-
-.myNotchR {
-  right: -8px;
+/* BT05b: cari nggak ketemu → sheet ikut isi. */
+.tamu.short {
+  min-height: 0;
 }
 
 /* Carousel kartu tamu: geser horizontal, keluar sampai tepi sheet. */
@@ -468,10 +343,4 @@
 
 .carousel::-webkit-scrollbar {
   display: none;
-}
-
-.empty {
-  margin: 0;
-  padding: 24px 0;
-  text-align: center;
 }

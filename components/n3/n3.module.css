@@ -1,0 +1,104 @@
+/* T11 · sheet Kartu kamu: card, radius 28, padding atas 12, gap 16 (tinggi ikut isi). */
+.sheet {
+  align-items: stretch;
+  gap: 16px;
+  padding-top: 12px;
+  border-radius: 28px 28px 0 0;
+}
+
+.sheet > :first-child {
+  align-self: center;
+}
+
+/* Label field T11 = label Medium (Figma), bukan abu seperti T02. */
+.field > label {
+  color: var(--label);
+  font-weight: 500;
+}
+
+.interests {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.interestsHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.count {
+  flex-shrink: 0;
+  font-weight: 500;
+  color: var(--label-3);
+}
+
+.chipList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Chip minat: accent-soft, pill, padding 8 / 14 kiri / 10 kanan, gap 6, 13 Medium + "×". */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 4px 0 14px;
+  border-radius: var(--radius-pill);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+}
+
+/* "×" area tap 34 tinggi chip, lebar 28 (teks × di tengah, padding kanan visual ±10). */
+.chipX {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+/* "+ Tambah minat": border 1,2 putus-putus accent-text, pill, padding 8/14. */
+.chipAdd {
+  display: inline-flex;
+  align-items: center;
+  height: 34px;
+  padding: 0 14px;
+  border: 1.2px dashed var(--accent-text);
+  border-radius: var(--radius-pill);
+  background: none;
+  color: var(--accent-text);
+  font: inherit;
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.chipInput {
+  width: 132px;
+  outline: none;
+  cursor: text;
+}
+
+.chipInput::placeholder {
+  color: var(--label-3);
+  font-weight: 400;
+}

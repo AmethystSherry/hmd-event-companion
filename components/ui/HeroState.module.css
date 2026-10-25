@@ -55,3 +55,28 @@
   width: 100%;
   margin-top: 8px;
 }
+
+/* Mini (BT05b): lingkaran 56 card-2, ikon 24, gap 8, padding 60 vertikal. */
+.sm {
+  gap: 8px;
+  padding: 60px 8px;
+}
+
+.sm .circle {
+  width: 56px;
+  height: 56px;
+  margin-bottom: 0;
+}
+
+.sm .circle svg {
+  width: 24px;
+  height: 24px;
+}
+
+.sm .title {
+  margin: 0;
+}
+
+.sm .body {
+  margin: 0;
+}
