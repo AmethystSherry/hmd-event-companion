@@ -78,10 +78,11 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  .ok {
+  /* app selalu light (html[data-theme=light]); dark cuma kalau dipaksa */
+  :global(:root:not([data-theme="light"])) .ok {
     color: #4cd08a;
   }
-  .bad {
+  :global(:root:not([data-theme="light"])) .bad {
     color: #ff6b6f;
   }
 }

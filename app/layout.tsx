@@ -27,15 +27,15 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#F3F2F0" },
-    { media: "(prefers-color-scheme: dark)", color: "#0B0B0B" },
-  ],
+  themeColor: "#F3F2F0",
 };
 
+// Selalu light (bukan ikut setting sistem): `data-theme="light"` di html mengalahkan
+// `prefers-color-scheme: dark` di tokens.css. Token dark tetap ada untuk `data-theme="dark"`
+// per elemen (mis. pratinjau /dev/ui).
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="id" className={`${switzer.variable} ${jetbrainsMono.variable}`}>
+    <html lang="id" data-theme="light" className={`${switzer.variable} ${jetbrainsMono.variable}`}>
       <body>{children}</body>
     </html>
   );
