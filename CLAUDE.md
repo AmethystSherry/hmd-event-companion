@@ -399,6 +399,9 @@ Keputusan 25 Okt (default "Keputusan & asumsi" F3-F4-deliverables, kecuali K3/K8
 - Token: `app/tokens.css` — warna semantik light (utama) + dark (`prefers-color-scheme`, atau paksa
   dengan `data-theme="light|dark"` di `html` atau elemen mana pun), radius, spacing, shadow, motion,
   kelas tipografi `t-*` (Clean/* dari Figma; tracking Figma dalam persen → `em`).
+- **App selalu light** (25 Okt): `app/layout.tsx` memasang `<html data-theme="light">` + `themeColor`
+  satu warna, jadi setting dark HP nggak berpengaruh. Dark cuma lewat `data-theme="dark"` per elemen
+  (pratinjau `/dev/ui`). CSS `prefers-color-scheme` baru wajib dijaga `:root:not([data-theme="light"])`.
 - Komponen: `components/ui/*` (satu `.tsx` + `.module.css`), ekspor lewat `@/components/ui`.
   Button, IconButton, PinPad (P01), Countdown (T03), NumberedRow (T01/PE04), Dropzone (P04k),
   Toggle, Segmented, Badge, Pill/Chip/AddChip,
