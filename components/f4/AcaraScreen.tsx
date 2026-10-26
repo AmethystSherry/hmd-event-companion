@@ -19,21 +19,23 @@ import { NempelSheet, nempelStatus, type NempelStatus } from "@/components/n4/Ne
 import { TanyaSheet, type TanyaPreview } from "@/components/n1/TanyaSheet";
 import { KartuSheet, type KartuPreview } from "@/components/n3/KartuSheet";
 import { usePhotoOutbox } from "@/components/n4/usePhotoOutbox";
-import { Badge, Button, JejakAcara, TicketNext, TopToast } from "@/components/ui";
+import { Badge, Button, EventTickets, TopToast } from "@/components/ui";
 import { useServerNow } from "@/components/useServerNow";
-import { stampsOf, type AcaraView } from "@/lib/acara";
+import type { AcaraView } from "@/lib/acara";
 import { cx } from "@/lib/cx";
 import { initials, timeWib } from "@/lib/format";
 import type { GuestCard } from "@/lib/data/types";
 import type { QueuedPhoto } from "@/lib/offline/photoDb";
 import type { GuestPhotos } from "@/lib/photo";
-import { countdownParts, minutesUntil, type SessionView } from "@/lib/rundown";
+import type { SessionView } from "@/lib/rundown";
 import { DetailSheet, RundownSheet, SpeakerSheet, TamuSheet, type SheetKind } from "./Sheets";
 import styles from "./f4.module.css";
 
 // F4 · layar acara tamu (/t/[token]/acara): satu layar, dua mode dari state acara (prd §6).
 // SESI = BT20 Open space · BT21 Talkshow · BT23 Tur kantor · BT24 Closing; JEDA = BT03 (+ jeda
-// terakhir, sebelum sesi 1). Panitia Mulai/Selesaikan → rev naik → SSE/poll 2 dtk → router.refresh.
+// terakhir, sebelum sesi 1, BT03s "Bentar lagi mulai"). Panitia Mulai/Selesaikan → rev naik → SSE/
+// poll 2 dtk → router.refresh. v3 (26 Okt): header cuma badge "Sedang berjalan"/"Sedang jeda",
+// Tiket acara (geser) ganti Jejak acara + kartu countdown (K13); tap tiket → BT22 sesi itu.
 // Sheet BT22/BT21p/BT04/BT05 dibuka lewat `?sheet=` (pushState) supaya back HP menutupnya.
 // N4: sheet hasil foto (?sheet=foto&id=…, dari kamera) & Galeri (?sheet=galeri); antrean foto
 // dikirim dari sini (terkirim → router.refresh → sheet BT07b berubah ke BT07).
@@ -234,6 +236,16 @@ export function AcaraScreen({
 
   const offline = preview?.offline ?? !online;
   const { active, next } = view;
+
+  // BT03s: jam mulai sesi berikutnya lewat tanpa ada perubahan rev → ambil data baru tepat di jam
+  // itu (jam server), supaya judul & tiket pindah ke "sebentar lagi mulai" sendiri.
+  useEffect(() => {
+    if (preview || stale || !view.soonAt) return;
+    const skewNow = Date.parse(serverNow) - Date.now();
+    const wait = Date.parse(view.soonAt) - (Date.now() + skewNow) + 500;
+    const t = setTimeout(() => router.refresh(), Math.min(Math.max(wait, 0), 2 ** 31 - 1));
+    return () => clearTimeout(t);
+  }, [preview, stale, view.soonAt, serverNow, router]);
   const talkshowLive = active?.type === "talkshow";
   const art = active ? active.art : offline ? "weak-signal" : "break";
   const total = view.sessions.length;
@@ -280,13 +292,8 @@ export function AcaraScreen({
           <header className={styles.header}>
             <div className={styles.status}>
               <Badge tone="live" pulse>
-                Lagi jalan
+                Sedang berjalan
               </Badge>
-              <span className="t-label c-label-2">
-                {active.room
-                  ? `${active.room} · sampai ${active.endsAt}`
-                  : `Sampai ${active.endsAt}`}
-              </span>
             </div>
             <button
               type="button"
@@ -316,23 +323,20 @@ export function AcaraScreen({
         ) : (
           <header className={styles.header}>
             <div className={styles.status}>
-              <Badge tone="neutral">Lagi jeda</Badge>
-              <span className="t-label c-label-2">Rumah baru Potara</span>
+              <Badge tone="neutral">Sedang jeda</Badge>
             </div>
-            <h1 className="t-title">Jeda dulu, ngopi</h1>
+            <h1 className="t-title">{view.soon ? "Bentar lagi mulai" : "Jeda dulu, ngopi"}</h1>
           </header>
         )}
 
-        <JejakAcara
-          stamps={stampsOf(view)}
+        <EventTickets
+          tickets={view.tickets}
           caption={
             active ? `Sesi ${active.no} dari ${total}` : `${view.done} dari ${total} selesai`
           }
+          onOpen={(id) => open("detail", id)}
         />
 
-        {!active && next && (
-          <NextTicket session={next} date={view.eventDate} now={now} onOpen={open} />
-        )}
         {!active && view.finale && (
           <p className={cx("t-label c-label-2", styles.finale)}>
             Semua sesi udah selesai. Bentar lagi buku tamu kebuka.
@@ -489,31 +493,5 @@ export function AcaraScreen({
 
       {!preview && <LiveRefresh token={token} pollMs={2000} onHealth={setOnline} />}
     </main>
-  );
-}
-
-// BT03 kartu tiket Berikutnya: countdown ke jam mulai terjadwal (menit dibulatkan ke atas).
-function NextTicket({
-  session,
-  date,
-  now,
-  onOpen,
-}: {
-  session: SessionView;
-  date: string;
-  now: number;
-  onOpen: (kind: SheetKind, id?: string) => void;
-}) {
-  const c = countdownParts(minutesUntil(date, session.startsAt, now));
-  return (
-    <TicketNext
-      value={c.value}
-      unit={c.unit}
-      soon={c.soon}
-      eyebrow={["Berikutnya", session.startsAt, session.room].filter(Boolean).join(" · ")}
-      title={session.title}
-      speaker={session.speaker}
-      onClick={() => onOpen("detail", session.id)}
-    />
   );
 }

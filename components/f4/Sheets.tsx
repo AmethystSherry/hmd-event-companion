@@ -28,7 +28,7 @@ export type SheetKind =
   "detail" | "pembicara" | "rundown" | "tamu" | "kartu" | "foto" | "galeri" | "tanya";
 
 const STATE_BADGE = {
-  berlangsung: { tone: "live", label: "Lagi jalan" },
+  berlangsung: { tone: "live", label: "Sedang berjalan" },
   selesai: { tone: "success", label: "Selesai" },
   berikutnya: { tone: "neutral", label: "Berikutnya" },
   nanti: { tone: "neutral", label: "Nanti" },

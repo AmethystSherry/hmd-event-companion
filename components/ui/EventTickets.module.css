@@ -1,0 +1,223 @@
+.root {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+/* Deret melebar ke padding kanan panel (20) supaya tiket berikutnya ngintip sampai tepi layar.
+   Padding vertikal 4: sobekan yang miring nggak kepotong (overflow-x auto ikut memotong vertikal). */
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: -4px -20px -4px 0;
+  padding: 4px 20px 4px 0;
+  overflow-x: auto;
+  list-style: none;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.row::-webkit-scrollbar {
+  display: none;
+}
+
+.item,
+.pile {
+  flex-shrink: 0;
+  scroll-snap-align: start;
+}
+
+/* Tumpukan sobekan: 1 = 66, 3 = 90 (54 + 12 per sobekan). */
+.pile {
+  position: relative;
+  width: var(--pile);
+  height: 88px;
+}
+
+.stub {
+  position: absolute;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 62px;
+  height: 88px;
+  padding: 0;
+  border: 0;
+  border-right: 1.5px dashed var(--label-3);
+  border-radius: 18px 3px 3px 18px;
+  background: var(--card-2);
+  box-shadow: 2px 2px 3px rgba(0, 0, 0, 0.08);
+  color: var(--label-3);
+  font: inherit;
+  cursor: pointer;
+  transform-origin: center;
+}
+
+.stubNo,
+.sideNo {
+  font-size: 28px;
+  line-height: 32px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Tiket 262×88; di HP sempit ngecil supaya tumpukan + tiket tetap kelihatan (temuan v3). */
+.ticket {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  width: min(262px, calc(100cqw - var(--pile) - 8px));
+  min-width: 220px;
+  height: 88px;
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  border-radius: 18px;
+  background: var(--card-2);
+  color: var(--label);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  --tear: var(--label-3);
+  --side-bg: transparent;
+  --side-fg: var(--label-3);
+  --status: var(--label-3);
+}
+
+.now,
+.next,
+.soon {
+  background: var(--accent-soft);
+  --tear: var(--accent);
+  --status: var(--accent-text);
+}
+
+.now {
+  --side-bg: var(--accent);
+  --side-fg: #ffffff; /* teks di atas accent, sama di kedua mode (Figma --on-cta light) */
+}
+
+.next,
+.soon {
+  --side-bg: var(--accent-soft);
+  --side-fg: var(--accent-text);
+}
+
+.side {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 62px;
+  background: var(--side-bg);
+  color: var(--side-fg);
+}
+
+.tear {
+  position: relative;
+  flex-shrink: 0;
+  width: 2px;
+}
+
+.tear::before {
+  content: "";
+  position: absolute;
+  top: 12px;
+  bottom: 12px;
+  left: 0;
+  border-left: 1.5px dashed var(--tear);
+}
+
+.notchTop,
+.notchBottom {
+  position: absolute;
+  left: -8px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--card);
+}
+
+.notchTop {
+  top: -9px;
+}
+
+.notchBottom {
+  bottom: -9px;
+}
+
+.body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+  padding: 12px 10px 12px 12px;
+}
+
+.status {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  letter-spacing: 0.005em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--status);
+}
+
+.title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--label-2);
+}
+
+.time,
+.room {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.room {
+  min-width: 0;
+}
+
+.room > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ticket:active,
+.stub:active {
+  transform: scale(var(--press-scale));
+}
+
+.stub:active {
+  rotate: 0deg;
+}
