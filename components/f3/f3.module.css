@@ -1,0 +1,81 @@
+/* F3 v3 · P13 Foto masuk (Figma 5072:29266). */
+
+.toolbar {
+  display: flex;
+  align-items: center;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.headerText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.headerText p,
+.headerText h1 {
+  margin: 0;
+}
+
+.download {
+  flex-shrink: 0;
+}
+
+.disabled {
+  opacity: 0.35;
+}
+
+.filterRow {
+  display: flex;
+  gap: 8px;
+  margin: 4px calc(-1 * var(--margin)) 0 0;
+  padding: 0 var(--margin) 4px 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.filterRow::-webkit-scrollbar {
+  display: none;
+}
+
+.filterRow > * {
+  flex-shrink: 0;
+}
+
+/* Trash 16 di ujung caption, area tap 44. */
+.trash {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin: -14px -14px -14px -12px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--label-3);
+  cursor: pointer;
+}
+
+.trash:active {
+  color: var(--danger-text);
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom) + 24px);
+  z-index: 70;
+  width: max-content;
+  max-width: calc(min(100vw, var(--screen-width)) - 32px);
+  transform: translateX(-50%);
+}

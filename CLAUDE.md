@@ -55,6 +55,10 @@ Web app mobile untuk House Moving Day Potara Studio (Minggu 8 Nov 2026, 13.00–
   Claude** — P10 daftar mentah, terbaru di atas (PRD §7 N1 soal pengelompokan diabaikan). Sheet Tanya
   BT08/BT09/BT08b di `acara/` (`?sheet=tanya`), P10/P10c di `panitia/event/[id]/tanya`, tile
   Pertanyaan BP02 + BT12 nyala. Lihat "Aturan N1 di kode". Menunggu review.
+- **F3 + F4 v3 (26 Okt)**: `F3-F4-deliverables.md` v3, Figma C18 (udah ikut). Jejak acara + kartu
+  countdown → **Tiket acara (geser)** `EventTickets`, badge tamu "Sedang berjalan/jeda", header cuma
+  badge, BT03s "Bentar lagi mulai", **P13 Foto masuk** (hapus oleh panitia, unduh ZIP). K13–K21 =
+  default. Lihat "Aturan F3 + F4 di kode" v3. Menunggu review.
 - **N3 · Kenalan antartamu (26 Okt)**: Figma section `4670:4888`, `N3-deliverables.md` v1. Satu sumber kartu
   (`cardOf`, lib/card): `Guest.card` atau turunan isian T02. Sheet T11/T11e di `acara/` (`?sheet=kartu`,
   `/kartu` = redirect), toast gelap T11s, BT05b empty state, `POST /api/t/[token]/kartu`. Lihat "Aturan N3
@@ -96,11 +100,11 @@ app/
     event/[id]/           PE03/PE03b (+ sheet PE03e/PE03h) · rundown/ (PE04k/PE04/PE04a/PE04b/
                           PE04s) · tamu/ (P04k/P04a/P04c/P04i/P04/P04b/d/e/f/g/h/s) · kontrol/ (BP02/BP03/BP01b +
                           F5 BP04/BP04b) · rekap/ (F5 P11/P11b/P11c/P11d) ·
-                          foto/ (placeholder) · tanya/ (N1 P10/P10c) ·
+                          foto/ (F3 v3 P13 Foto masuk) · tanya/ (N1 P10/P10c) ·
                           scan/ (P05/P05b/P06/P06b/P06c) · scan/cari/ (P07/P07b/P07c)
   api/live/               SSE: kirim `rev` store tiap ada perubahan (tanpa data tamu)
   api/panitia/            event/[id]/manifest (GET daftar pintu) · checkin (POST antrean op) ·
-                          foto/[id] (GET gambar, sesi PIN) · event/[id]/rekap.csv (GET, F5) ·
+                          foto/[id] (GET gambar / DELETE hapus P13, sesi PIN) · event/[id]/rekap.csv (GET, F5) ·
                           event/[id]/ringkasan (POST ringkasan Claude, F5)
   api/t/[token]/foto/     POST upload foto (N4) · [id] GET gambar / DELETE foto sendiri
   api/t/[token]/buku-tamu POST isian buku tamu (F5 · T14)
@@ -133,6 +137,7 @@ components/n4/            KolaseApp (kamera BT06/BT06b) · useCamera · capture 
                           usePhotoOutbox (kirim + antrean) · NempelSheet (BT07/b/c/e) · GaleriSheet (BT07d)
 components/n1/            TanyaSheet (BT08/BT09/BT08b) · Pertanyaan (P10/P10c)
 components/n3/            KartuSheet (T11/T11e + gagal simpan) · InterestChips (chip minat + tambah di tempat)
+components/f3/            FotoMasuk (P13: masonry bingkai, filter sesi, hapus + Dialog, unduh ZIP)
 components/f4/            AcaraScreen (BT20–24/BT03/S01, sheet lewat ?sheet=) · Sheets (BT22/BT21p/BT04/BT05) ·
 components/f5/            Selesai (BT12 + belum masuk) · BukuTamu (T14/b/c) · KolaseKulkas (T15/T15c/
                           T15d/T14d) · FotoDetail (T15b) · kolaseCanvas (gambar 9:16) · saveImage ·
@@ -245,8 +250,7 @@ Keputusan default 22 Okt (jawaban "Keputusan & asumsi" di F2-deliverables; prd.m
   bawah, tanpa TabBar. Konfirmasi pakai `Dialog` (tengah layar), bukan Sheet.
 - **F2 v4 (26 Okt)**: Badge kartu sesi dari `SESSION_CARD_BADGE` (lib/rundown): Live "**Sedang
   berjalan**" · Selesai · Berikutnya · Belum mulai. Teks rundown ("Sesi {n} lagi jalan", "Lagi jalan ·
-  MM:SS") & layar tamu (`f4/Sheets`, `AcaraScreen`, `lib/acara`) **sengaja belum** diganti (nunggu
-  keputusan tim). Tile Foto → `foto/` placeholder (P13 · Foto masuk `5073:6192` belum dibangun).
+  MM:SS") tetap "lagi jalan" (Figma). Layar tamu ikut "Sedang …" sejak F3 v3 (K15). Tile Foto → P13.
 - Scan (P05–P06c): back → BP02, tombol bawah "Lihat daftar tamu" → P07, tanpa TabBar. P05b = Toast
   di bawah baris back (ikut alur, nggak nutupin back/judul). Nomor "tamu ke-n dari N" di P06,
   header, dan BT02 dari sumber sama (hasil server + pembagi RSVP hadir setelah check-in ini).
@@ -267,7 +271,7 @@ Keputusan default 22 Okt (jawaban "Keputusan & asumsi" di F2-deliverables; prd.m
   "Kunci #014" (Key) + Pill "Sudah masuk" (Check, copy Figma), "Masuk sekarang", caption 12
   `aria-live`. Tanpa Ticket/cap (sobek cuma di T05a). Ilustrasi di-`preload()` (react-dom) sejak T05.
 - Kamera butuh HTTPS di HP (`npx next dev --experimental-https`); gagal/ditolak → P07b.
-- Store dev ada di `globalThis.__hmdStoreN3`: naikkan kuncinya tiap method store bertambah (server
+- Store dev ada di `globalThis.__hmdStoreF34v3`: naikkan kuncinya tiap method store bertambah (server
   dev yang sedang jalan nggak membuat ulang instance lama saat HMR). Server dev yang sudah jalan
   bisa tetap memakai modul server lama (mis. `store.getPhoto is not a function`) → restart `npm run dev`.
 
@@ -317,7 +321,7 @@ Keputusan default 24 Okt (jawaban "Keputusan & asumsi" + "Temuan" di N4-delivera
   {jam}" + Trash 16 (area tap 44) → Dialog "Hapus foto ini?" → `DELETE` → toast + refresh. Tile "Foto
   lagi" (dashed accent) disembunyikan di 20 foto → "Maks 20 foto". Kosong → tile + "Belum ada foto.
   Jepret yang pertama!" (TODO copy). Tap polaroid = belum ada (TODO desain).
-- Badge home Figma "Sedang jeda" vs kode "Lagi jeda": **belum diubah** (keputusan F3/F4).
+- Badge home "Sedang jeda" / "Sedang berjalan" (F3 v3, K15).
 13. Hapus foto sendiri: `DELETE /api/t/[token]/foto/[id]` (soft delete `deletedAt` + file dihapus),
     UI di F5 (T15b). Hapus otomatis H+30: lihat "Aturan F5 di kode".
 14. Tile "Foto" BP02 = `photoCount` (realtime lewat `rev`).
@@ -412,8 +416,7 @@ Keputusan 25 Okt (default "Keputusan & asumsi" F3-F4-deliverables, kecuali K3/K8
    (raw image layer C18, 1179×1650, webp 88, 67–91 KB). Dari `Session.art`; kosong → talkshow untuk
    `type: talkshow`, lainnya open-space. JEDA = break, JEDA offline = weak-signal. Tinggi ilustrasi =
    sisa layar di atas panel + 32 (flex, min 160; HP pendek = halaman scroll).
-5. **Countdown** kartu tiket Berikutnya: menit ke jam mulai **terjadwal** dibulatkan ke atas, tick
-   15 dtk dari jam server (`useServerNow`). ≤ 0 → "Sebentar lagi · mulai"; > 99 mnt → "{j} jam · lagi".
+5. ~~Countdown~~ **dihapus di v3 (K13)** — lihat "v3" di bawah.
 6. **Tanya** aktif (accent-soft) cuma saat sesi `type: talkshow` jalan → sheet N1 `?sheet=tanya`;
    selain itu opacity 0,4 + `aria-disabled`, tap diam.
 7. Galeri → `/t/[token]/galeri` (placeholder BT07d). FAB = `Button` primary icon-only 54 (bukan
@@ -446,8 +449,34 @@ Keputusan 25 Okt (default "Keputusan & asumsi" F3-F4-deliverables, kecuali K3/K8
     dimuat). Layar menyimpan snapshot `hmd-acara:{token}` + selisih jam `hmd-acara-skew` di
     localStorage; HTML dari cache SW yang lebih lama (rev lebih kecil) → pakai snapshot. Keenam
     ilustrasi di-fetch 1,5 dtk setelah layar dibuka (SW cache-first `/figma/`). SW cache `hmd-v4`.
-- Komponen baru: `TopToast` (S01, BP02d), `JejakAcara` (4 stempel), `TicketNext` (kartu tiket
-  Berikutnya), `GuestCard` (BT05). Kartu kamu (tiket gelap `--cta`) di `components/f4/Sheets`.
+- **v3 (26 Okt, K13–K21 default)**:
+  - **Tiket acara** `EventTickets` (components/ui) ganti `JejakAcara` + `TicketNext` (dihapus). Data
+    `acaraView.tickets[]` {no, title, jam, room, state done|now|next|soon|later}. Sobekan selesai numpuk
+    kiri (54 + 12/sobekan, geser 12, miring 5°/−4°, terbaru di atas), tiket 262×88 (lebar
+    `min(262, 100cqw − tumpukan − 8)` di HP sempit), deret melebar ke padding kanan panel, scroll-snap,
+    awal di 0. Tiket & sobekan = tombol (label lengkap) → BT22 sesi itu (K16). Jeda terakhir = semua
+    sobekan + baris "Semua sesi udah selesai…" (K17).
+  - Header cuma Badge "Sedang berjalan" / "Sedang jeda" (baris ruang/jam & "Rumah baru Potara" dihapus).
+    BT22 badge & BT04 subjudul "Sedang berjalan · {ruang}" (K15). Rundown/BP01 panitia tetap "lagi jalan".
+  - **BT03s** (K14): `acaraView.soon` = jeda + jam server ≥ jam mulai terjadwal sesi berikutnya + belum
+    dimulai (termasuk sebelum sesi 1) → judul "Bentar lagi mulai", tiket "SEBENTAR LAGI MULAI". Nggak ada
+    perubahan rev → `soonAt` (jam mulai, ISO) dan `AcaraScreen` `router.refresh()` tepat di jam itu.
+  - **P13 Foto masuk** (`components/f3/FotoMasuk`, `panitia/event/[id]/foto`, sesi PIN, LiveRefresh 2 dtk):
+    `toKolasePhotos` + `Masonry`/`PhotoPin frame` (kartu --card radius 4, foto radius 2, slot `action`
+    Trash 16 area 44), chip `Chip look="card"` "Semua" + sesi yang punya foto urut rundown (K20),
+    subjudul "{n} foto · tamu lihat semua pas acara selesai". Tap foto = diam (K21). Kosong → HeroState.
+  - **Hapus panitia** (K18): Dialog "Hapus foto ini?" / "Fotonya hilang dari galeri & kolase semua tamu."
+    → `DELETE /api/panitia/foto/[id]` `{by}` (same-origin + sesi PIN) → store `removePhoto(id, at, by)`
+    (`deletedAt` + `Photo.deletedBy`, idempoten → 204) lalu file dihapus. Optimistic (pin hilang dulu,
+    gagal → balik + Toast). Rev naik → BT07d/BT07/T15 & tile Foto ikut update.
+  - Foto yang udah dihapus (pemilik / panitia) **ditolak saat dikirim ulang**: `POST /api/t/[token]/foto`
+    cek `isPhotoDeleted` sebelum nulis file → 410 `foto-dihapus`; `addPhoto` id terhapus → StoreError
+    `foto-dihapus` (antrean HP membuang 4xx).
+  - **Unduh** (K19): ZIP stored tanpa dependency (`lib/zip.ts`, CRC32, nama UTF-8, tes baca balik via
+    zlib). HP fetch foto full lewat proxy panitia (filter aktif), `foto-hmd-{semua|slug-sesi}.zip`,
+    file `{nn}-{nama}-{sesi}.jpg` urut lama → baru, download `<a download>`. 0 foto → tombol redup.
+  - Dev: /dev/states/f4 BT03s (ganti BT03-habis), P13, P13-hapus, P13-kosong. Store dev `__hmdStoreF34v3`.
+- Komponen baru: `TopToast` (S01, BP02d), `EventTickets` (v3, Tiket acara), `GuestCard` (BT05). Kartu kamu (tiket gelap `--cta`) di `components/f4/Sheets`.
 - Server action dari browser pane Claude ditolak Next (origin `null`) → uji tombol dev di browser biasa.
 
 ## Aturan N1 di kode
@@ -534,9 +563,9 @@ Keputusan 26 Okt (prompt N3 + usulan "Temuan" N3-deliverables T1–T13):
   Card/CardLabel/InnerBox, StatTile (+`highlight`), ListRow/Avatar, Banner/TextAction, HeroState (+`size="sm"`), Field, Toast
   (undo ring), Sheet (bawah / `floating`), TabBar, Ticket (+`torn`)/TicketStub, LogoMark,
   Screen/ScreenHeader/Skeleton, SearchField, Dialog (konfirmasi tengah layar, BP03/BP01b),
-  StarRating (T14), Masonry + PhotoPin (T15, nanti galeri panitia), BarList (P11), SwipeRow (P04s/
+  StarRating (T14), Masonry + PhotoPin (T15; `frame` + `action` P13), Chip `look="card"` (P13), BarList (P11), SwipeRow (P04s/
   PE04s, panel hapus `--danger-fill`), TopToast (S01,
-  BP02d, `tone="dark"` T11s), JejakAcara · TicketNext (BT03) · GuestCard (BT05) · MyCard (BT05/T11), IllustratedScreen (ilustrasi + fade +
+  BP02d, `tone="dark"` T11s), EventTickets (Tiket acara F4 v3) · GuestCard (BT05) · MyCard (BT05/T11), IllustratedScreen (ilustrasi + fade +
   panel `--card`, BT02; pola sama dengan `components/f4/AcaraScreen` yang masih inline). `TextAction`
   bisa `href`.
 - **Button** (`Clean/Button` 4587:316, 12 varian): `size` `lg` (54, lebar penuh) | `sm` (36, lebar
@@ -614,4 +643,6 @@ menghapus data per orang di store lokal → balikin lewat `/dev/states/f1` Reset
       menunggu review
 - [x] N3 (26 Okt) — kenalan antartamu: sheet T11/T11e/T11s, BT05b, satu sumber kartu (T02 ↔ T11),
       POST kartu, realtime — menunggu review
+- [x] F3 + F4 v3 (26 Okt) — Tiket acara geser, badge "Sedang …", BT03s, P13 Foto masuk (hapus panitia,
+      unduh ZIP) — menunggu review
 - [ ] N2, BT07d galeri — berikutnya (versi lama: tag `archive-pre-revisi`)

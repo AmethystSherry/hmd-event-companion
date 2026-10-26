@@ -101,3 +101,20 @@
   white-space: nowrap;
   text-overflow: ellipsis;
 }
+
+.captionText {
+  flex: 1;
+}
+
+/* P13 · pin bingkai putih (pengecualian polaroid, sama seperti T15 di Figma). */
+.frame {
+  padding: 8px 8px 10px;
+  border-radius: 4px;
+  background: var(--card);
+  box-shadow: 0 6px 7px rgba(0, 0, 0, 0.1);
+}
+
+.frame .photo,
+.frame .open {
+  border-radius: 2px;
+}

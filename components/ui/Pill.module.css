@@ -106,3 +106,9 @@
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+/* P13 Foto masuk: chip nonaktif = kartu putih + shadow card (di atas --bg). */
+.card:not([aria-pressed="true"]) {
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+}

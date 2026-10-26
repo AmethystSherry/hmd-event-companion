@@ -1,10 +1,13 @@
 import type { ComponentProps, ReactNode } from "react";
 import { KontrolScreen } from "@/components/f2/Kontrol";
+import { FotoMasukScreen } from "@/components/f3/FotoMasuk";
 import { AcaraScreen } from "@/components/f4/AcaraScreen";
 import { acaraView } from "@/lib/acara";
 import { HMD_ID, seedData } from "@/lib/data/seed";
 import { createStore, type DataStore } from "@/lib/data/store";
-import { demoEvent, NAMES } from "@/lib/fixtures";
+import { demoEvent, demoSessions, NAMES } from "@/lib/fixtures";
+import { firstName } from "@/lib/format";
+import { photoTone, type KolasePhoto } from "@/lib/kolase";
 import { toGuestPhotos, type GuestPhotos } from "@/lib/photo";
 import { rundownView } from "@/lib/rundown";
 import type { GuestCard } from "@/lib/data/types";
@@ -146,6 +149,36 @@ export function kontrol(
   );
 }
 
+// P13 · 34 foto contoh dari 20 tamu (placeholder gradasi, rasio bervariasi), terbaru dulu.
+const P13_SESSIONS = demoSessions.map((x) => ({ id: x.id, title: x.title }));
+const P13_HEIGHTS = [1280, 960, 1280, 1100, 800, 1280];
+const P13_PHOTOS: KolasePhoto[] = Array.from({ length: 34 }, (_, i) => {
+  const id = `00000000-0000-4000-8000-${String(i + 1).padStart(12, "0")}`;
+  const [name] = NAMES[i % 20];
+  const session = P13_SESSIONS[[1, 0, 2, 1, 3, 0, 2][i % 7]];
+  return {
+    id,
+    mine: false,
+    name,
+    first: firstName(name),
+    sessionId: session.id,
+    session: session.title,
+    time: "14.10",
+    width: 1067,
+    height: P13_HEIGHTS[i % P13_HEIGHTS.length],
+    tone: photoTone(id),
+  };
+});
+const fotoMasuk = (photos: KolasePhoto[], confirmId?: string) => (
+  <FotoMasukScreen
+    eventId={demoEvent.id}
+    phaseLabel="Hari-H"
+    photos={photos}
+    sessions={P13_SESSIONS}
+    preview={{ confirmId }}
+  />
+);
+
 export const SCREENS: ScreenDef[] = [
   {
     code: "BT20",
@@ -186,14 +219,14 @@ export const SCREENS: ScreenDef[] = [
   },
   {
     code: "BT03",
-    name: "Jeda · nunggu sesi (12 mnt lagi)",
+    name: "Jeda · tiket berikutnya",
     kind: "Utama",
     lane: "Tamu",
     render: () => acara(jeda1, "13:48:00"),
   },
   {
-    code: "BT03-habis",
-    name: "Jeda · countdown habis",
+    code: "BT03s",
+    name: "Sebentar lagi mulai (jam mulai lewat)",
     kind: "Kasus",
     lane: "Tamu",
     render: () => acara(jeda1, "14:01:00"),
@@ -303,5 +336,26 @@ export const SCREENS: ScreenDef[] = [
       kontrol(openSpace, "13:12:34", {
         conflict: "HP 7K2Q udah mulai Open space duluan. Layarmu ikut update.",
       }),
+  },
+  {
+    code: "P13",
+    name: "Foto masuk",
+    kind: "Kasus",
+    lane: "Panitia",
+    render: () => fotoMasuk(P13_PHOTOS),
+  },
+  {
+    code: "P13-hapus",
+    name: "Foto masuk · konfirmasi hapus",
+    kind: "Aksi",
+    lane: "Panitia",
+    render: () => fotoMasuk(P13_PHOTOS, P13_PHOTOS[0].id),
+  },
+  {
+    code: "P13-kosong",
+    name: "Foto masuk · belum ada foto",
+    kind: "Kasus",
+    lane: "Panitia",
+    render: () => fotoMasuk([]),
   },
 ];

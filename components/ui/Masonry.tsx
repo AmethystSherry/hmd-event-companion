@@ -40,6 +40,8 @@ export function Masonry<T>({
 
 // Satu pin foto: foto radius 16 (tinggi ikut rasio asli) + label kaca "Fotoku" + caption avatar 20
 // + "{nama} · {sesi}". Tanpa `src` = placeholder gradasi (pratinjau / belum dimuat).
+// `frame` (P13 Foto masuk): kartu putih radius 4 (padding 8/8/10, shadow 0 6 7), foto radius 2;
+// `action` = tombol di ujung kanan caption (P13: hapus).
 export function PhotoPin({
   src,
   width,
@@ -50,6 +52,8 @@ export function PhotoPin({
   tone = 0,
   onOpen,
   label,
+  frame,
+  action,
 }: {
   src?: string;
   width: number;
@@ -60,6 +64,8 @@ export function PhotoPin({
   tone?: number; // placeholder: 0 oranye · 1 gelap · 2 krem · 3 amber
   onOpen?: () => void;
   label?: string; // aria-label tombol ("Buka foto Rara")
+  frame?: boolean;
+  action?: ReactNode;
 }) {
   const photo = (
     <span
@@ -72,7 +78,7 @@ export function PhotoPin({
     </span>
   );
   return (
-    <figure className={styles.pin}>
+    <figure className={cx(styles.pin, frame && styles.frame)}>
       {onOpen ? (
         <button type="button" className={styles.open} onClick={onOpen} aria-label={label}>
           {photo}
@@ -83,6 +89,7 @@ export function PhotoPin({
       <figcaption className={cx("t-label c-label-2", styles.caption)}>
         <Avatar name={name} size={20} />
         <span className={styles.captionText}>{caption}</span>
+        {action}
       </figcaption>
     </figure>
   );

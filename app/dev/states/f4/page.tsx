@@ -72,12 +72,12 @@ async function DevTools() {
         <div className={styles.links}>
           <form action={setFakeNow.bind(null, BEFORE_TALKSHOW)}>
             <Button size="sm" type="submit" icon={<Clock />}>
-              Hari-H 13.48 (countdown)
+              Hari-H 13.48 (jeda)
             </Button>
           </form>
           <form action={setFakeNow.bind(null, LATE)}>
             <Button size="sm" type="submit" icon={<Clock />}>
-              Hari-H 14.03 (lewat jadwal)
+              Hari-H 14.03 (BT03s · lewat jadwal)
             </Button>
           </form>
           <form action={setFakeNow.bind(null, null)}>

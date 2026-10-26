@@ -27,7 +27,7 @@ export function Pill({
 // Chip pilihan (T02b skill/asbun, T14 "Bagian paling seru").
 // tone "ink": terpilih = Ink; tone "accent": terpilih = oranye lembut (asbun).
 // look "soft" (T14): off = card-2. look "outline" (T02b): off = kartu + garis, on = ikon check
-// (`check={false}` = tanpa ikon, chip titip ucapan T02b).
+// (`check={false}` = tanpa ikon, chip titip ucapan T02b). look "card" (P13): off = kartu + shadow.
 export function Chip({
   selected,
   tone = "ink",
@@ -39,7 +39,7 @@ export function Chip({
 }: {
   selected: boolean;
   tone?: "ink" | "accent";
-  look?: "soft" | "outline";
+  look?: "soft" | "outline" | "card";
   check?: boolean;
   children: ReactNode;
 } & Omit<ComponentProps<"button">, "children">) {
@@ -50,6 +50,7 @@ export function Chip({
       className={cx(
         styles.chip,
         look === "outline" && styles.outline,
+        look === "card" && styles.card,
         selected && styles[`selected-${tone}`],
         className,
       )}
