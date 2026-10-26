@@ -382,6 +382,23 @@ describe("foto kolase (N4)", () => {
     expect(store.photoCount(HMD_ID)).toBe(0);
   });
 
+  it("P13: panitia hapus foto siapa pun, idempoten, kirim ulang foto yang dihapus ditolak", () => {
+    const { store, a, b } = withGuests();
+    store.addPhoto(photo(a.id, 1));
+    store.addPhoto(photo(b.id, 2));
+    const rev = store.rev;
+    expect(store.removePhoto(id(1), at("14:10"), "HP 7K2Q")).toBe(true);
+    expect(store.rev).toBe(rev + 1);
+    expect(store.removePhoto(id(1), at("14:11"), "HP LAIN")).toBe(false);
+    expect(store.rev).toBe(rev + 1);
+    expect(store.listPhotos(HMD_ID).map((p) => p.id)).toEqual([id(2)]);
+    expect(store.photoSummary(HMD_ID, b.id)).toMatchObject({ total: 1, others: 0 });
+    expect(store.isPhotoDeleted(id(1))).toBe(true);
+    expect(store.isPhotoDeleted(id(2))).toBe(false);
+    expect(() => store.addPhoto(photo(a.id, 1))).toThrow(StoreError);
+    expect(store.removePhoto("nggak-ada", at("14:12"), null)).toBe(false);
+  });
+
   it("hapus tamu → metadata fotonya ikut hilang", () => {
     const { store, a } = withGuests();
     store.addPhoto(photo(a.id, 1));

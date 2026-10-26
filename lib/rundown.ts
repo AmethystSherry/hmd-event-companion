@@ -122,17 +122,10 @@ export function actualMin(s: Pick<SessionView, "startedAt" | "endedAt">): number
   return Math.round(elapsedMs(s, 0) / 60_000);
 }
 
-// Menit sampai jam mulai terjadwal (dibulatkan ke atas; ≤ 0 = udah lewat jamnya).
+// Menit sampai jam mulai terjadwal (dibulatkan ke atas; ≤ 0 = udah lewat jamnya). Pengingat BP01
+// & BT03s (F4 v3: countdown nggak tampil lagi di layar tamu, K13).
 export function minutesUntil(date: string, startsAt: string, nowMs: number): number {
   return Math.ceil((eventStart(date, startsAt).getTime() - nowMs) / 60_000);
-}
-
-// Kolom kiri kartu tiket Berikutnya (BT03). K5: ≤ 0 → "Sebentar lagi · mulai" (bukan minus);
-// > 99 menit → "{j} jam · lagi".
-export function countdownParts(min: number): { value: string; unit: string; soon: boolean } {
-  if (min <= 0) return { value: "Sebentar lagi", unit: "mulai", soon: true };
-  if (min > 99) return { value: `${Math.round(min / 60)} jam`, unit: "lagi", soon: false };
-  return { value: String(min), unit: "mnt lagi", soon: false };
 }
 
 // Pengingat BP01: jam server udah lewat jam mulai sesi berikutnya (selagi jeda).

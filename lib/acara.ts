@@ -1,9 +1,10 @@
 import type { Event, Guest, Session, Ticket } from "./data/types";
 import { cardOf } from "./card";
+import { eventStart } from "./format";
 import { rundownView, type SessionView } from "./rundown";
 
-// F4 · data layar acara tamu (/t/[token]/acara): SESI ⇄ JEDA dari state acara + BT05 Tamu di
-// sini. Logika murni & bisa diserialisasi (server → klien, juga snapshot offline di localStorage).
+// F4 · data layar acara tamu (/t/[token]/acara): SESI ⇄ JEDA dari state acara, Tiket acara (v3)
+// + BT05 Tamu di sini. Logika murni & bisa diserialisasi (server → klien, juga snapshot offline di localStorage).
 // Data tamu lain cuma nama, IG, kartu, dan status datang — tanpa WA, token, atau nomor kunci (K8).
 
 export type AcaraGuest = {
@@ -16,6 +17,20 @@ export type AcaraGuest = {
   arrivedAt: string | null;
 };
 
+// F4 v3 · Tiket acara (geser): sesi selesai = sobekan, sekarang (jalan) / berikutnya / sebentar
+// lagi mulai (BT03s) / nanti = tiket penuh.
+export type TicketState = "done" | "now" | "next" | "soon" | "later";
+
+export type EventTicket = {
+  id: string;
+  no: number;
+  title: string;
+  startsAt: string;
+  endsAt: string;
+  room: string | null;
+  state: TicketState;
+};
+
 export type AcaraView = {
   mode: "sesi" | "jeda"; // "pre" (sebelum sesi 1) = jeda dengan Berikutnya = sesi 1
   sessions: SessionView[];
@@ -23,7 +38,9 @@ export type AcaraView = {
   next: SessionView | null;
   done: number;
   finale: boolean; // jeda terakhir: semua sesi selesai, acara belum ditutup
-  eventDate: string; // countdown ke jam mulai sesi berikutnya
+  tickets: EventTicket[]; // urut rundown; komponen yang menumpuk sobekan di kiri
+  soon: boolean; // BT03s: jeda, jam mulai sesi berikutnya udah lewat, panitia belum mulai (K14)
+  soonAt: string | null; // jam mulai terjadwal sesi berikutnya (selagi belum "soon") → refresh di HP
   loadedAt: string; // jam server saat data dimuat → "Info sesi terakhir 13.58" (S01)
   rev: number; // snapshot offline: yang lebih baru menang
   me: AcaraGuest & { keyNo: number };
@@ -70,6 +87,8 @@ export function acaraView({ event, sessions, guests, tickets, me, now, rev }: In
       return a.name.localeCompare(b.name, "id");
     });
   const self = toGuest(me);
+  const nextStart = !r.active && r.next ? eventStart(event.date, r.next.startsAt) : null;
+  const soon = !!nextStart && now.getTime() >= nextStart.getTime();
   return {
     mode: r.active ? "sesi" : "jeda",
     sessions: r.sessions,
@@ -77,7 +96,26 @@ export function acaraView({ event, sessions, guests, tickets, me, now, rev }: In
     next: r.next,
     done: r.done,
     finale: !r.active && !r.next && r.sessions.length > 0 && r.done > 0,
-    eventDate: event.date,
+    tickets: r.sessions.map((s) => ({
+      id: s.id,
+      no: s.no,
+      title: s.title,
+      startsAt: s.startsAt,
+      endsAt: s.endsAt,
+      room: s.room,
+      state:
+        s.state === "selesai"
+          ? "done"
+          : s.state === "berlangsung"
+            ? "now"
+            : s.state === "berikutnya"
+              ? soon
+                ? "soon"
+                : "next"
+              : "later",
+    })),
+    soon,
+    soonAt: nextStart && !soon ? nextStart.toISOString() : null,
     loadedAt: now.toISOString(),
     rev,
     me: { ...self, keyNo: me.keyNo },
@@ -94,30 +132,10 @@ export function filterGuests(list: AcaraGuest[], query: string): AcaraGuest[] {
   return list.filter((g) => g.name.toLowerCase().includes(q) || g.ig.includes(q));
 }
 
-// Jejak acara: label pendek di bawah stempel ("Closing & networking" → "Closing").
-export const stampLabel = (title: string) => title.split(" & ")[0];
-
-// Stempel: selesai · sekarang (sesi jalan, atau berikutnya saat jeda) · nanti.
-export function stampsOf(v: Pick<AcaraView, "sessions">) {
-  return v.sessions.map((s) => ({
-    id: s.id,
-    no: s.no,
-    label: stampLabel(s.title),
-    state:
-      s.state === "selesai"
-        ? ("done" as const)
-        : s.state === "berlangsung" || (s.state === "berikutnya" && !v.sessions.some(isLive))
-          ? ("now" as const)
-          : ("later" as const),
-  }));
-}
-
-const isLive = (s: SessionView) => s.state === "berlangsung";
-
 // BT04 · subjudul baris rundown tamu.
 export function rundownSubtitle(s: SessionView): string {
   if (s.state === "selesai") return "Selesai";
-  if (s.state === "berlangsung") return s.room ? `Lagi jalan · ${s.room}` : "Lagi jalan";
+  if (s.state === "berlangsung") return s.room ? `Sedang berjalan · ${s.room}` : "Sedang berjalan";
   if (s.state === "berikutnya") return `Berikutnya · ${s.speaker?.name ?? s.room ?? s.pic}`;
   return s.room ?? s.pic;
 }

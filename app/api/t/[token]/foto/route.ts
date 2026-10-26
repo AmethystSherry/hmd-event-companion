@@ -50,6 +50,11 @@ export async function POST(req: Request, ctx: RouteContext<"/api/t/[token]/foto"
     return reply({ ok: false, error: "Fotonya nggak bisa dibaca" }, 400);
   }
 
+  // Foto yang udah dihapus (pemilik / panitia P13) dikirim ulang dari antrean → tolak sebelum file
+  // ditulis lagi ke storage.
+  if (store.isPhotoDeleted(id)) {
+    return reply({ ok: false, code: "foto-dihapus", error: "Fotonya udah dihapus" }, 410);
+  }
   const known = store.getPhoto(id);
   if (known && known.guestId !== guest.id) return reply({ ok: false, error: "Foto bentrok" }, 409);
   if (!known) {
@@ -72,6 +77,8 @@ export async function POST(req: Request, ctx: RouteContext<"/api/t/[token]/foto"
   } catch (err) {
     if (!isStoreError(err)) throw err;
     if (!known) await deletePhotoFiles(guest.eventId, id).catch(() => {});
+    if (err.code === "foto-dihapus")
+      return reply({ ok: false, code: err.code, error: err.message }, 410);
     const code = err.code === "foto-penuh" || err.code === "acara-ditutup" ? err.code : undefined;
     return reply({ ok: false, code, error: err.message }, 409);
   }

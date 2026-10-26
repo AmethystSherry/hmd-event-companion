@@ -112,4 +112,8 @@ export function toGuestPhotos(input: {
 // Respons upload (BT07) & ringkasan kolase untuk layar tamu.
 export type PhotoUploadResponse =
   | { ok: true; id: string; total: number; others: number; latest: string[]; mine: number }
-  | { ok: false; error: string; code?: "foto-penuh" | "acara-ditutup" | "belum-masuk" };
+  | {
+      ok: false;
+      error: string;
+      code?: "foto-penuh" | "acara-ditutup" | "belum-masuk" | "foto-dihapus";
+    };

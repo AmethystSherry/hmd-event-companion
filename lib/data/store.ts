@@ -40,6 +40,7 @@ export class StoreError extends Error {
       | "ig-dipakai"
       | "foto-tidak-ada"
       | "foto-penuh"
+      | "foto-dihapus"
       | "acara-ditutup"
       | "sesi-belum-selesai"
       | "acara-belum-ditutup"
@@ -774,6 +775,8 @@ export function createStore(
       const existing = photosOf(g.eventId, true).find((p) => p.id === input.id);
       if (existing) {
         if (existing.guestId !== g.id) throw new StoreError("foto-tidak-ada", "Foto nggak ketemu");
+        // F3 v3: foto yang udah dihapus (pemilik / panitia P13) nggak boleh nempel lagi lewat kirim ulang.
+        if (existing.deletedAt) throw new StoreError("foto-dihapus", "Fotonya udah dihapus");
         return { photo: existing, created: false };
       }
       if (event(g.eventId).mode === "closed") {
@@ -808,6 +811,19 @@ export function createStore(
       return true;
     },
 
+    // P13 · panitia hapus foto siapa pun (foto nggak pantas) sampai data dihapus H+30. Soft delete +
+    // label HP. Udah dihapus / nggak ada → false, rev tetap (dobel tap / dua HP).
+    removePhoto(id: string, at: string, by: string | null): boolean {
+      const p = data.photos?.find((x) => x.id === id && !x.deletedAt);
+      if (!p) return false;
+      p.deletedAt = at;
+      p.deletedBy = by;
+      commit();
+      return true;
+    },
+    isPhotoDeleted(id: string): boolean {
+      return !!data.photos?.some((p) => p.id === id && p.deletedAt);
+    },
     getPhoto(id: string): Photo | null {
       return data.photos?.find((p) => p.id === id && !p.deletedAt) ?? null;
     },

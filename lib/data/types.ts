@@ -152,7 +152,8 @@ export type Photo = {
   width: number;
   height: number;
   bytes: number;
-  deletedAt?: string | null; // dihapus pemiliknya (T15b), file ikut dihapus
+  deletedAt?: string | null; // dihapus pemiliknya (T15b) / panitia (P13), file ikut dihapus
+  deletedBy?: string | null; // P13: label HP panitia ("HP 7K2Q"); kosong = dihapus pemiliknya
 };
 
 // Ringkasan kolase untuk BT07: total foto aktif, foto tamu lain, dan id terbaru untuk strip.

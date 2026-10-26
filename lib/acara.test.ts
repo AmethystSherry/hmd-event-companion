@@ -5,7 +5,6 @@ import { backfillSessionInfo } from "./data/sessionInfo";
 import { createStore } from "./data/store";
 import {
   actualMin,
-  countdownParts,
   lateToStart,
   minutesUntil,
   overdueMin,
@@ -38,14 +37,14 @@ function withGuests() {
   return { store, rara, budi, citra };
 }
 
-function view(store: ReturnType<typeof createStore>, meId: string) {
+function view(store: ReturnType<typeof createStore>, meId: string, hhmm = "13:10") {
   return acaraView({
     event: store.getEvent(HMD_ID)!,
     sessions: store.listSessions(HMD_ID),
     guests: store.listGuests(HMD_ID),
     tickets: store.listTickets(HMD_ID),
     me: store.getGuest(meId)!,
-    now: new Date(t("13:10")),
+    now: new Date(t(hhmm)),
     rev: store.rev,
   });
 }
@@ -113,7 +112,7 @@ describe("layar acara tamu (F4)", () => {
     store.startSession(HMD_ID, "s01", t("13:00"));
     const v = rundownView(store.getEvent(HMD_ID)!, store.listSessions(HMD_ID));
     expect(v.sessions.map(rundownSubtitle)).toEqual([
-      "Lagi jalan · Ruang 01",
+      "Sedang berjalan · Ruang 01",
       "Berikutnya · Alfin Ganteng",
       "Ruang 03",
       "Ruang 01",
@@ -122,7 +121,72 @@ describe("layar acara tamu (F4)", () => {
   });
 });
 
-describe("waktu sesi (BP02c, countdown BT03, pengingat BP01)", () => {
+describe("Tiket acara (F4 v3) & BT03s", () => {
+  const states = (v: ReturnType<typeof view>) => v.tickets.map((x) => `${x.no}:${x.state}`);
+
+  it("sebelum sesi 1: tiket 01 berikutnya; lewat 13.00 belum dimulai → sebentar lagi (BT03s)", () => {
+    const { store, rara } = withGuests();
+    expect(states(view(store, rara.id, "12:50"))).toEqual([
+      "1:next",
+      "2:later",
+      "3:later",
+      "4:later",
+    ]);
+    const late = view(store, rara.id, "13:00");
+    expect(late).toMatchObject({ soon: true, soonAt: null });
+    expect(late.tickets[0].state).toBe("soon");
+    expect(view(store, rara.id, "12:50").soonAt).toBe(new Date(t("13:00")).toISOString());
+  });
+
+  it("sesi jalan: selesai = sobekan, sekarang, berikutnya, nanti; nggak pernah soon", () => {
+    const { store, rara } = withGuests();
+    store.startSession(HMD_ID, "s01", t("13:00"));
+    store.startSession(HMD_ID, "s02", t("14:00"));
+    const v = view(store, rara.id, "15:00");
+    expect(states(v)).toEqual(["1:done", "2:now", "3:next", "4:later"]);
+    expect(v).toMatchObject({ soon: false, soonAt: null });
+    expect(v.tickets[1]).toMatchObject({
+      title: "Talkshow",
+      startsAt: "14.00",
+      endsAt: "14.45",
+      room: "Ruang 02",
+    });
+  });
+
+  it("jeda setelah sesi 1: berikutnya → soon setelah 14.00; jeda terakhir semua sobekan", () => {
+    const { store, rara } = withGuests();
+    store.startSession(HMD_ID, "s01", t("13:00"));
+    store.finishSession(HMD_ID, "s01", t("13:58"));
+    expect(states(view(store, rara.id, "13:59"))).toEqual([
+      "1:done",
+      "2:next",
+      "3:later",
+      "4:later",
+    ]);
+    expect(states(view(store, rara.id, "14:01"))).toEqual([
+      "1:done",
+      "2:soon",
+      "3:later",
+      "4:later",
+    ]);
+    for (const id of ["s02", "s03", "s04"]) {
+      store.startSession(HMD_ID, id, t("15:00"));
+      store.finishSession(HMD_ID, id, t("16:00"));
+    }
+    const end = view(store, rara.id, "16:30");
+    expect(end.tickets.every((x) => x.state === "done")).toBe(true);
+    expect(end).toMatchObject({ finale: true, soon: false, soonAt: null });
+  });
+
+  it('BT04 subjudul sesi jalan pakai "Sedang berjalan"', () => {
+    const { store } = withGuests();
+    store.startSession(HMD_ID, "s01", t("13:00"));
+    const v = rundownView(store.getEvent(HMD_ID)!, store.listSessions(HMD_ID));
+    expect(rundownSubtitle(v.sessions[0])).toBe("Sedang berjalan · Ruang 01");
+  });
+});
+
+describe("waktu sesi (BP02c, pengingat BP01)", () => {
   it("lewat = stopwatch − durasi, dibulatkan ke bawah min 1", () => {
     const s = { startedAt: t("13:00"), endedAt: null, durationMin: 60 };
     expect(overdueMin(s, ms("13:59"))).toBeNull();
@@ -131,11 +195,8 @@ describe("waktu sesi (BP02c, countdown BT03, pengingat BP01)", () => {
     expect(actualMin({ startedAt: t("13:00"), endedAt: t("14:02") })).toBe(62);
   });
 
-  it("countdown: dibulatkan ke atas; ≤ 0 Sebentar lagi; > 99 menit jam", () => {
+  it("menit ke jam mulai dibulatkan ke atas; pengingat lewat jam mulai", () => {
     expect(minutesUntil("2026-11-08", "14.00", ms("13:48") + 30_000)).toBe(12);
-    expect(countdownParts(12)).toEqual({ value: "12", unit: "mnt lagi", soon: false });
-    expect(countdownParts(0).value).toBe("Sebentar lagi");
-    expect(countdownParts(130)).toMatchObject({ value: "2 jam", unit: "lagi" });
     expect(lateToStart("2026-11-08", { startsAt: "14.00" }, ms("14:01"))).toBe(true);
     expect(lateToStart("2026-11-08", { startsAt: "14.00" }, ms("13:59"))).toBe(false);
   });
