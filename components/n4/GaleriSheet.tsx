@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import { Camera, Check, Info, LockSimple, Trash } from "@/components/icons";
-import { Button, Dialog, Polaroid, Segmented, Sheet, Toast } from "@/components/ui";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Camera, Info, LockSimple, Trash } from "@/components/icons";
+import { Polaroid, Segmented, Sheet, Toast } from "@/components/ui";
 import { timeWib } from "@/lib/format";
 import type { QueuedPhoto } from "@/lib/offline/photoDb";
 import { guestPhotoUrl, MAX_PHOTOS_PER_GUEST, type GuestPhotos } from "@/lib/photo";
@@ -11,12 +11,16 @@ import { lockedToast } from "./NempelSheet";
 import s from "./sheets.module.css";
 
 // N4 · BT07d Galeri · Foto saya (sheet di layar acara, ?sheet=galeri). Fotoku terbaru dulu (foto
-// yang masih antre ikut tampil dengan badge ⌛), hapus lewat Dialog → DELETE → layar di-refresh.
+// yang masih antre ikut tampil dengan badge ⌛). Hapus (v3, BT07dh) tanpa Dialog: foto langsung
+// disembunyikan di HP + Toast "Batalkan" 5 dtk; DELETE baru dikirim setelah toast habis, saat foto
+// lain dihapus, atau saat sheet ditutup (dianggap final). Tab ditutup < 5 dtk = nggak jadi kehapus.
+// Gagal → foto balik + toast. Berhasil → layar di-refresh (jumlah HP lain & tile panitia lewat rev).
 // Tab "Foto tamu" terkunci sampai acara selesai (lalu tamu pindah ke T15); tap → toast.
 // TODO desain: tap polaroid belum ada perilakunya.
 
 const TILTS = [2, -2, 1.5, -1.5];
 const TOAST_MS = 4000;
+const UNDO_SECONDS = 5;
 
 type Item = { id: string; at: number; src?: string; queued: boolean };
 
@@ -33,17 +37,55 @@ export function GaleriSheet({
   queued: QueuedPhoto[];
   onClose: () => void;
   onDeleted: () => void;
-  preview?: boolean; // /dev/states/n4: tanpa gambar & jaringan
+  preview?: { pending?: string }; // /dev/states/n4: tanpa gambar & jaringan (BT07dh: toast beku)
 }) {
-  const [confirm, setConfirm] = useState<Item | null>(null);
-  const [toast, setToast] = useState<{ key: number; text: string; ok?: boolean } | null>(null);
-  const show = (text: string, ok?: boolean) => setToast({ key: Date.now(), text, ok });
+  const [hidden, setHidden] = useState<string[]>(preview?.pending ? [preview.pending] : []);
+  const [toast, setToast] = useState<{
+    key: number;
+    text: string;
+    kind: "info" | "undo";
+  } | null>(preview?.pending ? { key: 0, text: "Foto dihapus dari kolase", kind: "undo" } : null);
+  // Foto yang toast Batalkan-nya lagi jalan (ref: dibaca saat sheet ditutup).
+  const pending = useRef<string | null>(preview?.pending ?? null);
+  const show = (text: string) => setToast({ key: Date.now(), text, kind: "info" });
 
   useEffect(() => {
-    if (!toast) return;
+    if (!toast || toast.kind === "undo") return;
     const t = setTimeout(() => setToast(null), TOAST_MS);
     return () => clearTimeout(t);
   }, [toast]);
+
+  // Kirim DELETE (final). keepalive: tetap jalan walau sheet baru ditutup.
+  const commit = useCallback(
+    async (id: string) => {
+      if (preview) return;
+      try {
+        const res = await fetch(`/api/t/${token}/foto/${id}`, {
+          method: "DELETE",
+          keepalive: true,
+        });
+        if (!res.ok && res.status !== 404) throw new Error();
+      } catch {
+        setHidden((h) => h.filter((x) => x !== id));
+        setToast({ key: Date.now(), text: "Gagal hapus, coba lagi", kind: "info" });
+        return;
+      }
+      onDeleted();
+    },
+    [token, preview, onDeleted],
+  );
+
+  // Sheet ditutup selagi toast jalan → nggak ada lagi tombol Batalkan, jadi hapusnya final.
+  const commitRef = useRef(commit);
+  useEffect(() => {
+    commitRef.current = commit;
+  });
+  useEffect(
+    () => () => {
+      if (pending.current) void commitRef.current(pending.current);
+    },
+    [],
+  );
 
   // Foto antre (belum di server) pakai Blob di HP; URL dilepas saat daftar berubah.
   const waiting = useMemo(
@@ -69,20 +111,34 @@ export function GaleriSheet({
       src: preview ? undefined : guestPhotoUrl(token, p.id),
       queued: false,
     })),
-  ].sort((a, b) => b.at - a.at);
+  ]
+    .filter((item) => !hidden.includes(item.id)) // pending hapus nggak dihitung di HP ini
+    .sort((a, b) => b.at - a.at);
   const full = items.length >= MAX_PHOTOS_PER_GUEST;
 
-  async function remove(item: Item) {
-    setConfirm(null);
-    if (preview) return show("Pratinjau: foto nggak dihapus");
-    try {
-      const res = await fetch(`/api/t/${token}/foto/${item.id}`, { method: "DELETE" });
-      if (!res.ok && res.status !== 404) throw new Error();
-    } catch {
-      return show("Gagal hapus, coba lagi");
-    }
-    show("Foto dihapus dari kolase", true);
-    onDeleted();
+  // 🗑 → langsung hilang + toast Batalkan. Foto sebelumnya yang masih pending langsung final.
+  function remove(item: Item) {
+    if (preview) return;
+    if (pending.current) void commit(pending.current);
+    pending.current = item.id;
+    setHidden((h) => [...h, item.id]);
+    // key baru → ring Batalkan mulai dari awal tiap hapus.
+    setToast((t) => ({ key: (t?.key ?? 0) + 1, text: "Foto dihapus dari kolase", kind: "undo" }));
+  }
+
+  function undo() {
+    const id = pending.current;
+    pending.current = null;
+    setToast(null);
+    if (id) setHidden((h) => h.filter((x) => x !== id));
+  }
+
+  function expire() {
+    if (preview) return; // pratinjau BT07dh: toast tetap tampil
+    const id = pending.current;
+    pending.current = null;
+    setToast(null);
+    if (id) void commit(id);
   }
 
   return (
@@ -123,7 +179,7 @@ export function GaleriSheet({
                         type="button"
                         className={s.trash}
                         aria-label={`Hapus foto ${jam}`}
-                        onClick={() => setConfirm(item)}
+                        onClick={() => remove(item)}
                       >
                         <Trash size={16} />
                       </button>
@@ -149,27 +205,21 @@ export function GaleriSheet({
         {full && <p className="t-caption c-label-2">Maks {MAX_PHOTOS_PER_GUEST} foto</p>}
       </Sheet>
 
-      <Dialog
-        open={!!confirm}
-        onClose={() => setConfirm(null)}
-        title="Hapus foto ini?"
-        actions={
-          <>
-            <Button variant="destructive" onClick={() => confirm && remove(confirm)}>
-              Hapus foto
-            </Button>
-            <Button variant="secondary" onClick={() => setConfirm(null)}>
-              Batal
-            </Button>
-          </>
-        }
-      >
-        Fotonya hilang dari kolase semua tamu.
-      </Dialog>
-
-      {toast && (
+      {toast?.kind === "undo" && (
+        <div className={s.undoDock}>
+          <Toast
+            key={toast.key}
+            icon={<Trash />}
+            className={s.undoToast}
+            undo={{ seconds: UNDO_SECONDS, onUndo: undo, onExpire: expire }}
+          >
+            {toast.text}
+          </Toast>
+        </div>
+      )}
+      {toast?.kind === "info" && (
         <div className={s.toastDock}>
-          <Toast key={toast.key} icon={toast.ok ? <Check /> : <Info />}>
+          <Toast key={toast.key} icon={<Info />}>
             {toast.text}
           </Toast>
         </div>

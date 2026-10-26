@@ -23,7 +23,7 @@ export default function N4States() {
   return (
     <Screen>
       <ScreenHeader
-        eyebrow="Dev · Figma section N4 (4670:4981, 25 Okt)"
+        eyebrow="Dev · Figma section N4 (4670:4981, 26 Okt)"
         title={`N4 · ${SCREENS.length} layar`}
       />
       <Card inset>

@@ -6,7 +6,7 @@ import { polaroidDate, type GuestPhotos } from "@/lib/photo";
 import { acara, jeda1 } from "../f4/screens";
 
 // Registri layar N4 v2 (N4-deliverables.md "Daftar layar", Figma 4670:4981 versi 25 Okt) untuk
-// /dev/states/n4/[code]. Komponen sama dengan route asli: kamera (KolaseApp) dan sheet hasil/galeri
+// /dev/states/n4/[code] (+ BT07dh v3 26 Okt). Komponen sama dengan route asli: kamera (KolaseApp) dan sheet hasil/galeri
 // di atas layar acara Jeda (AcaraScreen, data contoh F4), tanpa kamera/server.
 
 export type ScreenDef = {
@@ -91,6 +91,13 @@ export const SCREENS: ScreenDef[] = [
     name: "Foto pertama di kulkas (sheet)",
     kind: "Kasus lain",
     render: () => sheet(FIRST, { status: "sent" }),
+  },
+  {
+    code: "BT07dh",
+    name: "Foto dihapus (galeri + toast Batalkan)",
+    kind: "Kasus lain",
+    // Figma: foto 13.40 dihapus → "Foto saya · 2" (13.12, 14.18) + toast.
+    render: () => acara(jeda1, JEDA, { sheet: "galeri", galeri: { pending: id(98) } }, FULL),
   },
   {
     code: "BT07d-kosong",

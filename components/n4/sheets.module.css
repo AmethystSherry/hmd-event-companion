@@ -63,6 +63,8 @@
   align-items: stretch;
   min-height: 76dvh;
   padding-top: 12px;
+  /* Ruang untuk toast Batalkan BT07dh, supaya isi terakhir nggak ketutup saat di-scroll. */
+  padding-bottom: calc(env(safe-area-inset-bottom) + 84px);
 }
 
 .galeri > :first-child {
@@ -137,4 +139,24 @@
   justify-content: center;
   width: 100%;
   margin-bottom: 12px;
+}
+
+/* BT07dh: toast "Foto dihapus dari kolase" + Batalkan menempel di bawah sheet galeri (lebar penuh
+   − 20, radius 12, Figma 5073:6299). */
+.undoDock {
+  position: fixed;
+  left: 50%;
+  bottom: max(calc(env(safe-area-inset-bottom) + 12px), 20px);
+  z-index: 70;
+  width: calc(min(100vw, var(--screen-width)) - 20px);
+  transform: translateX(-50%);
+}
+
+.undoToast {
+  width: 100%;
+  border-radius: 12px;
+}
+
+.undoToast > span + span {
+  flex: 1;
 }

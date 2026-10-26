@@ -56,6 +56,7 @@ type Preview = {
   photoId?: string;
   offline?: boolean;
   photo?: { status: NempelStatus; pending?: number; extraToast?: boolean }; // /dev/states/n4
+  galeri?: { pending?: string }; // /dev/states/n4 BT07dh: foto ini disembunyikan + toast Batalkan
   tanya?: TanyaPreview; // /dev/states/n1
   kartu?: KartuPreview & { saved?: boolean; query?: string }; // /dev/states/n3 (T11s, BT05b)
 };
@@ -487,7 +488,7 @@ export function AcaraScreen({
           queued={queued}
           onClose={close}
           onDeleted={() => router.refresh()}
-          preview={!!preview}
+          preview={preview ? { pending: preview.galeri?.pending } : undefined}
         />
       )}
 

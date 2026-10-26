@@ -1,20 +1,22 @@
 # N4 · Foto buat kolase polaroid — Deliverables
 
-25 Okt 2026 · @Pota Design · **v2** (hasil foto jadi sheet di atas home, layar baru BT07d Galeri & BT07e Foto pertama)
+26 Okt 2026 · @Pota Design · **v3** (hapus foto tanpa konfirmasi + Batalkan 5 dtk, layar baru BT07dh)
+
+Riwayat: v1 24 Okt (layar penuh) · v2 25 Okt (sheet di atas home, BT07d Galeri, BT07e) · **v3 26 Okt** (lihat [Yang berubah dari v2](#yang-berubah-dari-v2-25-okt--26-okt))
 
 ## Ringkasan
 
-N4 adalah fitur nilai tambah buat tamu. Dari home (**Jeda atau Sesi**), tamu tap tombol kamera (FAB) → kamera dengan bingkai polaroid (nama + tanggal). Sekali jepret = 1 foto, langsung dikompres di HP. Abis jepret, kamera nutup dan **sheet "Nempel di kulkas!" muncul di atas home**. Fotomu sendiri bisa dilihat & dihapus dari **Galeri** (pintasan di home) sampai acara ditutup. Kolase lengkap (foto saya + foto tamu) dibuka di akhir acara (F5 · T15).
+N4 adalah fitur nilai tambah buat tamu. Dari home (**Jeda atau Sesi**), tamu tap tombol kamera (FAB) → kamera dengan bingkai polaroid (nama + tanggal). Sekali jepret = 1 foto, langsung dikompres di HP. Abis jepret, kamera nutup dan **sheet "Nempel di kulkas!" muncul di atas home**. Fotomu sendiri bisa dilihat & dihapus dari **Galeri** (pintasan di home) **kapan aja** — tap 🗑, foto langsung hilang, ada toast "Batalkan" 5 dtk. Kolase lengkap (foto saya + foto tamu) dibuka di akhir acara (F5 · T15).
 
-Section N4 punya 1 lane (Tamu): **8 layar** (BT03 sebagai titik mulai, 2 utama, 5 case) dan 6 kartu kasus.
+Section N4 punya 1 lane (Tamu): **9 layar** (BT03 sebagai titik mulai, 2 utama, 6 case) dan 7 kartu kasus.
 
 - **Figma, section N4:** [N4 · Foto buat kolase polaroid](https://www.figma.com/design/xYZlQ3GjRHHtYcod8rTIZJ/Fawwaz-Exploration?node-id=4670-4981) (`4670:4981`)
 - **Komponen:** frame `Clean v0.5 / Components` (`4587:276`)
 - **PRD:** `prd.md` v0.2 §7 N4 + §8 (Photo) + §9
-- **Status kode:** N4 v1 udah dibangun 24 Okt (lihat "Aturan N4 di kode" di CLAUDE.md). Dokumen ini = acuan untuk update ke v2.
+- **Status kode:** v1 dan v2 udah dibangun (`NempelSheet`, `GaleriSheet`, lihat "Aturan N4 di kode" di CLAUDE.md). Yang belum: perubahan v3.
 - **Font:** Switzer. Layar di section di-scale 0,5×, ukuran asli = 2× (frame 390×844)
 
-## Flow N4 (v2)
+## Flow N4 (v3)
 
 ```
 TAMU  BT03 Home (Jeda / Sesi)
@@ -27,7 +29,8 @@ TAMU  BT03 Home (Jeda / Sesi)
         │           └─ Tap "+N"            → BT07c toast "Kolase lengkap kebuka pas acara selesai (± 17.00)"
         │         Sheet: "Foto lagi" → BT06 · "Selesai" → sheet nutup, tetap di home (Jeda / Sesi)
         ├─ Tap pintasan "Galeri" ──▶ BT07d sheet Galeri foto
-        │     ├─ Tab "Foto saya · n": grid polaroid + 🗑 hapus + tile "Foto lagi" → BT06
+        │     ├─ Tab "Foto saya · n": grid polaroid + 🗑 + tile "Foto lagi" → BT06
+        │     │     └─ Tap 🗑 → BT07dh foto langsung hilang + toast "Foto dihapus dari kolase" · Batalkan (5 dtk)
         │     └─ Tab "Foto tamu" 🔒: kekunci sampai acara selesai
         └─ Sesi mulai pas lagi foto → nggak dipaksa pindah; "Selesai" → balik ke layar Sesi yang lagi jalan
         ──▶ F5 · T15 Kolase kulkas (dibuka pas acara ditutup)
@@ -35,16 +38,17 @@ TAMU  BT03 Home (Jeda / Sesi)
 
 ## Daftar layar
 
-| Kode | Layar | Jenis | Node | Status v2 |
+| Kode | Layar | Jenis | Node | Status |
 | --- | --- | --- | --- | --- |
 | BT03 | Jeda (home tamu) + FAB kamera | Titik mulai | `5027:5661` | **baru di section** (F4, udah ada di kode) |
 | BT06 | Kamera kolase | Utama | `5030:13770` | berubah (copy) |
 | BT07 | Nempel di kulkas (**sheet**) | Utama | `5030:13821` | **dirombak** |
 | BT06b | Izin kamera ditolak | Gagal | `5030:13790` | berubah (2 tombol) |
 | BT07b | Fotomu lagi antre (sheet) | Gagal | `5030:13898` | **dirombak** |
-| BT07c | Tap +30 sebelum acara selesai (sheet + toast) | Kasus lain | `5030:13979` | **dirombak** |
+| BT07c | Tap +N sebelum acara selesai (sheet + toast) | Kasus lain | `5030:13979` | **dirombak** |
 | BT07d | Galeri · Foto saya (sheet) | Kasus lain | `5030:14132` | **baru** |
 | BT07e | Foto pertama di kulkas (sheet) | Kasus lain | `5030:14060` | **baru** |
+| BT07dh | Foto dihapus (sheet galeri + toast Batalkan) | Kasus lain | `5073:6299` | **baru v3** |
 
 Node v1 (`4675:18966`, `4675:18986`, `4748:9466`, `4748:9511`, `4906:18010`) udah nggak dipakai.
 
@@ -52,13 +56,23 @@ Node v1 (`4675:18966`, `4675:18986`, `4748:9466`, `4748:9511`, `4906:18010`) uda
 
 | Kasus | Perilaku | Layar |
 | --- | --- | --- |
-| Tap Galeri di home | Foto saya bisa dihapus sampai acara ditutup. Foto tamu kebuka pas acara selesai | BT07d |
+| Tap Galeri di home | Foto saya bisa dihapus **kapan aja**. Foto tamu kebuka pas acara selesai | BT07d |
+| Hapus fotomu *(baru v3)* | Dari Galeri (BT07d) tap ikon sampah. Toast + Batalkan 5 dtk | BT07dh |
 | Izin kamera ditolak | Cara nyalain izin, atau Pakai kamera HP (browser IG) | BT06b |
 | Gagal upload | Foto diantre di HP, dikirim lagi pas sinyal balik | BT07b |
-| Tap +30 sebelum acara selesai | Toast: kolase lengkap (foto saya + tamu) kebuka pas acara selesai | BT07c |
+| Tap +N sebelum acara selesai | Toast: kolase lengkap (foto saya + tamu) kebuka pas acara selesai | BT07c |
 | Foto pertama di kulkas | "Kamu yang pertama!", strip cuma fotomu, tanpa +N | BT07e |
 | Sesi mulai pas lagi foto | Nggak dipaksa pindah. Selesai → balik ke layar Sesi yang lagi jalan | — |
 | Berulang (chip) | Foto lagi → BT06. Selesai → sheet nutup, balik ke BT03 / layar sesi | — |
+
+## Yang berubah dari v2 (25 Okt → 26 Okt)
+
+| Bagian | v2 (yang udah di kode) | v3 (Figma sekarang) |
+| --- | --- | --- |
+| Hapus foto di Galeri | 🗑 → Dialog "Hapus foto ini?" → hapus → toast | **🗑 → langsung hilang dari grid** + toast **"Foto dihapus dari kolase"** + **"Batalkan"** (5 dtk). **Dialog dihapus** |
+| Layar | — | **BT07dh** Foto dihapus (`5073:6299`) |
+| Kapan boleh hapus | "sampai acara ditutup" (copy kartu & cerita) | **"kapan aja"** (kode udah boleh sampai H+30, jadi cuma copy) |
+| Contoh angka | "34 foto tamu lain" · "+30" | "12 foto tamu lain" · "+8" (cuma data contoh; rumus tetap `others − 4`) |
 
 ## Yang berubah dari v1 (24 Okt → 25 Okt)
 
@@ -118,7 +132,7 @@ Sama dengan BT07, tapi:
 - Aksi: lg primary **"Coba kirim sekarang"** (ArrowClockwise) + lg secondary **"Selesai"**.
 - Begitu terkirim (sheet masih kebuka) → berubah jadi BT07.
 
-### BT07c · Tap +30 sebelum acara selesai
+### BT07c · Tap +N sebelum acara selesai
 
 BT07 + tile "+N" border `--accent` (state ditekan) + **Toast** gelap di atas tombol: ikon Info + **"Kolase lengkap kebuka pas acara selesai (± {jam selesai})"**.
 
@@ -143,6 +157,15 @@ Dari pintasan **Galeri** di home. Sheet lebih tinggi (mulai ±y 195).
   - Tile terakhir **"Foto lagi"**: `--card-2`, border 1.5px dashed `--accent`, radius 8, ikon Camera 28 + teks t-label `--accent-text` → BT06.
 - Scroll di dalam sheet kalau foto banyak.
 
+### BT07dh · Foto dihapus (baru v3)
+
+Dari BT07d, tap 🗑 di caption polaroid:
+
+- Foto **langsung hilang** dari grid (tanpa Dialog), grid merapat, tab jadi **"Foto saya · {n−1}"**.
+- **Toast** gelap di bawah grid (lebar penuh − 20, radius 12): ikon `Trash` + **"Foto dihapus dari kolase"** + aksi teks **"Batalkan"** (`--accent`) di kanan. Hilang sendiri setelah **5 dtk** (pakai `Toast` dengan undo ring, pola F1/F2).
+- **Batalkan** → foto balik ke posisinya, jumlah balik.
+- Hapus beberapa foto berturut-turut: tiap hapus ganti toast-nya; foto sebelumnya langsung dianggap final.
+
 ### BT06b · Izin kamera ditolak
 
 Sama dengan v1, kecuali:
@@ -156,10 +179,11 @@ Sama dengan v1, kecuali:
 | Layar | Copy | Tombol |
 | --- | --- | --- |
 | BT06 | Pill "Kulkas polaroid" · "{nama} · rumah baru" / "8.11.26" · "Jepret sekali, langsung nempel di kulkas bareng." | X, Lightning, shutter, ganti kamera |
-| BT07 | **"Nempel di kulkas!"** · "Fotomu udah nempel bareng 34 foto tamu lain." · "+30" | lg primary "Foto lagi", lg secondary "Selesai" |
+| BT07 | **"Nempel di kulkas!"** · "Fotomu udah nempel bareng 12 foto tamu lain." · "+8" | lg primary "Foto lagi", lg secondary "Selesai" |
 | BT07b | **"Fotomu lagi antre"** · "Sinyalnya lemah. Fotomu aman di HP dan dikirim otomatis begitu sinyal balik." · "1 foto nunggu sinyal" | lg primary "Coba kirim sekarang", lg secondary "Selesai" |
 | BT07c | Toast "Kolase lengkap kebuka pas acara selesai (± 17.00)" | sama BT07 |
 | BT07e | **"Kamu yang pertama!"** · "Kulkasnya masih sepi. Ajak yang lain ikut foto, ya." | lg primary "Foto lagi", lg secondary "Selesai" |
+| BT07dh | Toast "Foto dihapus dari kolase" · tab "Foto saya · 2" | teks "Batalkan" |
 | BT07d | **"Galeri foto"** · "Kolase lengkap kebuka pas acara selesai (± 17.00)" · tab "Foto saya · 3" / "Foto tamu" · caption "Rara · 13.12" · tile "Foto lagi" | ikon Trash per foto |
 | BT06b | "Kamera belum diizinkan" · **"Cara nyalain izin kamera"** · 3 langkah | lg primary "Coba lagi", lg secondary "Pakai kamera HP" |
 
@@ -175,11 +199,19 @@ Sama dengan v1, kecuali:
 | Tile "Foto lagi" | **custom** di `components/n4` | Bisa jadi varian `AddChip`/Dropzone kecil |
 | Toast BT07c | `Toast` | — |
 | Pill antrean | `Pill` + ikon Hourglass | — |
-| Hapus foto | `Dialog` konfirmasi (sama dengan T15b F5) | — |
+| Hapus foto + Batalkan | `Toast` dengan undo ring (yang ada) | v3: **nggak pakai Dialog** lagi |
 
 Warna hardcode yang tetap di light & dark: latar kamera `#0A0A0A`, polaroid putih + caption `#0F0F0F`, backdrop sheet.
 
 **Text style** (skala 0,5×): 6 → t-caption (12), 6,5 → t-label (13), 7,5 → t-body (15), 8,5 → t-headline (17), 12 → t-card-title (24), 16 → t-title (32).
+
+## Temuan dari review v3
+
+| Temuan | Layar | Saran |
+| --- | --- | --- |
+| Hapus di Galeri sekarang tanpa konfirmasi, tapi T15b (F5) masih pakai Dialog | BT07dh, T15b | Samakan: T15b juga toast + Batalkan, atau biarkan (T15b setelah acara, lebih final) |
+| "Batalkan" di toast cuma teks kecil (± 54×18) | BT07dh | Area tap min 44 tinggi |
+| Toast nutupin tile "Foto lagi" kalau grid pendek? | BT07dh | Di Figma toast di bawah grid (dalam sheet), aman; pastikan sheet scroll nggak ketutup toast |
 
 ## Temuan dari review v2
 
@@ -206,11 +238,12 @@ Yang udah diputuskan di v1 dan tetap berlaku ada di "Aturan N4 di kode" (CLAUDE.
 | "Selesai" = tutup sheet, tetap di home (mode apa pun) | Kasus "Sesi mulai pas lagi foto" | — |
 | Galeri = sheet di `acara/` (`?sheet=galeri`); `/galeri` di-redirect ke situ | Desain BT07d | — |
 | Tab "Foto tamu" baru kebuka setelah acara ditutup (lalu pindah ke T15) | Sesuai kartu kasus | Setelah ditutup tamu udah dialihkan ke `selesai/`, jadi tab ini praktis selalu terkunci |
-| Hapus dari Galeri → Dialog konfirmasi → `DELETE` yang udah ada | Hapus permanen | — |
+| *(v3)* Hapus dari Galeri **tanpa Dialog**: foto disembunyikan di HP dulu, `DELETE` baru dikirim setelah toast 5 dtk habis (Batalkan = batal kirim) | Undo nggak perlu API baru, dan file foto nggak kehapus sebelum pasti | Kalau tab ditutup < 5 dtk, foto **nggak jadi** kehapus (aman). Atau mau server soft-delete langsung + endpoint restore? |
+| *(v3)* Foto yang lagi "pending hapus" nggak ikut jumlah & strip di HP itu | Biar konsisten sama yang dilihat | HP tamu lain baru berubah setelah 5 dtk |
 | BT07e muncul kalau `others === 0` (strip = fotomu) | Desain | — |
 
 ## Next step
 
-- [ ] Putuskan temuan v2 (state ngirim, tap Foto tamu terkunci, tap polaroid di Galeri, galeri kosong, "Sedang/Lagi jeda")
-- [ ] Kirim **Prompt E** di `N4-prompt-claude-code.md` (N4 v1 udah ada di kode)
+- [ ] Putuskan cara undo hapus (tunda DELETE 5 dtk di HP, atau server restore)
+- [ ] Kirim prompt v3 di `N4-prompt-claude-code.md` (v1 & v2 udah di kode)
 - [ ] Update test case pitching kalau alur foto berubah

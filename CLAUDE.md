@@ -115,7 +115,7 @@ app/
   dev/states/f1/          37 layar F1 dengan data contoh + alat uji (link tamu, CSV dummy, reset)
   dev/states/f2/          17 layar F2 (BP02/BP02-pre/BP03/BP01b …) + alat uji (jam pura-pura hari-H,
                           data 12 hadir, reset check-in, mulai/selesaikan sesi)
-  dev/states/n4/          10 layar N4 v2 (BT03 + kamera + sheet) + alat uji (check-in semua, 30 foto dummy, hapus semua foto)
+  dev/states/n4/          11 layar N4 v3 (BT03 + kamera + sheet) + alat uji (check-in semua, 30 foto dummy, hapus semua foto)
   dev/states/f4/          20 layar F3+F4 (tamu + panitia) + alat uji (jam 13.48/14.03, mulai/selesai sesi
                           sebagai "HP LAIN" → BP02d, isi kartu BT05)
   dev/states/n1/          8 layar N1 (BT21/BT08/BT09/BT08b/BP02/P10/P10c + link BT21p) + alat uji (mulai
@@ -318,9 +318,15 @@ Keputusan default 24 Okt (jawaban "Keputusan & asumsi" + "Temuan" di N4-delivera
   `caption` & slot `action`. Miring tetap `photoTilt` (±4°); galeri berganti +2°/−2°/+1,5°/−1,5°.
 - **BT07d Galeri**: `Segmented` "Foto saya · {n}" / 🔒 "Foto tamu" (opsi `locked` + `onLocked` → toast
   BT07c). Grid 2 kolom fotoku terbaru dulu (foto antre ikut, badge ⌛, tanpa hapus); caption "{nama} ·
-  {jam}" + Trash 16 (area tap 44) → Dialog "Hapus foto ini?" → `DELETE` → toast + refresh. Tile "Foto
-  lagi" (dashed accent) disembunyikan di 20 foto → "Maks 20 foto". Kosong → tile + "Belum ada foto.
-  Jepret yang pertama!" (TODO copy). Tap polaroid = belum ada (TODO desain).
+  {jam}" + Trash 16 (area tap 44). Tile "Foto lagi" (dashed accent) disembunyikan di 20 foto → "Maks 20
+  foto". Kosong → tile + "Belum ada foto. Jepret yang pertama!" (TODO copy). Tap polaroid = belum ada (TODO).
+- **BT07dh hapus (v3 26 Okt)**: foto sendiri bisa dihapus **kapan aja** (server tetap: sampai H+30). 🗑 →
+  **tanpa Dialog**: foto disembunyikan di HP (nggak dihitung di "Foto saya · n" & batas 20) + `Toast undo`
+  5 dtk (Trash + "Foto dihapus dari kolase" + "Batalkan", dock lebar penuh − 20, radius 12). Batalkan →
+  foto balik, tanpa request. `DELETE` baru dikirim saat toast habis, saat foto lain dihapus (yang sebelumnya
+  langsung final, toast diganti), atau saat sheet Galeri ditutup (`keepalive`). Tab ditutup < 5 dtk = nggak
+  jadi kehapus. Gagal → foto balik + toast "Gagal hapus, coba lagi". Berhasil → `router.refresh()`; HP lain
+  & tile Foto panitia lewat `rev`. T15b (F5) tetap pakai Dialog.
 - Badge home "Sedang jeda" / "Sedang berjalan" (F3 v3, K15).
 13. Hapus foto sendiri: `DELETE /api/t/[token]/foto/[id]` (soft delete `deletedAt` + file dihapus),
     UI di F5 (T15b). Hapus otomatis H+30: lihat "Aturan F5 di kode".
@@ -631,6 +637,7 @@ menghapus data per orang di store lokal → balikin lewat `/dev/states/f1` Reset
       menunggu review & bucket Supabase
 - [x] N4 v2 (25 Okt) — hasil foto & Galeri BT07d jadi sheet di layar acara, BT07e, magnet + badge status,
       BT06b 2 tombol — menunggu review
+- [x] N4 v3 (26 Okt) — BT07dh hapus foto di Galeri tanpa Dialog + Batalkan 5 dtk — menunggu review
 - [x] F5 (24 Okt) — tutup acara, buku tamu, kolase 9:16, rekap + ringkasan Claude, CSV, hapus H+30;
       16 layar (BT12, T14*, T15*, BP04/BP04b, P11*) — menunggu review & `ANTHROPIC_API_KEY` di Vercel
 - [x] F1 update 26 Okt (v5.1) — T01 grid bagian acara tanpa Jejak undangan, T01a teks di atas,
