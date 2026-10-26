@@ -86,7 +86,7 @@ Web app mobile untuk House Moving Day Potara Studio (Minggu 8 Nov 2026, 13.00–
 ## Struktur (main)
 ```
 app/
-  layout.tsx · page.tsx   root layout (font, noindex) · beranda sementara
+  layout.tsx · page.tsx   root layout (font, noindex) · `/` → redirect /panitia (P01 PIN)
   (tamu)/t/[token]/       T01a/T01/T01e/T02b/T03/T03k/T03h · konfirmasi/ (T02/T02c/T02d) · kalender/ (.ics) ·
                           acara/ (F4 Sesi/Jeda + sheet) · foto/ (N4 BT06–BT07c) ·
                           selesai/ (F5 BT12) · buku-tamu/ (T14*) · kolase/ (T15*, T14d) ·
@@ -106,6 +106,7 @@ app/
   api/t/[token]/buku-tamu POST isian buku tamu (F5 · T14)
   api/t/[token]/tanya     POST pertanyaan talkshow (N1 · BT08)
   api/t/[token]/kartu     POST kartu kenalan (N3 · T11)
+  dev/                    daftar alat dev (dulu beranda `/`): link design system + semua /dev/states
   dev/ui/                 preview design system (light & dark)
   dev/states/f1/          37 layar F1 dengan data contoh + alat uji (link tamu, CSV dummy, reset)
   dev/states/f2/          17 layar F2 (BP02/BP02-pre/BP03/BP01b …) + alat uji (jam pura-pura hari-H,
