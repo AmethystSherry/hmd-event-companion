@@ -39,6 +39,7 @@ import {
   elapsedMs,
   lateToStart,
   overdueMin,
+  SESSION_CARD_BADGE,
   type RundownView,
   type SessionView,
 } from "@/lib/rundown";
@@ -260,7 +261,7 @@ export function KontrolScreen({
           icon={<Camera size={18} />}
           value={String(photos)}
           label="Foto"
-          href={`${base}/foto`}
+          href={`${base}/foto`} // P13 · Foto masuk (5073:6192) belum dibangun → placeholder
         />
         {closedAt && finale ? (
           <StatTile
@@ -353,7 +354,8 @@ export function KontrolScreen({
           ? `Udah jalan ${hms(elapsedMs(confirm.session, now))}. Layar tamu otomatis jeda sampai kamu mulai sesi berikutnya.`
           : confirm &&
             (active && active.id !== confirm.session.id
-              ? `${active.title} yang lagi jalan ikut selesai. Layar semua tamu langsung pindah ke ${confirm.session.title}, stopwatch mulai jalan.`
+              ? // Band F2 BP01b: tanpa "stopwatch mulai jalan" (cuma versi dari Jeda, F3 4900:27743).
+                `${active.title} yang lagi jalan ikut selesai. Layar semua tamu langsung pindah ke ${confirm.session.title}.`
               : `Layar semua tamu langsung pindah dari Jeda ke ${confirm.session.title}, stopwatch mulai jalan.`)}
       </Dialog>
 
@@ -469,17 +471,9 @@ function SessionCarousel({
           return (
             <Card key={x.id} className={s.sessionCard} aria-label={`Sesi ${x.no}: ${x.title}`}>
               <div className={s.sessionTop}>
-                {running ? (
-                  <Badge tone="live" pulse>
-                    Lagi jalan
-                  </Badge>
-                ) : x.state === "selesai" ? (
-                  <Badge tone="success">Selesai</Badge>
-                ) : x.state === "berikutnya" ? (
-                  <Badge tone="crew">Berikutnya</Badge>
-                ) : (
-                  <Badge tone="neutral">Belum mulai</Badge>
-                )}
+                <Badge tone={SESSION_CARD_BADGE[x.state].tone} pulse={running}>
+                  {SESSION_CARD_BADGE[x.state].label}
+                </Badge>
                 <span className="t-label c-label-2 tabular">
                   {x.startsAt}–{x.endsAt}
                 </span>

@@ -242,6 +242,10 @@ Keputusan default 22 Okt (jawaban "Keputusan & asumsi" di F2-deliverables; prd.m
   − `startedAt` (HP cuma memutar detiknya). Sesi yang sudah selesai bisa dimulai lagi (BP01b).
 - BP02: carousel scroll-snap dibuka di sesi yang jalan (atau berikutnya); "Scan tiket" = tombol
   bawah, tanpa TabBar. Konfirmasi pakai `Dialog` (tengah layar), bukan Sheet.
+- **F2 v4 (26 Okt)**: Badge kartu sesi dari `SESSION_CARD_BADGE` (lib/rundown): Live "**Sedang
+  berjalan**" · Selesai · Berikutnya · Belum mulai. Teks rundown ("Sesi {n} lagi jalan", "Lagi jalan ·
+  MM:SS") & layar tamu (`f4/Sheets`, `AcaraScreen`, `lib/acara`) **sengaja belum** diganti (nunggu
+  keputusan tim). Tile Foto → `foto/` placeholder (P13 · Foto masuk `5073:6192` belum dibangun).
 - Scan (P05–P06c): back → BP02, tombol bawah "Lihat daftar tamu" → P07, tanpa TabBar. P05b = Toast
   di bawah baris back (ikut alur, nggak nutupin back/judul). Nomor "tamu ke-n dari N" di P06,
   header, dan BT02 dari sumber sama (hasil server + pembagi RSVP hadir setelah check-in ini).
@@ -432,8 +436,9 @@ Keputusan 25 Okt (default "Keputusan & asumsi" F3-F4-deliverables, kecuali K3/K8
     elapsed > durasi (m = dibulatkan ke bawah, min 1; nggak maksa selesai). **Pengingat** di kartu
     Berikutnya: jam server > jam mulai → "{sesi} harusnya mulai {jam}" `--crew-text`. BP01: header
     carousel "Lagi jeda · layar tamu nunggu sesi n", Badge crew "Berikutnya", rundown "Selesai · 62 mnt".
-    BP01b: "Layar semua tamu langsung pindah dari Jeda ke {sesi}, stopwatch mulai jalan." (ada sesi lain
-    jalan → diawali "{sesi} yang lagi jalan ikut selesai."). Rundown sesi selesai tetap ikon ✓ (F5 no. 17).
+    BP01b dari Jeda: "Layar semua tamu langsung pindah dari Jeda ke {sesi}, stopwatch mulai jalan." (F3
+    `4900:27743`); ada sesi lain jalan (F2 v4): "{sesi} yang lagi jalan ikut selesai. Layar semua tamu
+    langsung pindah ke {sesi}." tanpa kalimat stopwatch. Rundown sesi selesai tetap ikon ✓ (F5 no. 17).
 12. **S01 / realtime**: `LiveRefresh pollMs={2000}` di `acara/` & `kontrol/` (remote ≤ 3 dtk). Offline =
     `offline` event / `navigator.onLine` false, atau SSE/poll gagal 2× berturut (`onHealth`); balik
     online → cek `?once=1` → toast hilang. "Info sesi terakhir {jam}" = `loadedAt` (jam server saat data

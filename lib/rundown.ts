@@ -35,6 +35,18 @@ export type RundownView = {
   done: number; // jumlah sesi selesai (Jejak acara "1 dari 4 selesai")
 };
 
+// Badge status di kartu sesi Kontrol acara (BP02/BP03/BP01b). Sengaja terpisah dari teks rundown
+// ("Sesi {n} lagi jalan", "Lagi jalan · MM:SS") & layar tamu — keputusan labelnya beda (F2 v4).
+export const SESSION_CARD_BADGE: Record<
+  SessionState,
+  { tone: "live" | "success" | "crew" | "neutral"; label: string }
+> = {
+  berlangsung: { tone: "live", label: "Sedang berjalan" },
+  selesai: { tone: "success", label: "Selesai" },
+  berikutnya: { tone: "crew", label: "Berikutnya" },
+  nanti: { tone: "neutral", label: "Belum mulai" },
+};
+
 type EventState = Pick<Event, "mode" | "activeSessionId" | "nextSessionId">;
 
 // K4: ilustrasi dari Session.art; kosong → talkshow untuk sesi talkshow, lainnya open space.

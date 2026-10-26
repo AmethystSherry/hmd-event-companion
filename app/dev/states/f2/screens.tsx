@@ -151,7 +151,7 @@ export const SCREENS: ScreenDef[] = [
   },
   {
     code: "BP02",
-    name: "Kontrol acara · sesi 1 lagi jalan",
+    name: "Kontrol acara · sesi 1 sedang berjalan",
     lane: "Panitia",
     kind: "Utama",
     render: () => kontrol({ running: true }),
