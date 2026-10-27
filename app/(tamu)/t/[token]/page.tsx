@@ -71,7 +71,8 @@ async function Router({
     const qr = payload ? (
       <TicketQr payload={payload} label={`QR tiket, kode ${ticket!.shortCode}`} />
     ) : undefined;
-    if (ticket && isEventDay(event.date, now)) {
+    // Hari-H, atau udah di-scan lebih awal (scan dibuka sebelum hari-H) → tiket masuk T05/BT02.
+    if (ticket && (isEventDay(event.date, now) || ticket.status === "dipakai")) {
       const inAt = ticket.status === "dipakai" ? ticket.checkedInAt : null;
       return (
         <>

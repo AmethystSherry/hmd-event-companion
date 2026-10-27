@@ -100,7 +100,7 @@ export function KontrolScreen({
   checkIn: { checkedIn: number; expected: number };
   photos?: number; // N4: jumlah foto kolase (realtime lewat rev)
   questions?: { total: number; open: number }; // N1: pertanyaan talkshow (tile → P10)
-  eventDay: boolean; // sebelum hari-H: sesi belum bisa dimulai, Scan belum ada
+  eventDay: boolean; // sebelum hari-H: sesi belum bisa dimulai (Scan tetap ada)
   phaseLabel: string; // "Hari-H · Live" / "Persiapan · H-17"
   backHref: string;
   serverNow: string;
@@ -183,7 +183,8 @@ export function KontrolScreen({
   return (
     <Screen
       bottom={
-        eventDay && !closedAt ? (
+        // Scan sejak Kontrol acara kebuka (bukan cuma hari-H): tamu datang lebih awal tetap bisa masuk.
+        !closedAt ? (
           <Button href={`${base}/scan`} icon={<QrCode />}>
             Scan tiket
           </Button>
@@ -275,7 +276,7 @@ export function KontrolScreen({
           icon={<Users size={18} />}
           value={`${checkIn.checkedIn}/${checkIn.expected}`}
           label="Check-in"
-          href={eventDay ? `${base}/scan/cari` : undefined}
+          href={`${base}/scan/cari`}
         />
         <StatTile
           icon={<Camera size={18} />}

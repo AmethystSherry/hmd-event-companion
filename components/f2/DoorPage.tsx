@@ -1,12 +1,12 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { RegisterOffline } from "@/components/RegisterOffline";
 import { Screen, Skeleton } from "@/components/ui";
 import { getStore } from "@/lib/data";
 import { requireCrew } from "@/lib/server/access";
-import { isEventDay, serverNow } from "@/lib/server/clock";
 import { DoorApp, type DoorView } from "./DoorApp";
 
-// Route /scan & /scan/cari (server): guard panitia + hari-H, lalu DoorApp (klien).
+// Route /scan & /scan/cari (server): guard panitia (sejak sebelum hari-H, tamu bisa datang lebih
+// awal), lalu DoorApp (klien).
 // HTML-nya kerangka saja: data tamu dimuat di HP (manifest → IndexedDB) supaya jalan offline.
 export function DoorFallback() {
   return (
@@ -32,7 +32,6 @@ export async function Door({
   const store = await getStore();
   const event = store.getEvent(id);
   if (!event) notFound();
-  if (!isEventDay(event.date, await serverNow())) redirect(`/panitia/event/${id}/kontrol`);
   return (
     <>
       <DoorApp eventId={id} eventName={event.name} initialView={view} cameraFailed={cameraFailed} />
