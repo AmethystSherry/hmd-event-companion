@@ -74,7 +74,14 @@ type Tab = "undangan" | "pengingat" | "makasih";
 type Filter = "semua" | "belum" | "belumJawab" | "hadir" | "nggak";
 type SheetState = { kind: "add" } | { kind: "edit"; id: string } | null;
 type ToastState =
-  | { kind: "invite"; guestId: string; ig: string; prev: InviteSnapshot; key: number }
+  | {
+      kind: "invite";
+      guestId: string;
+      ig: string;
+      prev: InviteSnapshot;
+      key: number;
+      shared?: boolean; // dikirim lewat share sheet HP (pesan udah terisi di DM)
+    }
   | { kind: "hapus"; guestId: string; name: string; key: string };
 
 const PENDING_KEY = "hmd:pending"; // aksi yang menunggu panitia balik dari IG/WA
@@ -228,10 +235,31 @@ export function GuestManager({
     };
   }, [actions]);
 
+  // ✈ Undang: IG nggak bisa mengisi teks DM lewat link (ig.me cuma buka chat kosong). Di HP pakai
+  // share sheet: pesan (nama + link) udah terisi, panitia pilih Instagram → akun tamu → Kirim.
+  // Desktop / tanpa Web Share: salin pesan + buka chat IG, balik ke tab = Diundang.
   const invite = (g: GuestRowData) => {
     const msg = fillTemplate(g.dmTemplate, { nama: firstName(g.name), link: g.link });
     void copyText(msg);
     if (!actions) return;
+    if (typeof navigator.share === "function" && window.matchMedia("(pointer: coarse)").matches) {
+      navigator.share({ text: msg }).then(
+        () =>
+          start(async () => {
+            const prev = await actions.markInvited(g.id);
+            setToast({
+              kind: "invite",
+              guestId: g.id,
+              ig: g.ig,
+              prev,
+              key: Date.now(),
+              shared: true,
+            });
+          }),
+        () => undefined, // batal share = diam
+      );
+      return;
+    }
     sessionStorage.setItem(PENDING_KEY, JSON.stringify({ kind: "ig", id: g.id }));
     window.open(igDmUrl(g.ig), "_blank", "noopener");
   };
@@ -279,7 +307,11 @@ export function GuestManager({
         >
           <span className={f1.stack}>
             <span>DM ke @{toast.ig} ditandai terkirim</span>
-            <span className={styles.toastSub}>Template udah disalin, tinggal tempel di IG</span>
+            <span className={styles.toastSub}>
+              {toast.shared
+                ? "Pastikan dikirim ke akun yang benar"
+                : "Template udah disalin, tinggal tempel di IG"}
+            </span>
           </span>
         </Toast>
       ) : (
