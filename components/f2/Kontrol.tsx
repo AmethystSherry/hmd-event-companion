@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition, type ReactNode } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import {
   BookOpen,
   Camera,
   CaretLeft,
   ChatCircle,
-  Check,
+  PaperPlaneTilt,
   Play,
   QrCode,
   Stop,
@@ -24,7 +24,6 @@ import {
   ListRow,
   Screen,
   ScreenHeader,
-  Sheet,
   StatTile,
   Toast,
   TopToast,
@@ -67,12 +66,13 @@ export type KontrolState = {
 const BP02D_MS = 4000;
 type Confirm = { kind: "finish" | "start"; session: SessionView };
 
-// F5: penutupan acara. canClose = nggak ada sesi jalan & sesi terakhir selesai (BP04).
+// F5 v2: penutupan acara. canClose = nggak ada sesi jalan & sesi terakhir selesai → BP04 (kartu
+// "Tutup acara"); closedAt → BP05 Acara selesai (kartu "{x} dari {n} udah ngisi").
 export type KontrolFinale = {
   canClose: boolean;
   closedAt: string | null;
-  lastEndedAt: string | null; // "Closing selesai {jam}"
-  feedback: { respondents: number; expected: number }; // "Mengisi x/n" setelah ditutup
+  endsAt: string; // jam selesai event, BP04 "± 17.00"
+  feedback: { respondents: number; expected: number }; // BP05 "{x} dari {n} udah ngisi"
 };
 
 export function KontrolScreen({
@@ -91,7 +91,7 @@ export function KontrolScreen({
   frozen,
   finale,
   close,
-  initialCloseSheet,
+  initialCloseDialog,
   state,
   initialConflict,
 }: {
@@ -110,7 +110,7 @@ export function KontrolScreen({
   frozen?: boolean;
   finale?: KontrolFinale;
   close?: (eventId: string, by: string | null) => Promise<StateResult>; // F5 BP04b
-  initialCloseSheet?: boolean;
+  initialCloseDialog?: boolean;
   state?: KontrolState; // F3 BP02d
   initialConflict?: string; // pratinjau BP02d (/dev/states/f4)
 }) {
@@ -119,7 +119,7 @@ export function KontrolScreen({
   const [confirm, setConfirm] = useState<Confirm | null>(initialConfirm ?? null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-  const [closeSheet, setCloseSheet] = useState(!!initialCloseSheet);
+  const [closeDialog, setCloseDialog] = useState(!!initialCloseDialog);
   const [conflict, setConflict] = useState<string | null>(initialConflict ?? null);
   const { sessions, active } = rundown;
 
@@ -141,7 +141,7 @@ export function KontrolScreen({
     if (state?.by && state.by !== deviceLabel()) {
       setConflict(conflictText(state.by, state.action));
       setConfirm(null);
-      setCloseSheet(false);
+      setCloseDialog(false);
     }
   }
   useEffect(() => {
@@ -157,13 +157,14 @@ export function KontrolScreen({
   };
   const done = sessions.filter((x) => x.state === "selesai").length;
   const closedAt = finale?.closedAt ?? null;
+  const allDone = !closedAt && !!finale?.canClose; // BP04
 
   // BP04b "Ya, tutup acara": idempoten di store (dobel tap / HP panitia lain = nggak berubah).
   const runClose = () => {
-    if (!close) return setCloseSheet(false);
+    if (!close) return setCloseDialog(false);
     startTransition(async () => {
       const r = await close(event.id, deviceLabel());
-      setCloseSheet(false);
+      setCloseDialog(false);
       settle(r);
     });
   };
@@ -182,7 +183,7 @@ export function KontrolScreen({
   return (
     <Screen
       bottom={
-        eventDay ? (
+        eventDay && !closedAt ? (
           <Button href={`${base}/scan`} icon={<QrCode />}>
             Scan tiket
           </Button>
@@ -193,58 +194,77 @@ export function KontrolScreen({
         leading={
           <div className={s.toolbar}>
             <IconButton href={backHref} label="Kembali" icon={<CaretLeft />} />
-            <Badge tone="crew" pulse={eventDay}>
-              {phaseLabel}
-            </Badge>
+            {closedAt ? (
+              <Badge tone="neutral">Acara selesai</Badge>
+            ) : (
+              <Badge tone="crew" pulse={eventDay}>
+                {phaseLabel}
+              </Badge>
+            )}
           </div>
         }
         eyebrow={`Kontrol acara · ${dateLong(event.date)}`}
         title={event.name}
       />
+      {(closedAt || allDone) && (
+        <p className={cx("t-label c-label-2", s.finaleSub)}>
+          {closedAt
+            ? `Acara ditutup ${timeWib(closedAt)} · tamu lagi isi buku tamu`
+            : "Semua sesi selesai · tamu masih di layar jeda"}
+        </p>
+      )}
 
-      {closedAt ? (
-        // TODO desain: BP02 setelah acara ditutup belum ada di Figma (temuan F5-deliverables).
-        <Card className={s.finaleCard}>
-          <p className="t-label c-label-2">Layar tamu sekarang</p>
-          <p className="t-title">Acara udah ditutup</p>
+      {closedAt && finale ? (
+        // BP05 · Acara selesai (home panitia setelah ditutup, Figma 5073:5946).
+        <Card className={s.finaleCard} aria-label="Buku tamu">
+          <div className={s.sessionTop}>
+            <Badge tone="neutral">Buku tamu kebuka</Badge>
+            <span className="t-label c-label-2 tabular">{timeWib(closedAt)}</span>
+          </div>
+          <p className="t-title">
+            {finale.feedback.respondents} dari {finale.feedback.expected} udah ngisi
+          </p>
           <p className="t-body c-label-2">
-            Ditutup {timeWib(closedAt)}. Tamu lagi isi buku tamu & lihat kolase.
+            Rekap update otomatis tiap ada yang ngisi. Kirim makasih via WA biar yang udah pulang
+            ikut ngisi.
           </p>
           <Button href={`${base}/rekap`} icon={<BookOpen />}>
             Lihat rekap buku tamu
+          </Button>
+          <Button variant="secondary" href={`${base}/tamu?tab=makasih`} icon={<PaperPlaneTilt />}>
+            Kirim makasih via WA
+          </Button>
+        </Card>
+      ) : allDone ? (
+        // BP04 · Semua sesi selesai (Figma 5060:29676): kartu "Tutup acara" gantikan carousel.
+        <Card className={s.finaleCard} aria-label="Tutup acara">
+          <div className={s.sessionTop}>
+            <Badge tone="neutral">
+              {done} dari {sessions.length} selesai
+            </Badge>
+            <span className="t-label c-label-2 tabular">± {finale!.endsAt}</span>
+          </div>
+          <p className="t-title">Tutup acara</p>
+          <p className="t-body c-label-2">Layar semua tamu pindah ke buku tamu & kolase kulkas.</p>
+          <Button
+            icon={<BookOpen />}
+            aria-disabled={!eventDay || pending}
+            onClick={() => eventDay && !pending && setCloseDialog(true)}
+          >
+            Tutup acara & buka buku tamu
           </Button>
         </Card>
       ) : (
         sessions.length > 0 && (
           <SessionCarousel
             sessions={sessions}
-            focusIndex={finale?.canClose ? sessions.length : rundown.focusIndex}
+            focusIndex={rundown.focusIndex}
             now={now}
             date={event.date}
             waitingFor={!active && rundown.next ? rundown.next.no : null}
             disabled={!eventDay || pending}
             onAction={(session) =>
               setConfirm({ kind: session.state === "berlangsung" ? "finish" : "start", session })
-            }
-            finale={
-              finale?.canClose ? (
-                // BP04 · Jeda terakhir = kartu terakhir carousel (keputusan F5, tanpa TabBar).
-                <Card className={cx(s.sessionCard, s.finaleCard)} aria-label="Jeda terakhir">
-                  <p className="t-label c-label-2">Layar tamu sekarang</p>
-                  <p className="t-title">Jeda terakhir</p>
-                  <p className="t-body c-label-2">
-                    {finale.lastEndedAt ? `Closing selesai ${timeWib(finale.lastEndedAt)}. ` : ""}
-                    Tamu masih bisa foto & lihat peserta.
-                  </p>
-                  <Button
-                    icon={<BookOpen />}
-                    aria-disabled={!eventDay || pending}
-                    onClick={() => eventDay && !pending && setCloseSheet(true)}
-                  >
-                    Tutup acara & buka buku tamu
-                  </Button>
-                </Card>
-              ) : undefined
             }
           />
         )
@@ -263,22 +283,13 @@ export function KontrolScreen({
           label="Foto"
           href={`${base}/foto`} // P13 · Foto masuk (5073:6192) belum dibangun → placeholder
         />
-        {closedAt && finale ? (
-          <StatTile
-            icon={<BookOpen size={18} />}
-            value={`${finale.feedback.respondents}/${finale.feedback.expected}`}
-            label="Mengisi"
-            href={`${base}/rekap`}
-          />
-        ) : (
-          <StatTile
-            icon={<ChatCircle size={18} />}
-            value={String(questions.total)}
-            label="Pertanyaan"
-            href={`${base}/tanya`}
-            highlight={questions.open > 0}
-          />
-        )}
+        <StatTile
+          icon={<ChatCircle size={18} />}
+          value={String(questions.total)}
+          label="Pertanyaan"
+          href={`${base}/tanya`}
+          highlight={questions.open > 0}
+        />
       </div>
 
       {sessions.length > 0 && (
@@ -304,15 +315,7 @@ export function KontrolScreen({
           {sessions.map((x) => (
             <ListRow
               key={x.id}
-              leading={
-                x.state === "selesai" ? (
-                  <span className={s.doneIcon} role="img" aria-label="Selesai">
-                    <Check size={18} weight="bold" />
-                  </span>
-                ) : (
-                  <Avatar name={String(x.no)} />
-                )
-              }
+              leading={<Avatar name={String(x.no)} />}
               title={x.title}
               subtitle={
                 x.state === "selesai"
@@ -359,40 +362,29 @@ export function KontrolScreen({
               : `Layar semua tamu langsung pindah dari Jeda ke ${confirm.session.title}, stopwatch mulai jalan.`)}
       </Dialog>
 
-      <Sheet
-        open={closeSheet}
-        onClose={() => !pending && setCloseSheet(false)}
+      {/* BP04b · Konfirmasi tutup acara (Figma v2 5060:29745): Dialog seperti BP01b/BP03. */}
+      <Dialog
+        open={closeDialog}
+        onClose={() => !pending && setCloseDialog(false)}
         title="Tutup acara sekarang?"
-        dismissible={!pending}
+        actions={
+          <>
+            <Button
+              aria-disabled={pending || undefined}
+              aria-busy={pending || undefined}
+              onClick={() => !pending && runClose()}
+            >
+              {pending ? "Menutup acara…" : "Ya, tutup acara"}
+            </Button>
+            <Button variant="secondary" onClick={() => !pending && setCloseDialog(false)}>
+              Batal
+            </Button>
+          </>
+        }
       >
-        <div className={s.closeSheet}>
-          <span className={s.closeIcon}>
-            <BookOpen size={30} />
-          </span>
-          <p className="t-headline">Tutup acara sekarang?</p>
-          <p className="t-body c-label-2">
-            Semua HP tamu ({checkIn.checkedIn}) langsung pindah ke buku tamu dan kolase. Layar acara
-            nggak bisa dibuka lagi.
-          </p>
-          <p className={cx("t-label", s.closeInfo)}>
-            <Check size={16} weight="bold" />
-            Semua sesi udah selesai · {done}/{sessions.length}
-          </p>
-        </div>
-        <div className={s.closeActions}>
-          <Button
-            icon={<BookOpen />}
-            aria-disabled={pending || undefined}
-            aria-busy={pending || undefined}
-            onClick={() => !pending && runClose()}
-          >
-            {pending ? "Menutup acara…" : "Ya, tutup acara"}
-          </Button>
-          <Button variant="secondary" onClick={() => !pending && setCloseSheet(false)}>
-            Belum, kembali
-          </Button>
-        </div>
-      </Sheet>
+        Semua HP tamu ({checkIn.checkedIn}) langsung pindah ke buku tamu & kolase. Layar acara nggak
+        bisa dibuka lagi.
+      </Dialog>
 
       {error && (
         <div className={s.toast}>
@@ -418,7 +410,6 @@ function SessionCarousel({
   waitingFor,
   disabled,
   onAction,
-  finale,
 }: {
   sessions: SessionView[];
   focusIndex: number;
@@ -427,9 +418,7 @@ function SessionCarousel({
   waitingFor: number | null; // BP01: mode jeda, layar tamu nunggu sesi n
   disabled: boolean;
   onAction: (session: SessionView) => void;
-  finale?: ReactNode; // F5 BP04: kartu "Jeda terakhir" sesudah sesi terakhir
 }) {
-  const count = sessions.length + (finale ? 1 : 0);
   const track = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(focusIndex);
 
@@ -444,7 +433,7 @@ function SessionCarousel({
     const first = el?.children[0] as HTMLElement | undefined;
     if (!el || !first) return;
     const step = first.offsetWidth + 12;
-    setIndex(Math.min(count - 1, Math.max(0, Math.round(el.scrollLeft / step))));
+    setIndex(Math.min(sessions.length - 1, Math.max(0, Math.round(el.scrollLeft / step))));
   };
 
   return (
@@ -453,13 +442,11 @@ function SessionCarousel({
         <p className="t-label c-label-2">
           {waitingFor
             ? `Lagi jeda · layar tamu nunggu sesi ${waitingFor}`
-            : index < sessions.length
-              ? `Sesi ${index + 1} dari ${sessions.length}`
-              : "Setelah sesi terakhir"}
+            : `Sesi ${index + 1} dari ${sessions.length}`}
         </p>
         <div aria-hidden className={s.dots}>
-          {Array.from({ length: count }, (_, i) => (
-            <span key={i} className={cx(i === index && s.dotOn)} />
+          {sessions.map((x, i) => (
+            <span key={x.id} className={cx(i === index && s.dotOn)} />
           ))}
         </div>
       </div>
@@ -524,7 +511,6 @@ function SessionCarousel({
             </Card>
           );
         })}
-        {finale}
       </div>
     </section>
   );

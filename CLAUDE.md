@@ -43,7 +43,8 @@ Web app mobile untuk House Moving Day Potara Studio (Minggu 8 Nov 2026, 13.00–
 - **F5 v2 (27 Okt)**: `F5-deliverables.md` v2, K1–K13 = default. **Data (Prompt B) udah**:
   `Session.shortTitle`, `Guest.thanksSentAt` + `markThanksSent`, `lib/thanks.ts`. **Layar tamu
   (Prompt C) udah**: BT12 baru, T14/T14b/T14c sheet, `/buku-tamu` redirect, T15 "Foto saya" + pin
-  bingkai. Panitia (BP04 baru, BP04b Dialog, BP05, P12) **belum**.
+  bingkai. **Panitia (Prompt D) udah**: BP04 kartu "Tutup acara", BP04b Dialog, BP05 Acara selesai,
+  P12 tab Makasih. Menunggu review.
 - **F1 update 23 + 25 Okt (v5)**: Figma band `4732:12593`, `F1-deliverables.md` v5 — 37 layar.
   Amplop T01a (ilustrasi Pota, segel = tombol) + T01 kartu kertas & Jejak undangan, T02 Pekerjaan/
   Minat, T02b titip ucapan, T03k sheet kalender, P04i IG perlu dicek, P04g/h hint filter, swipe hapus
@@ -346,8 +347,8 @@ Keputusan 24 Okt (rekomendasi atas "Keputusan & asumsi" + "Temuan" di F5-deliver
    Hapus foto sendiri boleh sampai H+30 (aturan N4 no. 1 direvisi).
 3. Pembagi "dari N" di BT12/BP04b/P11 = tamu **udah check-in** (`feedbackRecap.expected`).
 4. "Mau diundang lagi?" **nggak terpilih dari awal** (opsional); % dihitung dari yang menjawab.
-5. BP04 = kartu terakhir carousel BP02 ("Jeda terakhir"), tanpa TabBar. BP04b = **Sheet** (Figma).
-   Setelah ditutup, kartu hero "Acara udah ditutup · {jam}" + "Lihat rekap buku tamu" (Prompt D).
+5. (v2) BP04 = satu kartu "Tutup acara" pengganti carousel, tanpa TabBar. BP04b = **Dialog** (K8).
+   Setelah ditutup → BP05 Acara selesai (lihat no. 18).
 6. Buku tamu cuma tamu udah check-in & acara closed; **1 isian per tamu, nggak bisa diubah**.
    `POST /api/t/[token]/buku-tamu` (JSON `clientId` UUID, rating 1–5 wajib, `highlightSessionId`,
    `improve` ≤ 280, `inviteAgain` boolean|null). Idempoten per clientId; id lain → `sudah-isi`
@@ -392,14 +393,17 @@ Keputusan 24 Okt (rekomendasi atas "Keputusan & asumsi" + "Temuan" di F5-deliver
     1,5 dtk setelah T15 tenang) supaya `navigator.share` tetap dalam gesture. Pratinjau T15c =
     gambar hasil itu sendiri. Simpan: iOS → share sheet, Android/desktop → download, webview IG/FB
     → gambar layar penuh (data: URL) + toast "Tekan lama gambarnya buat simpan". Batal share = diam.
-17. **BP04** (`KontrolScreen` prop `finale` + `close`): `canClose` → kartu terakhir carousel
-    "Jeda terakhir" (Closing selesai = `endedAt` sesi terakhir) + "Tutup acara & buka buku tamu" →
-    Sheet BP04b (jumlah HP tamu = check-in, "Semua sesi udah selesai · x/n", tombol "Menutup acara…"
-    selagi jalan). Rundown: sesi selesai = ikon cek di lingkaran success-soft + "Selesai", kepala
-    "{x} dari {n} selesai". Tile Pertanyaan = jumlah asli sebelum ditutup (N1).
-18. **BP02 setelah ditutup** (TODO desain, belum ada di Figma): carousel diganti kartu "Acara udah
-    ditutup · Ditutup {jam}" + "Lihat rekap buku tamu" → `rekap/`; tile ke-3 = "Mengisi x/n".
-    Scan tiket tetap ada.
+17. (v2) **BP04** (`KontrolScreen` prop `finale {canClose, closedAt, endsAt, feedback}` + `close`):
+    `canClose` & belum ditutup → carousel diganti **satu kartu**: Badge "{x} dari {n} selesai" + "±
+    {endsAt}", `t-title` "Tutup acara", body, "Tutup acara & buka buku tamu" → **Dialog BP04b**
+    ("Tutup acara sekarang?", jumlah HP tamu = check-in, "Ya, tutup acara" / "Batal", tombol "Menutup
+    acara…" selagi jalan). Sub header "Semua sesi selesai · tamu masih di layar jeda". Rundown
+    **bernomor** "Selesai · {n} mnt" (ikon ✓ v1 dihapus), kepala "{x} dari {n} selesai".
+18. (v2) **BP05 Acara selesai** (ganti kartu TODO v1): Badge neutral "Acara selesai" (ganti Badge
+    Hari-H), sub "Acara ditutup {jam} · tamu lagi isi buku tamu", kartu Badge "Buku tamu kebuka" + jam
+    tutup, "{x} dari {n} udah ngisi" (`feedbackRecap`, realtime), "Lihat rekap buku tamu" → `rekap/`,
+    secondary "Kirim makasih via WA" → `tamu?tab=makasih`. Tile Check-in · Foto · Pertanyaan. **Tanpa
+    Scan tiket.**
 19. **P11** (`/panitia/event/[id]/rekap`, sesi PIN, sebelum ditutup = P11c): angka & `BarList` dari
     `feedbackRecap`, realtime lewat `LiveRefresh`. Kartu ringkasan dari `summaryView` (lib/feedback):
     siap · lagi dibuat (skeleton; HP yang melihat ringkasan basi memanggil `POST …/ringkasan`, sekali
@@ -436,6 +440,11 @@ Keputusan 24 Okt (rekomendasi atas "Keputusan & asumsi" + "Temuan" di F5-deliver
     sheet=buku-tamu`, udah isi → `/kolase?isi=1`, belum masuk → `/selesai`.
   - **T15**: chip & label kaca "**Foto saya**" (kunci filter internal tetap `fotoku`), pin `PhotoPin
     frame`. Chip sesi T14/T15 & P13 + caption pakai `sessionShort`.
+- **v2 · P12 Kirim makasih** (`GuestManager` tab ke-3 "Makasih", prop `thanks` = `thanksView` +
+  `dateLabel`, cuma kalau `closed` & belum `purgedAt`; `?tab=makasih`): eyebrow "{tanggal} · setelah
+  acara", kartu "{n} tamu yang datang" + "{x}/{n} terkirim" / cek bulat kalau semua (K11), template
+  read-only, baris Avatar + nama + Badge "Terkirim" / sm "Kirim WA" (`wa.me`, pola P04b:
+  sessionStorage `{kind:"thanks"}` → balik ke tab → `markThanksSent`) / "Nggak ada WA" `--label-3`.
 
 ## Aturan F3 + F4 di kode
 Keputusan 25 Okt (default "Keputusan & asumsi" F3-F4-deliverables, kecuali K3/K8/K10 = usulan):
@@ -480,7 +489,7 @@ Keputusan 25 Okt (default "Keputusan & asumsi" F3-F4-deliverables, kecuali K3/K8
     carousel "Lagi jeda · layar tamu nunggu sesi n", Badge crew "Berikutnya", rundown "Selesai · 62 mnt".
     BP01b dari Jeda: "Layar semua tamu langsung pindah dari Jeda ke {sesi}, stopwatch mulai jalan." (F3
     `4900:27743`); ada sesi lain jalan (F2 v4): "{sesi} yang lagi jalan ikut selesai. Layar semua tamu
-    langsung pindah ke {sesi}." tanpa kalimat stopwatch. Rundown sesi selesai tetap ikon ✓ (F5 no. 17).
+    langsung pindah ke {sesi}." tanpa kalimat stopwatch. Rundown sesi selesai bernomor (F5 v2 no. 17).
 12. **S01 / realtime**: `LiveRefresh pollMs={2000}` di `acara/` & `kontrol/` (remote ≤ 3 dtk). Offline =
     `offline` event / `navigator.onLine` false, atau SSE/poll gagal 2× berturut (`onHealth`); balik
     online → cek `?once=1` → toast hilang. "Info sesi terakhir {jam}" = `loadedAt` (jam server saat data

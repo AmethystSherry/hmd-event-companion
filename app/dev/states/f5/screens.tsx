@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { GuestManager } from "@/components/f1/GuestManager";
 import { KontrolScreen } from "@/components/f2/Kontrol";
 import { KolaseScreen } from "@/components/f5/KolaseKulkas";
 import { RekapScreen } from "@/components/f5/Rekap";
@@ -6,12 +7,13 @@ import { SelesaiLuarScreen, SelesaiScreen } from "@/components/f5/Selesai";
 import { sessionShort } from "@/lib/data/sessionInfo";
 import type { FeedbackRecap, Session } from "@/lib/data/types";
 import type { SummaryView } from "@/lib/feedback";
-import { demoEvent, demoSessions, NAMES } from "@/lib/fixtures";
+import { demoEvent, demoGuestView, demoSessions, NAMES } from "@/lib/fixtures";
 import { rundownView } from "@/lib/rundown";
 import { firstName, fromMinutes, toMinutes } from "@/lib/format";
 import { igProfileUrl, POTARA_IG } from "@/lib/invite";
 import { photoTone, type KolasePhoto } from "@/lib/kolase";
 import { polaroidDate } from "@/lib/photo";
+import { thanksView } from "@/lib/thanks";
 
 // Registri layar F5 tamu (F5-deliverables.md "Daftar layar", Figma 4671:4888) untuk
 // /dev/states/f5/[code]. Komponen sama dengan route asli, data contoh (48 foto placeholder,
@@ -115,12 +117,41 @@ const kontrol = (opts: { sheet?: boolean; closed?: boolean }) => (
     finale={{
       canClose: true,
       closedAt: opts.closed ? "2026-11-08T17:02:00+07:00" : null,
-      lastEndedAt: DONE_SESSIONS.at(-1)!.endedAt!,
+      endsAt: demoEvent.endsAt,
       feedback: { respondents: 15, expected: 18 },
     }}
-    initialCloseSheet={opts.sheet}
+    initialCloseDialog={opts.sheet}
   />
 );
+
+// P12: 20 tamu datang, 2 terkirim (Rara, Sekar), 1 walk-in tanpa WA (contoh K10).
+const makasih = () => {
+  const view = demoGuestView();
+  const raw = view.rows.map((r, i) => ({
+    id: r.id,
+    name: r.name,
+    wa: i === 19 ? null : (r.wa ?? "6281234567890"),
+    token: `demo-${i}`,
+    thanksSentAt: i < 2 ? "2026-11-08T17:20:00+07:00" : null,
+  }));
+  const thanks = thanksView(
+    raw,
+    raw.map((g) => ({ guestId: g.id, status: "dipakai" as const })),
+    "https://hmd.example",
+  );
+  return (
+    <GuestManager
+      eventId={demoEvent.id}
+      reminderDateLabel="Sabtu, 7 Nov"
+      templateFromCsv
+      dmTemplate={demoEvent.dmTemplate}
+      guests={view.rows}
+      stats={view.stats}
+      initialTab="makasih"
+      thanks={{ ...thanks, dateLabel: "Minggu, 8 Nov" }}
+    />
+  );
+};
 
 const RECAP: FeedbackRecap = {
   respondents: 15,
@@ -255,11 +286,18 @@ export const SCREENS: ScreenDef[] = [
     render: () => kontrol({ sheet: true }),
   },
   {
-    code: "BP04-tutup",
-    name: "Setelah acara ditutup (belum ada di Figma)",
-    kind: "Kasus lain",
+    code: "BP05",
+    name: "Acara selesai (home panitia)",
+    kind: "Utama",
     lane: "Panitia",
     render: () => kontrol({ closed: true }),
+  },
+  {
+    code: "P12",
+    name: "Kirim makasih via WA",
+    kind: "Kasus lain",
+    lane: "Panitia",
+    render: () => makasih(),
   },
   {
     code: "P11",

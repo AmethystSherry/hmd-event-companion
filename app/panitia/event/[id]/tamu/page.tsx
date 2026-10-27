@@ -9,6 +9,7 @@ import { addDays, dateMedium } from "@/lib/format";
 import { requireCrew } from "@/lib/server/access";
 import { serverNow } from "@/lib/server/clock";
 import { appOrigin } from "@/lib/server/url";
+import { thanksView } from "@/lib/thanks";
 import { templateFromCsv, toGuestRow } from "@/lib/view";
 import {
   addGuest,
@@ -16,12 +17,13 @@ import {
   importGuests,
   markInvited,
   markReminderSent,
+  markThanksSent,
   undoInvite,
   updateGuest,
 } from "../../../actions";
 
 // Tamu & undangan: belum ada tamu → P04k/P04a/P04c (CSV sekali). Ada tamu → P04 (+ P04b tab
-// Pengingat H-1). Jawaban tamu masuk realtime (LiveRefresh).
+// Pengingat H-1, + P12 tab Makasih setelah acara ditutup). Jawaban tamu masuk realtime (LiveRefresh).
 export default function GuestsPage({
   params,
   searchParams,
@@ -42,7 +44,15 @@ export default function GuestsPage({
   );
 }
 
-const actions = { markInvited, undoInvite, addGuest, updateGuest, deleteGuest, markReminderSent };
+const actions = {
+  markInvited,
+  undoInvite,
+  addGuest,
+  updateGuest,
+  deleteGuest,
+  markReminderSent,
+  markThanksSent,
+};
 
 async function View({
   params,
@@ -59,6 +69,12 @@ async function View({
     return <GuestImport eventId={id} eventName={event.name} save={importGuests} />;
   }
   const [origin, now] = await Promise.all([appOrigin(), serverNow()]);
+  // P12 (K12): tab Makasih cuma setelah acara ditutup & sebelum data dihapus H+30.
+  const thanks =
+    event.mode === "closed" && !event.purgedAt
+      ? { ...thanksView(guests, store.listTickets(id), origin), dateLabel: dateMedium(event.date) }
+      : undefined;
+  const tab = query.tab;
   return (
     <>
       <GuestManager
@@ -69,7 +85,8 @@ async function View({
         guests={guests.map((g) => toGuestRow(g, event, origin, now))}
         stats={store.stats(id)}
         actions={actions}
-        initialTab={query.tab === "pengingat" ? "pengingat" : "undangan"}
+        initialTab={tab === "pengingat" || tab === "makasih" ? tab : "undangan"}
+        thanks={thanks}
       />
       <LiveRefresh />
     </>

@@ -49,7 +49,6 @@ async function Kontrol({ params }: Pick<PageProps<"/panitia/event/[id]/kontrol">
   const now = await serverNow();
   const eventDay = isEventDay(event.date, now);
   const recap = store.feedbackRecap(id);
-  const last = sessions.at(-1); // listSessions urut jam
   const rundown = rundownView(event, sessions);
   // N1: tile Pertanyaan = semua pertanyaan talkshow ("23 masuk"), border kalau ada yang belum dijawab.
   const asked = questionsView(
@@ -74,7 +73,7 @@ async function Kontrol({ params }: Pick<PageProps<"/panitia/event/[id]/kontrol">
         finale={{
           canClose: store.canClose(id),
           closedAt: event.closedAt ?? null,
-          lastEndedAt: last?.endedAt ?? null,
+          endsAt: event.endsAt,
           feedback: { respondents: recap.respondents, expected: recap.expected },
         }}
         close={closeEvent}
