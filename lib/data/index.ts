@@ -13,11 +13,11 @@ export type * from "./types";
 // Store lokal (keputusan 22 Okt): in-memory + disimpan ke .data/store.json (di-gitignore) supaya
 // bertahan saat server restart. Nanti diganti Supabase lewat interface yang sama (DataStore).
 // Disimpan di globalThis supaya halaman, server action & SSE memakai instance yang sama saat dev.
-// Kunci naik (F1 → F2 → F3 → F4 → F5 → F34 → N1 → N3) tiap method store bertambah: server dev yang sedang jalan memuat ulang dari file.
+// Kunci naik (F1 → F2 → F3 → F4 → F5 → F34 → N1 → N3 → F5v2) tiap method store bertambah: server dev yang sedang jalan memuat ulang dari file.
 const DIR = join(process.cwd(), ".data");
 const FILE = join(DIR, "store.json");
 
-const g = globalThis as typeof globalThis & { __hmdStoreF34v3?: DataStore };
+const g = globalThis as typeof globalThis & { __hmdStoreF5v2?: DataStore };
 
 function load(): StoreData {
   try {
@@ -54,7 +54,7 @@ export async function getStore(): Promise<DataStore> {
       },
     });
   }
-  return (g.__hmdStoreF34v3 ??= createStore(load(), { persist }));
+  return (g.__hmdStoreF5v2 ??= createStore(load(), { persist }));
 }
 
 const MAX_TRIES = 5;

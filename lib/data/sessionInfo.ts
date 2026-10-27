@@ -6,7 +6,10 @@ import type { Session, StoreData } from "./types";
 // Figma (K3). Nilai yang sudah diubah panitia nggak disentuh.
 export const HMD_EVENT_ID = "hmd-2026";
 
-type Info = Pick<Session, "room" | "roomNote" | "description" | "speaker" | "topic" | "art">;
+type Info = Pick<
+  Session,
+  "room" | "roomNote" | "description" | "speaker" | "topic" | "art" | "shortTitle"
+>;
 
 export const HMD_SESSION_INFO: Record<string, Info> = {
   s01: {
@@ -16,6 +19,7 @@ export const HMD_SESSION_INFO: Record<string, Info> = {
     speaker: null,
     topic: null,
     art: "open-space",
+    shortTitle: null,
   },
   s02: {
     room: "Ruang 02",
@@ -24,6 +28,7 @@ export const HMD_SESSION_INFO: Record<string, Info> = {
     speaker: { name: "Alfin Ganteng", ig: "alfinganteng", label: "Guest star" },
     topic: "Cara pakai AI tanpa ngabisin air di rumah",
     art: "talkshow",
+    shortTitle: null,
   },
   s03: {
     room: "Ruang 03",
@@ -32,6 +37,7 @@ export const HMD_SESSION_INFO: Record<string, Info> = {
     speaker: null,
     topic: null,
     art: "office-tour",
+    shortTitle: null,
   },
   s04: {
     room: "Ruang 01",
@@ -40,6 +46,7 @@ export const HMD_SESSION_INFO: Record<string, Info> = {
     speaker: null,
     topic: null,
     art: "closing",
+    shortTitle: "Closing", // F5 v2 (K4): chip T14 "Closing"
   },
 };
 
@@ -50,6 +57,9 @@ const RENAMED: Record<string, Partial<Record<"title" | "tagline" | "pic", [strin
   s04: { pic: ["Tim Potara", "MC"] },
 };
 
+// shortTitle seed berlaku untuk judul ini saja (F5 v2, K4).
+const SHORT_FOR_TITLE: Record<string, string> = { s04: "Closing & networking" };
+
 // Melengkapi data di tempat (tanpa commit / rev): idempoten, aman dipanggil tiap store dimuat.
 export function backfillSessionInfo(data: StoreData): void {
   for (const s of data.sessions) {
@@ -57,7 +67,10 @@ export function backfillSessionInfo(data: StoreData): void {
     const info = HMD_SESSION_INFO[s.id];
     if (!info) continue;
     for (const key of Object.keys(info) as (keyof Info)[]) {
-      if (s[key] === undefined) Object.assign(s, { [key]: info[key] });
+      if (s[key] !== undefined) continue;
+      // Label pendek cuma cocok untuk judul seed; judul yang udah diganti panitia → pakai judulnya.
+      const value = key === "shortTitle" && s.title !== SHORT_FOR_TITLE[s.id] ? null : info[key];
+      Object.assign(s, { [key]: value });
     }
     for (const [key, [from, to]] of Object.entries(RENAMED[s.id] ?? {}) as [
       "title" | "tagline" | "pic",
@@ -66,4 +79,9 @@ export function backfillSessionInfo(data: StoreData): void {
       if (s[key] === from) s[key] = to;
     }
   }
+}
+
+// F5 v2 (K4): label pendek sesi untuk chip, caption, dan bar; fallback judul lengkap.
+export function sessionShort(s: Pick<Session, "title" | "shortTitle">): string {
+  return s.shortTitle?.trim() || s.title;
 }

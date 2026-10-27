@@ -60,6 +60,8 @@ export type Guest = {
   // T02b · titip ucapan (opsional, tamu yang nggak bisa datang). Belum ditampilkan di mana pun.
   farewellMessage?: string | null; // ≤ 140 huruf
   farewellAt?: string | null;
+  // F5 v2 · P12 makasih via WA (manual, sekali per tamu; dihapus H+30).
+  thanksSentAt?: string | null;
 };
 
 // Kartu "Tamu di sini" (BT05): peran + "Tanya soal …" (≤ 3 topik, juga jadi chip Kartu kamu).
@@ -84,6 +86,9 @@ export type Session = {
   speaker?: Speaker | null; // Talkshow: kartu pembicara + BT21p
   topic?: string | null; // Talkshow: baris di bawah judul
   art?: SessionArt | null; // ilustrasi Pota (public/figma/f3-*.webp)
+  // F5 v2 · label pendek (chip T14/T15/P13, caption T15, bar P11). Kosong = `title`; baca lewat
+  // `sessionShort`. Dikosongkan otomatis kalau panitia mengganti judul sesi.
+  shortTitle?: string | null;
 };
 
 export type Speaker = { name: string; ig: string; label: string }; // label = "Guest star"

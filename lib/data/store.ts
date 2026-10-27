@@ -5,7 +5,7 @@ import { MAX_IMPROVE, summaryDue } from "../feedback";
 import { toMinutes } from "../format";
 import { MAX_PHOTOS_PER_GUEST } from "../photo";
 import { MAX_QUESTION } from "../questions";
-import { backfillSessionInfo } from "./sessionInfo";
+import { backfillSessionInfo, sessionShort } from "./sessionInfo";
 import type {
   CheckInMethod,
   CheckInResult,
@@ -227,6 +227,7 @@ export function createStore(
       followConfirmed: false,
       keyNo: nextKeyNo(eventId),
       reminderSentAt: null,
+      thanksSentAt: null,
       source,
       createdAt: now(),
     };
@@ -286,7 +287,7 @@ export function createStore(
         .map((s, i) => ({
           i,
           sessionId: s.id,
-          title: s.title,
+          title: sessionShort(s),
           count: list.filter((f) => f.highlightSessionId === s.id).length,
         }))
         .sort((a, b) => b.count - a.count || a.i - b.i)
@@ -428,7 +429,9 @@ export function createStore(
     updateSession(id: string, input: SessionInput): Session {
       const s = data.sessions.find((x) => x.id === id);
       if (!s) throw new StoreError("sesi-tidak-ada", "Sesi nggak ketemu");
+      const renamed = input.title !== s.title;
       Object.assign(s, input);
+      if (renamed) s.shortTitle = null; // label pendek seed nggak cocok lagi (F5 v2)
       commit();
       return s;
     },
@@ -664,6 +667,24 @@ export function createStore(
     markReminderSent(id: string): void {
       guest(id).reminderSentAt = now();
       commit();
+    },
+
+    // F5 v2 · P12 makasih via WA: sekali per tamu (tanpa kirim ulang), cuma tamu yang udah masuk,
+    // setelah acara ditutup & sebelum data dihapus. Udah terkirim → false, rev tetap.
+    markThanksSent(id: string, at: string): boolean {
+      const g = guest(id);
+      const e = event(g.eventId);
+      if (e.purgedAt) throw new StoreError("data-dihapus", "Data acara ini udah dihapus");
+      if (e.mode !== "closed") {
+        throw new StoreError("acara-belum-ditutup", "Makasih dikirim setelah acara ditutup");
+      }
+      if (data.tickets.find((t) => t.guestId === g.id)?.status !== "dipakai") {
+        throw new StoreError("belum-masuk", "Tamu ini belum datang");
+      }
+      if (g.thanksSentAt) return false;
+      g.thanksSentAt = at;
+      commit();
+      return true;
     },
 
     // T02: jawaban tamu. Hadir → tiket aktif (dibuat sekali, dipakai lagi kalau ubah jawaban).
@@ -1066,6 +1087,7 @@ export function createStore(
           job: null,
           interests: null,
           card: null,
+          thanksSentAt: null,
           token: newToken(),
         } satisfies Partial<Guest>);
       }

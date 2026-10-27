@@ -273,3 +273,60 @@ describe("hapus data per orang H+30 (P11d)", () => {
     expect(() => store.addFeedback(guests[0].id, input(8), at)).toThrow(StoreError);
   });
 });
+
+describe("label pendek sesi (F5 v2, K4)", () => {
+  it("seed Closing → 'Closing', dipakai bar rekap; judul lain tetap judul lengkap", () => {
+    const { store, inside } = closedWith(1);
+    store.addFeedback(inside[0].id, input(1, { highlightSessionId: "s04" }), t("17:10"));
+    const bars = store.feedbackRecap(HMD_ID).highlights;
+    expect(bars[0]).toMatchObject({ sessionId: "s04", title: "Closing", count: 1 });
+    expect(bars.find((b) => b.sessionId === "s02")?.title).toBe("Talkshow");
+    // Ringkasan Claude tetap dapat judul lengkap (konteks lebih jelas).
+    expect(store.beginSummary(HMD_ID, t("17:20"), true)).toBeNull(); // < 3 jawaban
+  });
+
+  it("panitia ganti judul sesi → label pendek dikosongkan", () => {
+    const store = fresh();
+    const s = store.listSessions(HMD_ID).find((x) => x.id === "s04")!;
+    store.updateSession("s04", { ...s, title: "Penutupan" });
+    expect(store.listSessions(HMD_ID).find((x) => x.id === "s04")?.shortTitle).toBeNull();
+  });
+
+  it("store lama tanpa shortTitle dilengkapi saat dimuat, kecuali judulnya udah diganti", () => {
+    const old = seedData();
+    for (const x of old.sessions) delete x.shortTitle;
+    old.sessions.find((x) => x.id === "s03")!.title = "Tur";
+    const store = createStore(old, { persist: vi.fn() });
+    const byId = new Map(store.listSessions(HMD_ID).map((x) => [x.id, x]));
+    expect(byId.get("s04")?.shortTitle).toBe("Closing");
+    expect(byId.get("s03")?.shortTitle).toBeNull();
+  });
+});
+
+describe("makasih via WA (P12, F5 v2)", () => {
+  it("cuma setelah ditutup & tamu udah masuk; sekali per tamu (rev tetap)", () => {
+    const open = closedWith(1, false);
+    expect(() => open.store.markThanksSent(open.inside[0].id, t("16:59"))).toThrow(
+      expect.objectContaining({ code: "acara-belum-ditutup" }),
+    );
+    const { store, inside, outside } = closedWith(1);
+    expect(() => store.markThanksSent(outside.id, t("17:10"))).toThrow(
+      expect.objectContaining({ code: "belum-masuk" }),
+    );
+    expect(store.markThanksSent(inside[0].id, t("17:10"))).toBe(true);
+    const rev = store.rev;
+    expect(store.markThanksSent(inside[0].id, t("17:20"))).toBe(false);
+    expect(store.rev).toBe(rev);
+    expect(store.getGuest(inside[0].id)?.thanksSentAt).toBe(t("17:10"));
+  });
+
+  it("hapus H+30 mengosongkan tanda terkirim; setelahnya ditolak", () => {
+    const { store, inside } = closedWith(1);
+    store.markThanksSent(inside[0].id, t("17:10"));
+    store.purgePersonalData(HMD_ID, "2026-12-08T00:00:00+07:00");
+    expect(store.getGuest(inside[0].id)?.thanksSentAt).toBeNull();
+    expect(() => store.markThanksSent(inside[0].id, "2026-12-08T01:00:00+07:00")).toThrow(
+      expect.objectContaining({ code: "data-dihapus" }),
+    );
+  });
+});

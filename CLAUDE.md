@@ -40,6 +40,9 @@ Web app mobile untuk House Moving Day Potara Studio (Minggu 8 Nov 2026, 13.00–
   di `rekap/`. Semua layar F5 menunggu review.
   12 keputusan F5-deliverables dijawab pakai rekomendasi — lihat "Aturan F5 di kode". Ringkasan
   Claude butuh `ANTHROPIC_API_KEY` di Vercel (tanpa key → P11b).
+- **F5 v2 (27 Okt)**: `F5-deliverables.md` v2, K1–K13 = default. **Data (Prompt B) udah**:
+  `Session.shortTitle`, `Guest.thanksSentAt` + `markThanksSent`, `lib/thanks.ts`. Layar tamu (BT12
+  baru, T14 sheet, "Foto saya") & panitia (BP04 baru, BP04b Dialog, BP05, P12) **belum**.
 - **F1 update 23 + 25 Okt (v5)**: Figma band `4732:12593`, `F1-deliverables.md` v5 — 37 layar.
   Amplop T01a (ilustrasi Pota, segel = tombol) + T01 kartu kertas & Jejak undangan, T02 Pekerjaan/
   Minat, T02b titip ucapan, T03k sheet kalender, P04i IG perlu dicek, P04g/h hint filter, swipe hapus
@@ -271,7 +274,7 @@ Keputusan default 22 Okt (jawaban "Keputusan & asumsi" di F2-deliverables; prd.m
   "Kunci #014" (Key) + Pill "Sudah masuk" (Check, copy Figma), "Masuk sekarang", caption 12
   `aria-live`. Tanpa Ticket/cap (sobek cuma di T05a). Ilustrasi di-`preload()` (react-dom) sejak T05.
 - Kamera butuh HTTPS di HP (`npx next dev --experimental-https`); gagal/ditolak → P07b.
-- Store dev ada di `globalThis.__hmdStoreF34v3`: naikkan kuncinya tiap method store bertambah (server
+- Store dev ada di `globalThis.__hmdStoreF5v2`: naikkan kuncinya tiap method store bertambah (server
   dev yang sedang jalan nggak membuat ulang instance lama saat HMR). Server dev yang sudah jalan
   bisa tetap memakai modul server lama (mis. `store.getPhoto is not a function`) → restart `npm run dev`.
 
@@ -404,6 +407,18 @@ Keputusan 24 Okt (rekomendasi atas "Keputusan & asumsi" + "Temuan" di F5-deliver
     muncul setelah ada 3 jawaban.", copy bukan Figma). P11d: arsip + Banner, CSV nonaktif. Unduh
     CSV = `<form method=get>` ke `rekap.csv` (`rekap-buku-tamu-hmd.csv`); 0 jawaban / dihapus →
     nonaktif. Komponen baru `BarList` (bar teratas Ink).
+- **v2 (27 Okt, K1–K13 default) · data**:
+  - K1: tutup acara tetap cuma setelah sesi terakhir selesai (BT24 Closing = konteks).
+  - K4 `Session.shortTitle?` (seed s04 "Closing"), baca lewat `sessionShort(s)` (lib/data/sessionInfo)
+    = label pendek atau `title`. Dipakai bar P11 (`feedbackRecap.highlights.title`) & caption T15/P13
+    (`toKolasePhotos`); ringkasan Claude & CSV tetap judul lengkap. `updateSession` dengan judul baru →
+    `shortTitle` null. Backfill store lama cuma mengisi kalau judulnya masih judul seed.
+  - K10–K13 P12: `Guest.thanksSentAt?`, store `markThanksSent(id, at)` (acara closed, tamu udah masuk,
+    belum dihapus; udah terkirim → `false`, rev tetap — tanpa kirim ulang), server action
+    `markThanksSent`. `lib/thanks.ts`: `THANKS_TEMPLATE` (copy Figma, read-only, `{nama}` = nama depan),
+    `thanksLink` = `/t/{token}/buku-tamu?dari=wa`, `thanksView` (tamu udah check-in urut nama
+    `localeCompare id`, `waHref` null kalau tanpa WA, `sent/total`). Hapus H+30 mengosongkan
+    `thanksSentAt`. Store dev `__hmdStoreF5v2`.
 
 ## Aturan F3 + F4 di kode
 Keputusan 25 Okt (default "Keputusan & asumsi" F3-F4-deliverables, kecuali K3/K8/K10 = usulan):

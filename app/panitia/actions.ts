@@ -211,6 +211,13 @@ export async function markReminderSent(guestId: string): Promise<void> {
   refresh();
 }
 
+// F5 v2 · P12 makasih via WA terkirim (ditandai saat panitia balik dari WA, sekali per tamu).
+export async function markThanksSent(guestId: string): Promise<FormResult> {
+  await requireCrew();
+  const at = (await serverNow()).toISOString();
+  return guestOp((store) => store.markThanksSent(guestId, at));
+}
+
 // Hasil aksi Kontrol acara. changed=false → aksinya udah dilakukan HP lain duluan (no-op); `by` +
 // `action` = siapa & apa yang terakhir mengubah state (toast BP02d "HP 7K2Q udah mulai …").
 export type StateResult =

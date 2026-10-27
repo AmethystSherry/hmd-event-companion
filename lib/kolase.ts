@@ -1,3 +1,4 @@
+import { sessionShort } from "./data/sessionInfo";
 import type { Guest, Photo, Session } from "./data/types";
 import { firstName, timeWib } from "./format";
 
@@ -80,7 +81,7 @@ export type KolasePhoto = {
   name: string; // nama lengkap (T15b)
   first: string; // nama depan (caption)
   sessionId: string | null;
-  session: string | null; // judul sesi
+  session: string | null; // label pendek sesi (sessionShort)
   time: string; // "14.27"
   width: number;
   height: number;
@@ -113,11 +114,11 @@ export function filterPhotos(photos: KolasePhoto[], filter: KolaseFilter): Kolas
 export function toKolasePhotos(
   photos: Photo[],
   guests: Pick<Guest, "id" | "name">[],
-  sessions: Pick<Session, "id" | "title">[],
+  sessions: Pick<Session, "id" | "title" | "shortTitle">[],
   meId: string | null,
 ): KolasePhoto[] {
   const names = new Map(guests.map((g) => [g.id, g.name]));
-  const titles = new Map(sessions.map((x) => [x.id, x.title]));
+  const titles = new Map(sessions.map((x) => [x.id, sessionShort(x)])); // label pendek (K4)
   return photos.map((p) => {
     const name = names.get(p.guestId) ?? "Tamu";
     return {
