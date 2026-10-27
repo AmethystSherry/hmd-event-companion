@@ -13,6 +13,7 @@ import {
 import { getStore, mutateStore, StoreError, type DataStore, type StateAction } from "@/lib/data";
 import type { InviteSnapshot } from "@/lib/data/store";
 import { LOCATION } from "@/lib/data/seed";
+import { rundownView } from "@/lib/rundown";
 import { DEFAULT_DM_TEMPLATE } from "@/lib/invite";
 import { cleanSession, type SessionForm } from "@/lib/sessionForm";
 import {
@@ -246,14 +247,21 @@ async function stateOp(
 
 const cleanBy = (by: string | null) => (by ? by.slice(0, 16) : null);
 
-// BP01b · Mulai sesi (sesi lain yang masih jalan ikut selesai) · BP03 · Selesaikan sesi.
+// BP01b · Mulai sesi · BP03 · Selesaikan sesi. Urut rundown: cuma sesi berikutnya yang boleh
+// dimulai, dan cuma kalau nggak ada sesi yang lagi jalan (selain itu no-op).
 // Jam dari server (stopwatch semua HP sama). Dobel tap / dua HP → idempoten di store (K10).
 export async function startSession(
   eventId: string,
   sessionId: string,
   by: string | null = null,
 ): Promise<StateResult> {
-  return stateOp(eventId, (store, at) => store.startSession(eventId, sessionId, at, cleanBy(by)));
+  return stateOp(eventId, (store, at) => {
+    const event = store.getEvent(eventId);
+    if (!event) return false;
+    const { active, next } = rundownView(event, store.listSessions(eventId));
+    if (active || next?.id !== sessionId) return false;
+    return store.startSession(eventId, sessionId, at, cleanBy(by));
+  });
 }
 
 export async function finishSession(

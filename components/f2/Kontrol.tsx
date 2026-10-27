@@ -422,6 +422,7 @@ function SessionCarousel({
 }) {
   const track = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(focusIndex);
+  const anyRunning = sessions.some((x) => x.state === "berlangsung");
 
   useEffect(() => {
     const el = track.current;
@@ -454,6 +455,8 @@ function SessionCarousel({
       <div ref={track} className={s.carousel} onScroll={onScroll}>
         {sessions.map((x) => {
           const running = x.state === "berlangsung";
+          // Urut rundown: Mulai cuma di sesi berikutnya & selagi nggak ada yang jalan.
+          const locked = !running && (x.state !== "berikutnya" || anyRunning);
           const over = running ? overdueMin(x, now) : null;
           const late = x.state === "berikutnya" && lateToStart(date, x, now);
           return (
@@ -503,8 +506,8 @@ function SessionCarousel({
               ) : (
                 <Button
                   icon={<Play />}
-                  aria-disabled={disabled}
-                  onClick={() => !disabled && onAction(x)}
+                  aria-disabled={disabled || locked}
+                  onClick={() => !disabled && !locked && onAction(x)}
                 >
                   Mulai sesi
                 </Button>

@@ -230,7 +230,9 @@ Keputusan default 22 Okt (jawaban "Keputusan & asumsi" di F2-deliverables; prd.m
 1. Hari-H mulai **00.00 WIB** tanggal event (`lib/server/clock` → `isEventDay`); scan boleh sebelum
    13.00. Tamu T03 → T05, panitia PE03b → BP02 otomatis. (27 Okt) **Scan tiket & P07 dibuka sejak
    Kontrol acara bisa dibuka, nggak nunggu hari-H** (tamu datang lebih awal). Mulai/Selesaikan sesi &
-   Tutup acara juga aktif kapan aja (manual panitia; jam sesi cuma display).
+   Tutup acara juga aktif kapan aja (manual panitia; jam sesi cuma display). **Urut rundown**: Mulai
+   cuma di kartu "Berikutnya" & selagi nggak ada sesi jalan (lainnya redup); server action
+   `startSession` juga menolak (no-op) sesi lain → nggak bisa lompat / mulai ulang sesi selesai.
    Tiket `dipakai` sebelum hari-H → tamu langsung ke T05/BT02. Dev: cookie `hmd_now` / env `HMD_FAKE_NOW`
    (diabaikan di production), dipasang dari `/dev/states/f2`.
 2. "Kecerahan maks" = QR layar penuh latar putih + Wake Lock (browser nggak bisa atur brightness).
