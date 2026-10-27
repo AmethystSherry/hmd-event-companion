@@ -41,8 +41,9 @@ Web app mobile untuk House Moving Day Potara Studio (Minggu 8 Nov 2026, 13.00–
   12 keputusan F5-deliverables dijawab pakai rekomendasi — lihat "Aturan F5 di kode". Ringkasan
   Claude butuh `ANTHROPIC_API_KEY` di Vercel (tanpa key → P11b).
 - **F5 v2 (27 Okt)**: `F5-deliverables.md` v2, K1–K13 = default. **Data (Prompt B) udah**:
-  `Session.shortTitle`, `Guest.thanksSentAt` + `markThanksSent`, `lib/thanks.ts`. Layar tamu (BT12
-  baru, T14 sheet, "Foto saya") & panitia (BP04 baru, BP04b Dialog, BP05, P12) **belum**.
+  `Session.shortTitle`, `Guest.thanksSentAt` + `markThanksSent`, `lib/thanks.ts`. **Layar tamu
+  (Prompt C) udah**: BT12 baru, T14/T14b/T14c sheet, `/buku-tamu` redirect, T15 "Foto saya" + pin
+  bingkai. Panitia (BP04 baru, BP04b Dialog, BP05, P12) **belum**.
 - **F1 update 23 + 25 Okt (v5)**: Figma band `4732:12593`, `F1-deliverables.md` v5 — 37 layar.
   Amplop T01a (ilustrasi Pota, segel = tombol) + T01 kartu kertas & Jejak undangan, T02 Pekerjaan/
   Minat, T02b titip ucapan, T03k sheet kalender, P04i IG perlu dicek, P04g/h hint filter, swipe hapus
@@ -142,7 +143,7 @@ components/n1/            TanyaSheet (BT08/BT09/BT08b) · Pertanyaan (P10/P10c)
 components/n3/            KartuSheet (T11/T11e + gagal simpan) · InterestChips (chip minat + tambah di tempat)
 components/f3/            FotoMasuk (P13: masonry bingkai, filter sesi, hapus + Dialog, unduh ZIP)
 components/f4/            AcaraScreen (BT20–24/BT03/S01, sheet lewat ?sheet=) · Sheets (BT22/BT21p/BT04/BT05) ·
-components/f5/            Selesai (BT12 + belum masuk) · BukuTamu (T14/b/c) · KolaseKulkas (T15/T15c/
+components/f5/            Selesai (BT12 v2 + belum masuk, sheet T14) · BukuTamu (BukuTamuSheet T14/b/c) · KolaseKulkas (T15/T15c/
                           T15d/T14d) · FotoDetail (T15b) · kolaseCanvas (gambar 9:16) · saveImage ·
                           Rekap (P11/P11b/P11c/P11d)
 components/               LiveRefresh (SSE → router.refresh, `pollMs`, `onHealth`) · useServerNow · RefreshAt ·
@@ -419,6 +420,22 @@ Keputusan 24 Okt (rekomendasi atas "Keputusan & asumsi" + "Temuan" di F5-deliver
     `thanksLink` = `/t/{token}/buku-tamu?dari=wa`, `thanksView` (tamu udah check-in urut nama
     `localeCompare id`, `waHref` null kalau tanpa WA, `sent/total`). Hapus H+30 mengosongkan
     `thanksSentAt`. Store dev `__hmdStoreF5v2`.
+- **v2 · layar tamu** (menggantikan no. 8 "T14b/T14c ada back", no. 13 soal `/buku-tamu`, no. 14 layout):
+  - **BT12** (`components/f5/Selesai`, client): `IllustratedScreen` `/figma/f3-closing.webp` + panel —
+    Badge neutral "Acara selesai", `t-title` "Makasih udah mampir!", "{n} foto · {m} pertanyaan · {k}
+    tamu" (k = udah check-in), `EventTickets` (semua sesi = sobekan, caption "{x} dari {n} selesai") +
+    prop baru **`extra`** (tiket gaya Sekarang, stub ikon `BookOpen`, "SATU LAGI · Isi buku tamu · ± 1
+    menit"; `done` = sobekan terakhir ikon BookOpen + cek, K2, TODO desain), kartu `--card-2` "Kolase
+    kulkas · {n} foto" + 4 thumbnail + "+{n−4}" (satu `Link` ke T15, tanpa tombol bersarang; 0 foto →
+    "Belum ada foto"). Tanpa tombol bawah. Belum check-in → `SelesaiLuarScreen` kerangka sama +
+    "Acaranya udah selesai" + Follow (copy bukan Figma).
+  - **T14/T14b/T14c** = `BukuTamuSheet` (`Sheet strong`) di BT12, `?sheet=buku-tamu` (pushState, back HP/
+    backdrop/Esc menutup, draft tetap). Header `t-card-title` + "± 1 menit. Cuma bintang yang wajib.",
+    bagian tanpa Card, T14b = baris merah WifiSlash (bukan Banner), tombol di dalam sheet. Tiket extra →
+    sheet; udah isi → `/kolase?isi=1`. `/buku-tamu` (link WA P12) = redirect: belum isi → `selesai?
+    sheet=buku-tamu`, udah isi → `/kolase?isi=1`, belum masuk → `/selesai`.
+  - **T15**: chip & label kaca "**Foto saya**" (kunci filter internal tetap `fotoku`), pin `PhotoPin
+    frame`. Chip sesi T14/T15 & P13 + caption pakai `sessionShort`.
 
 ## Aturan F3 + F4 di kode
 Keputusan 25 Okt (default "Keputusan & asumsi" F3-F4-deliverables, kecuali K3/K8/K10 = usulan):

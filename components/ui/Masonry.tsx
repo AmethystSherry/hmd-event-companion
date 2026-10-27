@@ -38,7 +38,7 @@ export function Masonry<T>({
   );
 }
 
-// Satu pin foto: foto radius 16 (tinggi ikut rasio asli) + label kaca "Fotoku" + caption avatar 20
+// Satu pin foto: foto radius 16 (tinggi ikut rasio asli) + label kaca "Foto saya" + caption avatar 20
 // + "{nama} · {sesi}". Tanpa `src` = placeholder gradasi (pratinjau / belum dimuat).
 // `frame` (P13 Foto masuk): kartu putih radius 4 (padding 8/8/10, shadow 0 6 7), foto radius 2;
 // `action` = tombol di ujung kanan caption (P13: hapus).
@@ -74,7 +74,7 @@ export function PhotoPin({
     >
       {/* eslint-disable-next-line @next/next/no-img-element -- route proxy, bukan aset statis */}
       {src && <img src={src} alt="" loading="lazy" decoding="async" draggable={false} />}
-      {mine && <span className={cx("t-label-emph", styles.mine)}>Fotoku</span>}
+      {mine && <span className={cx("t-label-emph", styles.mine)}>Foto saya</span>}
     </span>
   );
   return (

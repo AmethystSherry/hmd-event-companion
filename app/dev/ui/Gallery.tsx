@@ -95,7 +95,7 @@ const COLORS = [
   "danger-text",
 ];
 
-// T15: pin kolase placeholder (tinggi bervariasi, foto sendiri berlabel "Fotoku").
+// T15: pin kolase placeholder (tinggi bervariasi, foto sendiri berlabel "Foto saya").
 const PINS = [
   { id: "a", name: "Rara Wening", caption: "Rara · Talkshow", h: 1200, tone: 0, mine: true },
   { id: "b", name: "Bima Sakti", caption: "Bima · Open space", h: 900, tone: 1, mine: false },

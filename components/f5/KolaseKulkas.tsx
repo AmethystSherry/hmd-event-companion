@@ -42,7 +42,7 @@ import { renderKolase } from "./kolaseCanvas";
 import { saveFile, shareFile, type SaveOutcome } from "./saveImage";
 import s from "./f5.module.css";
 
-// T15 · Kolase kulkas (masonry 2 kolom, filter Semua/Fotoku/per sesi) + T15b detail foto
+// T15 · Kolase kulkas (masonry 2 kolom, filter Semua/Foto saya/per sesi; pin bingkai F5 v2) + T15b detail foto
 // (?foto={id}, back HP menutup) + T15c sheet gambar 9:16 + T15e share sheet HP + T15d kosong +
 // T14d toast "udah pernah isi" (?isi=1). Foto baru/terhapus ikut muncul lewat rev → SSE.
 
@@ -342,7 +342,7 @@ export function KolaseScreen({
               </Chip>
               {photos.some((p) => p.mine) && (
                 <Chip selected={filter === "fotoku"} onClick={() => setFilter("fotoku")}>
-                  Fotoku
+                  Foto saya
                 </Chip>
               )}
               {sessionChips.map((x) => (
@@ -370,6 +370,7 @@ export function KolaseScreen({
                   tone={p.tone}
                   label={`Buka foto dari ${p.first}`}
                   onOpen={() => openPhoto(p)}
+                  frame
                 />
               )}
             />

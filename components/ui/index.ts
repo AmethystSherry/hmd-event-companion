@@ -6,7 +6,12 @@ export { Card, CardLabel, InnerBox } from "./Card";
 export { Countdown } from "./Countdown";
 export { Dialog } from "./Dialog";
 export { Dropzone } from "./Dropzone";
-export { EventTickets, type EventTicketItem, type EventTicketState } from "./EventTickets";
+export {
+  EventTickets,
+  type EventTicketExtra,
+  type EventTicketItem,
+  type EventTicketState,
+} from "./EventTickets";
 export { Field } from "./Field";
 export { GuestCard } from "./GuestCard";
 export { HeroState } from "./HeroState";

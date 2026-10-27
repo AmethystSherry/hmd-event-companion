@@ -380,3 +380,86 @@
 .answers li + li {
   border-top: 0.5px solid var(--separator);
 }
+
+/* ---- F5 v2 · BT12 (panel layar acara) ---- */
+.doneBadge {
+  align-self: flex-start;
+}
+
+.doneHead {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.kolaseCard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 20px;
+  background: var(--card-2);
+  color: inherit;
+  text-decoration: none;
+  transition: transform var(--press-ms) ease-out;
+}
+
+.kolaseCard:active {
+  transform: scale(var(--press-scale));
+}
+
+.kolaseHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.kolaseStrip {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.thumbMore {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--label-2);
+}
+
+/* ---- F5 v2 · T14 sheet buku tamu ---- */
+.bukuTamu {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+  text-align: left;
+}
+
+.bukuTamuHead {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bukuTamuPart {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sendError {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: var(--danger-text);
+}
+
+.sendError svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}

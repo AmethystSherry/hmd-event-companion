@@ -1,14 +1,14 @@
 import type { ReactNode } from "react";
 import { KontrolScreen } from "@/components/f2/Kontrol";
-import { BukuTamuScreen } from "@/components/f5/BukuTamu";
 import { KolaseScreen } from "@/components/f5/KolaseKulkas";
 import { RekapScreen } from "@/components/f5/Rekap";
 import { SelesaiLuarScreen, SelesaiScreen } from "@/components/f5/Selesai";
+import { sessionShort } from "@/lib/data/sessionInfo";
 import type { FeedbackRecap, Session } from "@/lib/data/types";
 import type { SummaryView } from "@/lib/feedback";
 import { demoEvent, demoSessions, NAMES } from "@/lib/fixtures";
 import { rundownView } from "@/lib/rundown";
-import { firstName } from "@/lib/format";
+import { firstName, fromMinutes, toMinutes } from "@/lib/format";
 import { igProfileUrl, POTARA_IG } from "@/lib/invite";
 import { photoTone, type KolasePhoto } from "@/lib/kolase";
 import { polaroidDate } from "@/lib/photo";
@@ -26,10 +26,10 @@ export type ScreenDef = {
 };
 
 const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
-const sessions = demoSessions.map((s) => ({ id: s.id, title: s.title }));
+const sessions = demoSessions.map((s) => ({ id: s.id, title: sessionShort(s) })); // label pendek (K4)
 const HEIGHTS = [1280, 960, 1280, 1100, 800, 1280]; // rasio bervariasi seperti contoh Figma
 
-// 48 foto dari 20 tamu, terbaru dulu; tamu ke-0 = Rara (pemilik HP, "Fotoku").
+// 48 foto dari 20 tamu, terbaru dulu; tamu ke-0 = Rara (pemilik HP, "Foto saya").
 const PHOTOS: KolasePhoto[] = Array.from({ length: 48 }, (_, i) => {
   const [name] = NAMES[i % 20];
   const session = sessions[[1, 0, 2, 1, 3, 0, 2][i % 7]];
@@ -63,13 +63,31 @@ const kolase = (photos: KolasePhoto[], preview: Parameters<typeof KolaseScreen>[
   />
 );
 
-const bukuTamu = (preview: Parameters<typeof BukuTamuScreen>[0]["preview"]) => (
-  <BukuTamuScreen
+// BT12 v2: semua sesi jadi sobekan + tiket "SATU LAGI"; `preview` = sheet T14/T14b/T14c kebuka.
+const selesai = (
+  opts: { filled?: boolean; preview?: Parameters<typeof SelesaiScreen>[0]["preview"] } = {},
+) => (
+  <SelesaiScreen
     token={null}
+    photoCount={48}
+    questionCount={23}
+    guestCount={20}
+    tickets={demoSessions.map((x, i) => ({
+      id: x.id,
+      no: i + 1,
+      title: x.title,
+      startsAt: x.startsAt,
+      endsAt: fromMinutes(toMinutes(x.startsAt) + x.durationMin),
+      room: x.room ?? null,
+      state: "done" as const,
+    }))}
+    ticketCaption="4 dari 4 selesai"
+    latest={PHOTOS.slice(0, 4).map((p) => ({ id: p.id, tone: p.tone }))}
+    filled={!!opts.filled}
     sessions={sessions}
-    backHref={back}
     kolaseHref={back}
-    preview={preview}
+    initialSheet={!!opts.preview}
+    preview={opts.preview}
   />
 );
 
@@ -147,37 +165,28 @@ export const SCREENS: ScreenDef[] = [
     name: "Acara selesai",
     kind: "Utama",
     lane: "Tamu",
-    render: () => (
-      <SelesaiScreen
-        eyebrow="17.02 · 4 dari 4 bagian selesai"
-        photoCount={48}
-        questionCount={23}
-        photoGuests={20}
-        guestCount={20}
-        latest={PHOTOS.slice(0, 4).map((p) => ({ id: p.id, tone: p.tone }))}
-        kolaseHref={back}
-        bukuTamuHref={back}
-      />
-    ),
+    render: () => selesai(),
+  },
+  {
+    code: "BT12-isi",
+    name: "Acara selesai · buku tamu udah diisi (TODO desain)",
+    kind: "Kasus lain",
+    lane: "Tamu",
+    render: () => selesai({ filled: true }),
   },
   {
     code: "BT12-luar",
     name: "Acara selesai · belum check-in",
     kind: "Kasus lain",
     lane: "Tamu",
-    render: () => (
-      <SelesaiLuarScreen
-        eyebrow={`${demoEvent.name} · Minggu, 8 Nov`}
-        followHref={igProfileUrl(POTARA_IG)}
-      />
-    ),
+    render: () => <SelesaiLuarScreen followHref={igProfileUrl(POTARA_IG)} />,
   },
   {
     code: "T14",
     name: "Buku tamu",
     kind: "Utama",
     lane: "Tamu",
-    render: () => bukuTamu({ draft: FILLED }),
+    render: () => selesai({ preview: { draft: FILLED } }),
   },
   {
     code: "T14b",
@@ -185,14 +194,16 @@ export const SCREENS: ScreenDef[] = [
     kind: "Gagal",
     lane: "Tamu",
     render: () =>
-      bukuTamu({ draft: { ...FILLED, improve: "Parkir motornya agak sempit." }, failed: true }),
+      selesai({
+        preview: { draft: { ...FILLED, improve: "Parkir motornya agak sempit." }, failed: true },
+      }),
   },
   {
     code: "T14c",
     name: "Rating belum diisi",
     kind: "Gagal",
     lane: "Tamu",
-    render: () => bukuTamu({ draft: { ...FILLED, rating: 0 }, hint: true }),
+    render: () => selesai({ preview: { draft: { ...FILLED, rating: 0 }, hint: true } }),
   },
   {
     code: "T14d",

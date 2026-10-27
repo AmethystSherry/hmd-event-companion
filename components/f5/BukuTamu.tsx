@@ -2,27 +2,16 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
-import { ArrowClockwise, CaretLeft, PaperPlaneTilt, WifiSlash } from "@/components/icons";
-import {
-  Banner,
-  Button,
-  Card,
-  CardLabel,
-  Chip,
-  Field,
-  IconButton,
-  Screen,
-  ScreenHeader,
-  Segmented,
-  StarRating,
-} from "@/components/ui";
+import { ArrowClockwise, PaperPlaneTilt, WifiSlash } from "@/components/icons";
+import { Button, Chip, Field, Segmented, Sheet, StarRating } from "@/components/ui";
 import { cx } from "@/lib/cx";
 import { MAX_IMPROVE, type FeedbackPostResponse } from "@/lib/feedback";
 import { newPhotoId } from "@/lib/photo";
 import s from "./f5.module.css";
 
-// T14 · Buku tamu (±1 menit) + T14b gagal kirim + T14c rating belum diisi. T14d (udah pernah
-// isi) = /kolase?isi=1. Isian disimpan di localStorage per token tiap berubah; clientId ikut
+// T14 · Buku tamu (±1 menit) + T14b gagal kirim + T14c rating belum diisi — F5 v2: Sheet di atas
+// BT12 (tanpa back/eyebrow, isi tanpa Card). T14d (udah pernah isi) = /kolase?isi=1.
+// Sheet ditutup = isian tetap di HP (draft). Isian disimpan di localStorage per token tiap berubah; clientId ikut
 // disimpan supaya kirim ulang (sinyal putus, tombol "Coba lagi", event online) nggak dobel.
 
 export type BukuTamuDraft = {
@@ -62,16 +51,18 @@ const EMPTY: BukuTamuDraft = {
   invite: null,
 };
 
-export function BukuTamuScreen({
+export function BukuTamuSheet({
   token,
+  open,
+  onClose,
   sessions,
-  backHref,
   kolaseHref,
   preview,
 }: {
   token: string | null; // null = pratinjau /dev/states (tanpa kirim)
-  sessions: { id: string; title: string }[];
-  backHref: string;
+  open: boolean;
+  onClose: () => void;
+  sessions: { id: string; title: string }[]; // label pendek (sessionShort)
   kolaseHref: string;
   preview?: { draft?: Partial<BukuTamuDraft>; failed?: boolean; hint?: boolean };
 }) {
@@ -155,60 +146,51 @@ export function BukuTamuScreen({
 
   const failed = status === "error";
   return (
-    <Screen
-      withBack
-      bottom={
-        <Button
-          icon={failed ? <ArrowClockwise /> : <PaperPlaneTilt />}
-          aria-disabled={!draft.rating || status === "sending" || undefined}
-          aria-busy={status === "sending" || undefined}
-          onClick={onSubmit}
-        >
-          {failed ? "Coba lagi" : "Kirim ke buku tamu"}
-        </Button>
-      }
-    >
-      <ScreenHeader
-        leading={<IconButton href={backHref} label="Kembali" icon={<CaretLeft />} />}
-        eyebrow="±1 menit"
-        title="Gimana rasanya mampir?"
-      />
-      {failed && (
-        <Banner tone="danger" icon={<WifiSlash />} title="Gagal kirim, sinyalnya lemah">
-          Jawabanmu tetap tersimpan. Coba lagi ya.
-        </Banner>
-      )}
-      <Card>
-        <CardLabel>Nilai acaranya</CardLabel>
-        <StarRating
-          ref={stars}
-          label="Nilai acaranya"
-          value={draft.rating}
-          onChange={(rating) => update({ rating })}
-          invalid={hint}
-          describedBy={hint ? hintId : undefined}
-        />
-        {hint && (
-          <p id={hintId} className={cx("t-label", s.hint)} role="alert">
-            Kasih bintang dulu ya, rating wajib diisi
-          </p>
+    <Sheet open={open} onClose={onClose} title="Gimana rasanya mampir?" strong>
+      <div className={s.bukuTamu}>
+        <header className={s.bukuTamuHead}>
+          <h2 className="t-card-title">Gimana rasanya mampir?</h2>
+          <p className="t-label c-label-2">± 1 menit. Cuma bintang yang wajib.</p>
+        </header>
+        {failed && (
+          <div className={s.sendError} role="alert">
+            <WifiSlash size={18} />
+            <div>
+              <p className={cx("t-label-emph", s.hint)}>Gagal kirim, sinyalnya lemah</p>
+              <p className="t-label c-label-2">Jawabanmu tetap tersimpan. Coba lagi ya.</p>
+            </div>
+          </div>
         )}
-      </Card>
-      <Card>
-        <CardLabel>Bagian paling seru</CardLabel>
-        <div className={s.chips}>
-          {sessions.map((x) => (
-            <Chip
-              key={x.id}
-              selected={draft.highlight === x.id}
-              onClick={() => update({ highlight: draft.highlight === x.id ? null : x.id })}
-            >
-              {x.title}
-            </Chip>
-          ))}
-        </div>
-      </Card>
-      <Card>
+        <section className={s.bukuTamuPart}>
+          <p className="t-label c-label-2">Nilai acaranya</p>
+          <StarRating
+            ref={stars}
+            label="Nilai acaranya"
+            value={draft.rating}
+            onChange={(rating) => update({ rating })}
+            invalid={hint}
+            describedBy={hint ? hintId : undefined}
+          />
+          {hint && (
+            <p id={hintId} className={cx("t-label", s.hint)} role="alert">
+              Kasih bintang dulu ya, rating wajib diisi
+            </p>
+          )}
+        </section>
+        <section className={s.bukuTamuPart}>
+          <p className="t-label c-label-2">Bagian paling seru</p>
+          <div className={s.chips}>
+            {sessions.map((x) => (
+              <Chip
+                key={x.id}
+                selected={draft.highlight === x.id}
+                onClick={() => update({ highlight: draft.highlight === x.id ? null : x.id })}
+              >
+                {x.title}
+              </Chip>
+            ))}
+          </div>
+        </section>
         <Field
           multiline
           label="Satu hal yang bisa kami perbaiki"
@@ -218,19 +200,27 @@ export function BukuTamuScreen({
           value={draft.improve}
           onChange={(e) => update({ improve: e.target.value })}
         />
-      </Card>
-      <Card>
-        <CardLabel>Mau diundang lagi?</CardLabel>
-        <Segmented
-          label="Mau diundang lagi?"
-          options={[
-            { value: "mau", label: "Mau dong" },
-            { value: "nanti", label: "Nanti dulu" },
-          ]}
-          value={draft.invite}
-          onChange={(invite) => update({ invite })}
-        />
-      </Card>
-    </Screen>
+        <section className={s.bukuTamuPart}>
+          <p className="t-label c-label-2">Mau diundang lagi?</p>
+          <Segmented
+            label="Mau diundang lagi?"
+            options={[
+              { value: "mau", label: "Mau dong" },
+              { value: "nanti", label: "Nanti dulu" },
+            ]}
+            value={draft.invite}
+            onChange={(invite) => update({ invite })}
+          />
+        </section>
+        <Button
+          icon={failed ? <ArrowClockwise /> : <PaperPlaneTilt />}
+          aria-disabled={!draft.rating || status === "sending" || undefined}
+          aria-busy={status === "sending" || undefined}
+          onClick={onSubmit}
+        >
+          {failed ? "Coba lagi" : "Kirim ke buku tamu"}
+        </Button>
+      </div>
+    </Sheet>
   );
 }

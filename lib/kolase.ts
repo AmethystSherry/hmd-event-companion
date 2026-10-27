@@ -100,7 +100,7 @@ export function pinCaption(p: Pick<KolasePhoto, "first" | "session">): string {
   return p.session ? `${p.first} · ${p.session}` : p.first;
 }
 
-// Filter chip T15: Semua · Fotoku · satu per sesi yang punya foto (urutan rundown).
+// Filter chip T15: Semua · Foto saya · satu per sesi yang punya foto (urutan rundown).
 export type KolaseFilter = "semua" | "fotoku" | `sesi:${string}`;
 
 export function filterPhotos(photos: KolasePhoto[], filter: KolaseFilter): KolasePhoto[] {

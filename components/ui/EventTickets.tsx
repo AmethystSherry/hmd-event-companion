@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { Check, Clock, MapPin } from "@/components/icons";
+import { BookOpen, Check, Clock, MapPin } from "@/components/icons";
 import { cx } from "@/lib/cx";
 import styles from "./EventTickets.module.css";
 
@@ -7,6 +7,8 @@ import styles from "./EventTickets.module.css";
 // selesai = sobekan 62×88 yang numpuk di kiri (geser 12, miring ±5°, terbaru paling atas); sesi
 // sekarang / berikutnya / sebentar lagi mulai / nanti = tiket 262×88 (stub "SESI 02", garis sobek,
 // takik, label status, judul, jam & ruang). Tiket dan sobekan = tombol → BT22 sesi itu (K16).
+// F5 v2 · `extra` (BT12): tiket "SATU LAGI · Isi buku tamu" bergaya Sekarang dengan stub ikon;
+// `done` = jadi sobekan terakhir di tumpukan (ikon BookOpen + cek, K2).
 
 export type EventTicketState = "done" | "now" | "next" | "soon" | "later";
 
@@ -18,6 +20,15 @@ export type EventTicketItem = {
   endsAt: string;
   room: string | null;
   state: EventTicketState;
+};
+
+export type EventTicketExtra = {
+  kicker: string; // "SATU LAGI"
+  title: string; // "Isi buku tamu"
+  meta: string; // "± 1 menit"
+  label: string; // aria-label tombol
+  done?: boolean;
+  onOpen?: () => void;
 };
 
 const LABEL: Record<Exclude<EventTicketState, "done">, string> = {
@@ -33,13 +44,16 @@ export function EventTickets({
   tickets,
   caption,
   onOpen,
+  extra,
 }: {
   tickets: EventTicketItem[];
   caption: string; // "Sesi 2 dari 4" / "1 dari 4 selesai"
   onOpen?: (id: string) => void;
+  extra?: EventTicketExtra;
 }) {
   const done = tickets.filter((t) => t.state === "done");
   const rest = tickets.filter((t) => t.state !== "done");
+  const piled = done.length + (extra?.done ? 1 : 0);
   return (
     <section className={styles.root} aria-label="Tiket acara">
       <div className={styles.head}>
@@ -48,9 +62,9 @@ export function EventTickets({
       </div>
       <ul
         className={styles.row}
-        style={{ "--pile": `${done.length ? 54 + 12 * done.length : 0}px` } as CSSProperties}
+        style={{ "--pile": `${piled ? 54 + 12 * piled : 0}px` } as CSSProperties}
       >
-        {done.length > 0 && (
+        {piled > 0 && (
           <li className={styles.pile}>
             {done.map((t, i) => (
               <button
@@ -65,6 +79,22 @@ export function EventTickets({
                 <span className={styles.stubNo}>{no2(t.no)}</span>
               </button>
             ))}
+            {extra?.done && (
+              <button
+                type="button"
+                className={styles.stub}
+                style={{
+                  left: done.length * 12,
+                  rotate: `${done.length % 2 ? -4 : 5}deg`,
+                  zIndex: piled,
+                }}
+                onClick={extra.onOpen}
+                aria-label={extra.label}
+              >
+                <Check size={14} />
+                <BookOpen size={26} />
+              </button>
+            )}
           </li>
         )}
         {rest.map((t) => (
@@ -112,6 +142,34 @@ export function EventTickets({
             </button>
           </li>
         ))}
+        {extra && !extra.done && (
+          <li className={styles.item}>
+            <button
+              type="button"
+              className={cx(styles.ticket, styles.now)}
+              onClick={extra.onOpen}
+              aria-label={extra.label}
+            >
+              <span aria-hidden className={styles.side}>
+                <BookOpen size={28} />
+              </span>
+              <span aria-hidden className={styles.tear}>
+                <span className={styles.notchTop} />
+                <span className={styles.notchBottom} />
+              </span>
+              <span aria-hidden className={styles.body}>
+                <span className={styles.status}>{extra.kicker}</span>
+                <span className={cx("t-headline", styles.title)}>{extra.title}</span>
+                <span className={styles.meta}>
+                  <span className={styles.time}>
+                    <Clock size={14} />
+                    {extra.meta}
+                  </span>
+                </span>
+              </span>
+            </button>
+          </li>
+        )}
       </ul>
     </section>
   );

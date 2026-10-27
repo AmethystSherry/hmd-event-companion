@@ -4,6 +4,7 @@ import { KolaseScreen } from "@/components/f5/KolaseKulkas";
 import { LiveRefresh } from "@/components/LiveRefresh";
 import { RegisterOffline } from "@/components/RegisterOffline";
 import { Screen, Skeleton } from "@/components/ui";
+import { sessionShort } from "@/lib/data/sessionInfo";
 import { dateLong, firstName } from "@/lib/format";
 import { igProfileUrl, POTARA_IG } from "@/lib/invite";
 import { toKolasePhotos } from "@/lib/kolase";
@@ -39,8 +40,8 @@ async function Collage({
   if (!ctx) redirect(`/t/${token}`);
   const { guest, event, store, inside } = ctx;
   if (!inside) redirect(`/t/${token}/selesai`);
-
-  const sessions = store.listSessions(event.id).map((x) => ({ id: x.id, title: x.title }));
+  // Label pendek sesi (F5 v2, K4) untuk chip dan caption.
+  const sessions = store.listSessions(event.id).map((x) => ({ id: x.id, title: sessionShort(x) }));
   const raw = store.listPhotos(event.id);
   return (
     <>

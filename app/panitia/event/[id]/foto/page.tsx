@@ -6,6 +6,7 @@ import { Screen, Skeleton } from "@/components/ui";
 import { getStore } from "@/lib/data";
 import { eventPhase } from "@/lib/format";
 import { toKolasePhotos } from "@/lib/kolase";
+import { sessionShort } from "@/lib/data/sessionInfo";
 import { requireCrew } from "@/lib/server/access";
 import { isEventDay, serverNow } from "@/lib/server/clock";
 import { ensurePurged } from "@/lib/server/feedback";
@@ -44,7 +45,7 @@ async function Content({ params }: Pick<PageProps<"/panitia/event/[id]/foto">, "
         eventId={id}
         phaseLabel={isEventDay(event.date, now) ? "Hari-H" : eventPhase(event.date, now).label}
         photos={toKolasePhotos(store.listPhotos(id), store.listGuests(id), sessions, null)}
-        sessions={sessions.map((x) => ({ id: x.id, title: x.title }))}
+        sessions={sessions.map((x) => ({ id: x.id, title: sessionShort(x) }))}
       />
       <LiveRefresh pollMs={2000} />
     </>
