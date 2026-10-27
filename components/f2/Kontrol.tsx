@@ -100,7 +100,7 @@ export function KontrolScreen({
   checkIn: { checkedIn: number; expected: number };
   photos?: number; // N4: jumlah foto kolase (realtime lewat rev)
   questions?: { total: number; open: number }; // N1: pertanyaan talkshow (tile → P10)
-  eventDay: boolean; // sebelum hari-H: sesi belum bisa dimulai (Scan tetap ada)
+  eventDay: boolean; // badge pulse saja; Mulai/Selesaikan/Tutup & Scan manual panitia, jam = display
   phaseLabel: string; // "Hari-H · Live" / "Persiapan · H-17"
   backHref: string;
   serverNow: string;
@@ -249,8 +249,8 @@ export function KontrolScreen({
           <p className="t-body c-label-2">Layar semua tamu pindah ke buku tamu & kolase kulkas.</p>
           <Button
             icon={<BookOpen />}
-            aria-disabled={!eventDay || pending}
-            onClick={() => eventDay && !pending && setCloseDialog(true)}
+            aria-disabled={pending}
+            onClick={() => !pending && setCloseDialog(true)}
           >
             Tutup acara & buka buku tamu
           </Button>
@@ -263,7 +263,7 @@ export function KontrolScreen({
             now={now}
             date={event.date}
             waitingFor={!active && rundown.next ? rundown.next.no : null}
-            disabled={!eventDay || pending}
+            disabled={pending}
             onAction={(session) =>
               setConfirm({ kind: session.state === "berlangsung" ? "finish" : "start", session })
             }
