@@ -13,8 +13,11 @@ export function fillTemplate(template: string, vars: { nama: string; link: strin
 }
 
 // DM IG: coba app dulu (ig.me), kalau gagal browser tetap ke profil instagram.com/{ig}.
-export function igDmUrl(ig: string): string {
-  return `https://ig.me/m/${encodeURIComponent(ig)}`;
+// `text` = isi chat. `?text=` nggak didokumentasikan Meta: sebagian versi app IG mengisinya,
+// sisanya chat kosong → pesan tetap disalin ke clipboard sebagai cadangan (P04 ✈).
+export function igDmUrl(ig: string, text?: string): string {
+  const url = `https://ig.me/m/${encodeURIComponent(ig)}`;
+  return text ? `${url}?text=${encodeURIComponent(text)}` : url;
 }
 
 export function igProfileUrl(ig: string): string {
