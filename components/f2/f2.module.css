@@ -288,7 +288,7 @@
 .step:not(:last-child)::before {
   content: "";
   position: absolute;
-  left: 27px;
+  left: 19px; /* tengah titik: padding tombol 12 + titik 16/2 − garis 2/2 */
   top: 34px;
   bottom: -10px;
   width: 2px;
