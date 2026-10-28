@@ -1,17 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { MagnifyingGlass } from "@/components/icons";
-import {
-  Badge,
-  Button,
-  GuestCard,
-  HeroState,
-  ListRow,
-  MyCard,
-  SearchField,
-  Sheet,
-} from "@/components/ui";
+import { MagnifyingGlass, PencilSimple } from "@/components/icons";
+import { Badge, Button, GuestCard, HeroState, ListRow, SearchField, Sheet } from "@/components/ui";
 import { filterGuests, rundownSubtitle, type AcaraView } from "@/lib/acara";
 import { cx } from "@/lib/cx";
 import { initials } from "@/lib/format";
@@ -167,19 +158,30 @@ export function TamuSheet({
   const list = filterGuests(view.guests, q);
   const searching = !!q.trim();
   return (
-    <Sheet
-      open
-      onClose={onClose}
-      title="Tamu di sini"
-      className={cx(styles.sheet, styles.tamu, searching && !list.length && styles.short)}
-    >
-      <div className={styles.sheetHead}>
-        <p aria-hidden className="t-card-title">
-          Tamu di sini
-        </p>
-        <p className="t-label c-label-2">
-          {view.total} tamu · {view.hereCount} udah di sini
-        </p>
+    <Sheet open onClose={onClose} title="Tamu di sini" className={cx(styles.sheet, styles.tamu)}>
+      {/* (28 Okt) Kartu kamu → avatar di pojok kanan atas; tap = ubah kartu (T11). */}
+      <div className={styles.tamuHead}>
+        <div className={styles.sheetHead}>
+          <p aria-hidden className="t-card-title">
+            Tamu di sini
+          </p>
+          <p className="t-label c-label-2">
+            {view.total} tamu · {view.hereCount} udah di sini
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onEdit}
+          className={styles.meButton}
+          aria-label={`Kartu kamu, ${me.name}. Ubah`}
+        >
+          <span aria-hidden className={styles.meAvatar}>
+            {initials(me.name)}
+          </span>
+          <span aria-hidden className={styles.meEdit}>
+            <PencilSimple size={11} weight="bold" />
+          </span>
+        </button>
       </div>
       <SearchField
         label="Cari tamu"
@@ -189,30 +191,11 @@ export function TamuSheet({
         className={styles.search}
       />
 
-      {!searching && (
-        <>
-          <div className={styles.rowHead}>
-            <span className="t-label-emph">Kartu kamu</span>
-            <button type="button" onClick={onEdit} className={cx("t-label-emph", styles.link)}>
-              Ubah
-            </button>
-          </div>
-          <MyCard
-            name={me.name}
-            ig={me.ig}
-            keyNo={me.keyNo}
-            role={me.role}
-            askAbout={me.askAbout}
-          />
-        </>
-      )}
-
       {list.length > 0 && (
         <div className={styles.rowHead}>
           <span className="t-label-emph">
             {searching ? `Hasil · ${list.length}` : `Semua tamu · ${view.guests.length}`}
           </span>
-          {list.length > 2 && <span className="t-caption c-label-3">geser →</span>}
         </div>
       )}
       {list.length > 0 ? (

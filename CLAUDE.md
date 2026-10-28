@@ -633,7 +633,8 @@ Keputusan 26 Okt (prompt N3 + usulan "Temuan" N3-deliverables T1–T13):
    input kecil (autofocus, "Mis. Kopi"). Enter / blur = tambah, Esc = batal (nggak nutup sheet), koma /
    ";" di `onChange` (keyboard HP sering kirim key "Unidentified", juga tempel teks) = tambah & lanjut
    ketik, dobel diabaikan. Counter "{n} dari 3".
-9. **BT05**: "Kartu kamu" = `MyCard` (components/ui, dipindah dari f4/Sheets), role kosong → "@ig · belum isi
+9. (28 Okt) **BT05** kartu kamu jadi avatar 48 (cincin accent + badge pensil) di pojok kanan judul; tap =
+   T11. Tinggi sheet ikut isi (tanpa min-height), "geser →" dihapus. Lama: "Kartu kamu" = `MyCard` (components/ui, dipindah dari f4/Sheets), role kosong → "@ig · belum isi
    pekerjaan" (T8). Saat cari, Kartu kamu disembunyikan; nggak ketemu → BT05b `HeroState size="sm"`
    "Nggak ada tamu bernama “{q}”" + "Coba nama lain atau @instagram-nya.", judul hasil disembunyikan,
    sheet ikut isi. Cari tetap nama/@ig (T10). GuestCard tinggi tetap 228.

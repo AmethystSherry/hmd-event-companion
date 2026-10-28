@@ -280,10 +280,62 @@
 }
 
 /* BT05 · sheet tinggi (top 187 di 844). */
+/* Tinggi ikut isi (28 Okt; dulu min-height hampir layar penuh). */
 .tamu {
-  min-height: calc(100dvh - 187px);
   gap: 14px;
   border-radius: 28px 28px 0 0;
+}
+
+/* Judul + avatar "Kartu kamu" di pojok kanan (tap = ubah kartu T11). */
+.tamuHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.meButton {
+  position: relative;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+  transition: transform var(--press-ms) ease-out;
+}
+
+.meButton:active {
+  transform: scale(var(--press-scale));
+}
+
+.meAvatar {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.meEdit {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--card);
+  border-radius: 50%;
+  background: var(--cta);
+  color: var(--on-cta);
 }
 
 .search {
@@ -296,20 +348,8 @@
   justify-content: space-between;
 }
 
-.link {
-  min-height: 44px;
-  margin: -12px -8px;
-  padding: 0 8px;
-  border: 0;
-  background: none;
-  color: var(--accent-text);
-  cursor: pointer;
-}
 
 /* BT05b: cari nggak ketemu → sheet ikut isi. */
-.tamu.short {
-  min-height: 0;
-}
 
 /* Carousel kartu tamu: geser horizontal, keluar sampai tepi sheet. */
 .carousel {
