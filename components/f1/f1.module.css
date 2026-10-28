@@ -100,8 +100,8 @@
 .chips {
   display: flex;
   gap: 8px;
-  margin: 0 calc(var(--margin) * -1);
-  padding: 2px var(--margin);
+  margin: 0 calc(var(--bleed) * -1);
+  padding: 2px var(--bleed);
   overflow-x: auto;
   scrollbar-width: none;
 }

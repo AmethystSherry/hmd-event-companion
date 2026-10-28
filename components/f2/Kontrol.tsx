@@ -427,7 +427,10 @@ function SessionCarousel({
   useEffect(() => {
     const el = track.current;
     const card = el?.children[focusIndex] as HTMLElement | undefined;
-    if (el && card) el.scrollTo({ left: card.offsetLeft - el.offsetLeft - 16 });
+    if (el && card) {
+      const pad = parseFloat(getComputedStyle(el).scrollPaddingLeft) || 0; // --bleed
+      el.scrollTo({ left: card.offsetLeft - el.offsetLeft - pad });
+    }
   }, [focusIndex]);
 
   const onScroll = () => {

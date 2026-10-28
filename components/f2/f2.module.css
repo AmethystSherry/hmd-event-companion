@@ -159,18 +159,19 @@
 }
 
 /* BP02 carousel kartu sesi: selebar layar (keluar dari margin 16), 1 kartu + intip berikutnya. */
+/* Carousel melebar sampai tepi layar (--bleed), biar kartu sebelah nggak kepotong lurus di HP lebar. */
 .carouselWrap {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin: 0 calc(-1 * var(--margin));
+  margin: 0 calc(-1 * var(--bleed));
 }
 
 .carouselHead {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 var(--margin);
+  padding: 0 var(--bleed);
 }
 
 .dots {
@@ -194,10 +195,12 @@
 .carousel {
   display: flex;
   gap: 12px;
-  padding: 0 var(--margin) 4px;
+  /* bawah 12 (−8 margin): bayangan kartu nggak kepotong overflow */
+  padding: 0 var(--bleed) 12px;
+  margin-bottom: -8px;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
-  scroll-padding: 0 var(--margin);
+  scroll-padding: 0 var(--bleed);
   scrollbar-width: none;
   overscroll-behavior-x: contain;
 }

@@ -86,6 +86,8 @@
   --margin: 16px;
   --content-width: 358px;
   --screen-width: 390px;
+  /* Deret geser (carousel/chip) melebar sampai tepi layar, juga di HP > --screen-width. */
+  --bleed: calc(var(--margin) + max(0px, (100vw - var(--screen-width)) / 2));
   --control-h: 54px;
   --control-h-sm: 36px;
   --touch: 44px;

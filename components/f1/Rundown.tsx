@@ -154,7 +154,7 @@ export function Rundown({
         </>
       ) : (
         <>
-          <Card inset>
+          <Card inset className={styles.swipeList}>
             {shown.map((s, i) => (
               <SwipeRow
                 key={s.id}

@@ -223,3 +223,8 @@
   gap: 12px;
   margin-bottom: 4px;
 }
+
+/* Kartu berisi SwipeRow (P04 / PE04): latar baris persegi nutupin lengkung kartu → potong di radius. */
+.swipeList {
+  overflow: clip;
+}

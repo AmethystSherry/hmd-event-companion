@@ -495,7 +495,7 @@ export function GuestManager({
           Belum dapat DM. Tap ✈ satu-satu, template otomatis disalin.
         </p>
       )}
-      <Card inset>
+      <Card inset className={styles.swipeList}>
         {visible.length === 0 ? (
           <p className={`t-label c-label-2 ${styles.guestRow}`}>Belum ada tamu di filter ini.</p>
         ) : (
