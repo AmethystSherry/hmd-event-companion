@@ -361,3 +361,11 @@ main.bleed {
     opacity: 0;
   }
 }
+
+/* T01: "@potarastudio" di caption bawah = link ke profil IG (follow). */
+.igLink {
+  color: var(--accent-text);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}

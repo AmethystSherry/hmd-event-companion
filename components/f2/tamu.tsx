@@ -113,7 +113,7 @@ export function DayTicketScreen({
         />
         <div className={s.tearWrap}>
           <Ticket state="valid" torn data={data} className={s.tearHead} />
-          <TicketStub code={code} qr={qr} className={s.tearStub} />
+          <TicketStub code={code} className={s.tearStub} />
         </div>
       </Screen>
     );
@@ -252,8 +252,10 @@ export function GuestDayTicket({
 }) {
   // Ilustrasi BT02 diunduh sejak T05 tampil → muncul tanpa kedip tepat setelah T05a.
   preload(BT02_ART, { as: "image", fetchPriority: "high" });
+  // Baru masuk tapi komponen baru dipasang (mis. discan sebelum hari-H: halaman pindah dari T03 ke
+  // sini lewat refresh, jadi nggak ada perubahan aktif → dipakai) → tetap mulai dari sobek T05a.
   const [phase, setPhase] = useState<DayPhase>(
-    status === "aktif" ? "t05" : justCheckedIn ? "bt02" : "t03b",
+    status === "aktif" ? "t05" : justCheckedIn ? "t05a" : "t03b",
   );
   const [live, setLive] = useState(false); // sobek terjadi selagi halaman terbuka
   const [bright, setBright] = useState(false);
@@ -281,13 +283,14 @@ export function GuestDayTicket({
       } catch {}
     }
     if (phase !== "t05a") return;
+    if (!live && wasSeen(ticketKey)) return; // dibuka ulang: udah pernah sobek + BT02
     navigator.vibrate?.(60);
     const t = setTimeout(() => {
       setCountdown(WELCOME_SEC);
       setPhase("bt02");
     }, TEAR_MS + HOLD_MS);
     return () => clearTimeout(t);
-  }, [phase, ticketKey]);
+  }, [phase, ticketKey, live]);
 
   const router = useRouter();
   // BT02 selesai (3 dtk / "Masuk sekarang") → layar acara; tiket ini dibuka lagi nanti → T03b.
@@ -307,8 +310,11 @@ export function GuestDayTicket({
     };
   }, [phase, finishWelcome]);
 
-  // Dibuka ulang setelah BT02 pernah tampil → langsung T03b.
-  const shown = phase === "bt02" && !live && hydrated && wasSeen(ticketKey) ? "t03b" : phase;
+  // Dibuka ulang setelah BT02 pernah tampil → langsung T03b (tanpa sobek lagi).
+  const shown =
+    (phase === "t05a" || phase === "bt02") && !live && hydrated && wasSeen(ticketKey)
+      ? "t03b"
+      : phase;
 
   return (
     <DayTicketScreen

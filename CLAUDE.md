@@ -281,6 +281,10 @@ Keputusan default 22 Okt (jawaban "Keputusan & asumsi" di F2-deliverables; prd.m
   eyebrow "Masuk {jam} · tamu ke-n dari N" (stamp kosong → "Udah masuk"), judul `t-title`, Pill
   "Kunci #014" (Key) + Pill "Sudah masuk" (Check, copy Figma), "Masuk sekarang", caption 12
   `aria-live`. Tanpa Ticket/cap (sobek cuma di T05a). Ilustrasi di-`preload()` (react-dom) sejak T05.
+- (28 Okt) `Ticket`: QR di kepala tiket (ganti ikon kunci) selama belum sobek; potongan bawah cuma kode +
+  "Tunjukkan ke panitia di pintu". Tamu yang baru masuk (< 10 mnt) selalu mulai dari sobek T05a, juga
+  kalau discan sebelum hari-H (halaman pindah dari T03); dibuka ulang setelah BT02 → langsung T03b.
+  T01: "@potarastudio" di caption bawah = link profil IG.
 - Kamera butuh HTTPS di HP (`npx next dev --experimental-https`); gagal/ditolak → P07b.
 - Store dev ada di `globalThis.__hmdStoreF5v2`: naikkan kuncinya tiap method store bertambah (server
   dev yang sedang jalan nggak membuat ulang instance lama saat HMR). Server dev yang sudah jalan

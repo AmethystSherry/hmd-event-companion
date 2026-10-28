@@ -5,7 +5,8 @@ import { Badge } from "./Badge";
 import styles from "./Ticket.module.css";
 
 // Clean/Ticket (4594:1046) · Sobek (4594:1093) · Potongan (4594:1111).
-// Anatomi design.md "Tiket": kepala → perforasi → info → garis sobek → potongan QR (stub).
+// Anatomi design.md "Tiket": kepala → perforasi → info → garis sobek → potongan (stub).
+// 28 Okt: QR pindah ke kepala tiket (ganti ikon kunci) selama belum sobek; potongan cuma kode.
 export type TicketState = "aktif" | "terkonfirmasi" | "valid" | "sobek";
 
 export type TicketData = {
@@ -34,7 +35,7 @@ export function Ticket({
 }: {
   data: TicketData;
   state: TicketState;
-  qr?: ReactNode; // QR 140; tidak dirender saat sobek
+  qr?: ReactNode; // QR 140 di kepala; tidak dirender saat sobek (kepala balik ke ikon kunci)
   stamp?: { time: string; guestNo: number | null; total: number };
   torn?: boolean; // T05a: badge "Valid" tapi tiket sudah sobek (potongan dirender terpisah)
   className?: string;
@@ -45,9 +46,13 @@ export function Ticket({
       className={cx(styles.ticket, torn && styles.torn, className)}
     >
       <header className={styles.head}>
-        <span className={styles.keyIcon}>
-          <Key size={20} />
-        </span>
+        {torn ? (
+          <span className={styles.keyIcon}>
+            <Key size={20} />
+          </span>
+        ) : (
+          <div className={styles.qrBox}>{qr ?? <div className={styles.qrPlaceholder} />}</div>
+        )}
         <h2 className="t-card-title">Kunci rumah baru</h2>
         <p className="t-label c-label-2">House Moving Day · Potara Studio</p>
         {BADGE[state]}
@@ -101,7 +106,7 @@ export function Ticket({
       ) : (
         <>
           <Perforation />
-          <TicketStubBody code={data.code} qr={qr} />
+          <TicketStubBody code={data.code} />
           <Scallops />
         </>
       )}
@@ -109,30 +114,21 @@ export function Ticket({
   );
 }
 
-// Potongan QR terlepas (untuk animasi sobek, Phase 4).
-export function TicketStub({
-  code,
-  qr,
-  className,
-}: {
-  code: string;
-  qr?: ReactNode;
-  className?: string;
-}) {
+// Potongan terlepas (untuk animasi sobek, Phase 4).
+export function TicketStub({ code, className }: { code: string; className?: string }) {
   return (
     <div className={cx(styles.stub, className)} aria-hidden>
       <TearEdge position="top" />
       <div className={styles.stubTopSpacer} />
-      <TicketStubBody code={code} qr={qr} />
+      <TicketStubBody code={code} />
       <Scallops />
     </div>
   );
 }
 
-function TicketStubBody({ code, qr }: { code: string; qr?: ReactNode }) {
+function TicketStubBody({ code }: { code: string }) {
   return (
     <div className={styles.potongan}>
-      <div className={styles.qrBox}>{qr ?? <div className={styles.qrPlaceholder} />}</div>
       <p className={cx("t-code", styles.code)}>{code}</p>
       <p className="t-label c-label-2">Tunjukkan ke panitia di pintu</p>
     </div>

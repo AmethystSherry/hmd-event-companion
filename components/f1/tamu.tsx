@@ -54,7 +54,17 @@ export function InvitationScreen({
           <Button href={confirmHref} icon={<Check />}>
             Konfirmasi kehadiran
           </Button>
-          <p className={`t-label c-label-3 ${f1.caption}`}>Syarat hadir: follow @{POTARA_IG}</p>
+          <p className={`t-label c-label-3 ${f1.caption}`}>
+            Syarat hadir: follow{" "}
+            <a
+              href={igProfileUrl(POTARA_IG)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={inv.igLink}
+            >
+              @{POTARA_IG}
+            </a>
+          </p>
         </>
       }
     >
