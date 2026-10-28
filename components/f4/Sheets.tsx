@@ -145,9 +145,7 @@ export function RundownSheet({
           />
         ))}
       </div>
-      <Button variant="secondary" onClick={onClose}>
-        Tutup
-      </Button>
+      {/* Tanpa tombol Tutup (28 Okt): tutup lewat tab Rundown di navbar, geser ke bawah, atau back. */}
     </Sheet>
   );
 }
