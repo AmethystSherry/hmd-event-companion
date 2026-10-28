@@ -369,3 +369,32 @@ main.bleed {
   text-decoration: underline;
   text-underline-offset: 2px;
 }
+
+/* T01: baris follow IG di bawah kartu undangan (syarat hadir). */
+.follow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 12px 12px 14px;
+  border-radius: var(--radius-inner);
+  background: var(--accent-soft);
+}
+
+.followIcon {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--card);
+  color: var(--accent-text);
+}
+
+.followText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}

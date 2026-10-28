@@ -290,6 +290,8 @@ Keputusan default 22 Okt (jawaban "Keputusan & asumsi" di F2-deliverables; prd.m
   "Tunjukkan ke panitia di pintu". Tamu yang baru masuk (< 10 mnt) selalu mulai dari sobek T05a, juga
   kalau discan sebelum hari-H (halaman pindah dari T03); dibuka ulang setelah BT02 → langsung T03b.
   T01: "@potarastudio" di caption bawah = link profil IG.
+  (28 Okt) + baris follow di akhir kartu T01 (`inv.follow`, accent-soft, logo IG + "Follow @potarastudio" +
+  Button sm "Follow" → profil IG, tab baru). T02 toggle follow: "Syarat hadir · Buka profil IG" (link, tab baru).
 - Kamera butuh HTTPS di HP (`npx next dev --experimental-https`); gagal/ditolak → P07b.
 - Store dev ada di `globalThis.__hmdStoreStart`: naikkan kuncinya tiap method store bertambah (server
   dev yang sedang jalan nggak membuat ulang instance lama saat HMR). Server dev yang sudah jalan
@@ -457,6 +459,8 @@ Keputusan 24 Okt (rekomendasi atas "Keputusan & asumsi" + "Temuan" di F5-deliver
   - (28 Okt) BT12: buku tamu = tombol di bawah panel (belum isi: primary "Isi buku tamu · ± 1 menit"; udah: secondary
     "Buku tamu udah diisi" → kolase + T14d), tiket `extra` nggak dipakai lagi. Belum isi → sheet T14 kebuka sendiri
     sekali per HP (localStorage `hmd-buku-tamu-auto:{token}`, 600 ms setelah layar muncul).
+    Tiap BT12 tampil lagi (mis. back dari kolase setelah kirim) sheet disamakan dengan URL + `router.refresh()`
+    (state layar yang disimpan Next dulu bikin sheet kebuka lagi).
   - **T14/T14b/T14c** = `BukuTamuSheet` (`Sheet strong`) di BT12, `?sheet=buku-tamu` (pushState, back HP/
     backdrop/Esc menutup, draft tetap). Header `t-card-title` + "± 1 menit. Cuma bintang yang wajib.",
     bagian tanpa Card, T14b = baris merah WifiSlash (bukan Banner), tombol di dalam sheet. Tiket extra →

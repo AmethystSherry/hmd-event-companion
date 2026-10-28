@@ -21,7 +21,7 @@ import {
   type ConfirmInput,
   type ConfirmResult,
 } from "@/lib/confirm";
-import { POTARA_IG } from "@/lib/invite";
+import { igProfileUrl, POTARA_IG } from "@/lib/invite";
 import f1 from "./f1.module.css";
 
 // T02 Konfirmasi hadir (+ Pekerjaan & Minat opsional) · T02c form belum lengkap · T02d gagal kirim (isian tetap).
@@ -164,7 +164,17 @@ export function ConfirmForm({
             {shown("follow") ? (
               <p className={`t-label ${f1.danger}`}>{errors.follow}</p>
             ) : (
-              <p className="t-label c-label-2">Syarat hadir</p>
+              <p className="t-label c-label-2">
+                Syarat hadir ·{" "}
+                <a
+                  href={igProfileUrl(POTARA_IG)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={f1.igLink}
+                >
+                  Buka profil IG
+                </a>
+              </p>
             )}
           </div>
           <Toggle

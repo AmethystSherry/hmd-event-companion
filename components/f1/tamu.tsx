@@ -7,6 +7,7 @@ import {
   Check,
   Clock,
   Info,
+  InstagramLogo,
   LinkBreak,
   MapPin,
 } from "@/components/icons";
@@ -129,6 +130,25 @@ export function InvitationScreen({
             </ol>
           </div>
         )}
+        {/* (28 Okt) Syarat hadir follow IG: baris jelas + tombol langsung ke profil IG Potara. */}
+        <div className={inv.follow}>
+          <span aria-hidden className={inv.followIcon}>
+            <InstagramLogo size={20} />
+          </span>
+          <span className={inv.followText}>
+            <span className="t-label-emph">Follow @{POTARA_IG}</span>
+            <span className="t-caption c-label-2">Syarat hadir, sekalian lihat kolase nanti</span>
+          </span>
+          <Button
+            size="sm"
+            href={igProfileUrl(POTARA_IG)}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`Follow @${POTARA_IG} di Instagram`}
+          >
+            Follow
+          </Button>
+        </div>
       </section>
     </Screen>
   );

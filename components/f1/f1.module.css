@@ -251,3 +251,11 @@
   padding: 12px 0 calc(24px + env(safe-area-inset-bottom));
   background: linear-gradient(to bottom, transparent, var(--card) 12px);
 }
+
+/* T02: link profil IG Potara di samping "Syarat hadir" (toggle follow). */
+.igLink {
+  color: var(--accent-text);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
