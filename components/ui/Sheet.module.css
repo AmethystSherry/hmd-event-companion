@@ -23,7 +23,9 @@
   width: 100%;
   max-width: var(--screen-width);
   max-height: 92dvh;
+  overflow-x: hidden; /* cuma deret di dalam (mis. carousel kartu tamu) yang boleh geser horizontal */
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 10px 20px calc(env(safe-area-inset-bottom) + 24px);
   border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
   background: var(--card);
