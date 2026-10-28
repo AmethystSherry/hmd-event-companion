@@ -1,0 +1,42 @@
+/* Kotak sama dengan <img> ilustrasi (absolute inset 0). Container query dipakai buat meniru
+   object-fit: cover + posisi tengah gambar, lalu video ditaruh supaya isinya tepat di atas gambar. */
+.box {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  container-type: size;
+  pointer-events: none;
+}
+
+/* Kotak "gambar" hasil cover: rasio gambar asli, menutupi kotak, di tengah. */
+.frame {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: max(100cqw, calc(100cqh * var(--ar)));
+  aspect-ratio: var(--ar);
+  transform: translate(-50%, -50%);
+  container-type: inline-size;
+}
+
+/* Video 9:16: lebar = lebar gambar / s, tengah; tepi atas gambar ada di y × tinggi video. */
+.video {
+  position: absolute;
+  top: calc(var(--y) * -1 * (100cqw / var(--s)) * 16 / 9);
+  left: calc(50cqw - 50cqw / var(--s));
+  width: calc(100cqw / var(--s));
+  max-width: none;
+  aspect-ratio: 9 / 16;
+  opacity: 0;
+  transition: opacity 400ms ease-out;
+}
+
+.on {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .video {
+    display: none;
+  }
+}

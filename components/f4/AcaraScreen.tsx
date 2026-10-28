@@ -20,7 +20,8 @@ import { TanyaSheet, type TanyaPreview } from "@/components/n1/TanyaSheet";
 import type { MyQuestion } from "@/lib/questions";
 import { KartuSheet, type KartuPreview } from "@/components/n3/KartuSheet";
 import { usePhotoOutbox } from "@/components/n4/usePhotoOutbox";
-import { Badge, Button, EventTickets, TopToast } from "@/components/ui";
+import { ArtVideo, Badge, Button, EventTickets, GuestTabBar, TopToast } from "@/components/ui";
+import { ART_VIDEO } from "@/lib/artVideo";
 import { useServerNow } from "@/components/useServerNow";
 import type { AcaraView } from "@/lib/acara";
 import { cx } from "@/lib/cx";
@@ -280,6 +281,8 @@ export function AcaraScreen({
       <div className={styles.art}>
         {/* eslint-disable-next-line @next/next/no-img-element -- ilustrasi statis, cache SW */}
         <img src={artUrl(art)} alt="" className={styles.artImg} />
+        {/* Sinyal kuat → video ilustrasi; lemah / offline (S01) → gambar saja. */}
+        <ArtVideo fit={ART_VIDEO[`f3-${art}`]} enabled={!offline} />
         <span aria-hidden className={styles.fade} />
       </div>
 
@@ -347,40 +350,30 @@ export function AcaraScreen({
           </p>
         )}
 
-        <nav className={styles.shortcuts} aria-label="Pintasan">
-          <button type="button" className={styles.tile} onClick={() => open("tamu")}>
-            <Users size={22} />
-            <span className="t-caption">Tamu</span>
-          </button>
-          <button type="button" className={styles.tile} onClick={() => open("rundown")}>
-            <ListBullets size={22} />
-            <span className="t-caption">Rundown</span>
-          </button>
-          <button type="button" className={styles.tile} onClick={() => open("galeri")}>
-            <ImageIcon size={22} />
-            <span className="t-caption">Galeri</span>
-          </button>
-          {talkshowLive ? (
-            <button
-              type="button"
-              className={cx(styles.tile, styles.tileHot)}
-              onClick={() => open("tanya")}
-            >
-              <ChatCircle size={22} />
-              <span className="t-caption">Tanya</span>
-            </button>
-          ) : (
-            <span
-              role="link"
-              aria-disabled="true"
-              aria-label="Tanya (aktif pas Talkshow)"
-              className={cx(styles.tile, styles.tileOff)}
-            >
-              <ChatCircle size={22} />
-              <span className="t-caption">Tanya</span>
-            </span>
-          )}
-        </nav>
+        <GuestTabBar
+          ask={{
+            label: "Tanya pembicara",
+            icon: <ChatCircle size={24} />,
+            onClick: () => open("tanya"),
+            disabled: !talkshowLive,
+            hint: "Tanya (aktif pas Talkshow)",
+          }}
+          tabs={[
+            { id: "tamu", label: "Tamu", icon: <Users size={22} />, onClick: () => open("tamu") },
+            {
+              id: "rundown",
+              label: "Rundown",
+              icon: <ListBullets size={22} />,
+              onClick: () => open("rundown"),
+            },
+            {
+              id: "galeri",
+              label: "Galeri",
+              icon: <ImageIcon size={22} />,
+              onClick: () => open("galeri"),
+            },
+          ]}
+        />
       </section>
 
       {/* N3: di sheet Kartu kamu toast gagal simpan yang tampil (posisi sama). */}

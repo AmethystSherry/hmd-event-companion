@@ -12,6 +12,7 @@ import {
   type EventTicketItem,
 } from "@/components/ui";
 import { cx } from "@/lib/cx";
+import { ART_VIDEO } from "@/lib/artVideo";
 import { BukuTamuSheet, type BukuTamuDraft } from "./BukuTamu";
 import s from "./f5.module.css";
 
@@ -82,7 +83,7 @@ export function SelesaiScreen({
   const extra = Math.max(0, photoCount - latest.length);
   return (
     <>
-      <IllustratedScreen src={ART} priority>
+      <IllustratedScreen src={ART} video={ART_VIDEO["f3-closing"]} priority>
         <Badge tone="neutral" className={s.doneBadge}>
           Acara selesai
         </Badge>
@@ -146,7 +147,7 @@ export function SelesaiScreen({
 // (temuan v2 #16). Copy bukan dari Figma.
 export function SelesaiLuarScreen({ followHref }: { followHref: string }) {
   return (
-    <IllustratedScreen src={ART} priority>
+    <IllustratedScreen src={ART} video={ART_VIDEO["f3-closing"]} priority>
       <Badge tone="neutral" className={s.doneBadge}>
         Acara selesai
       </Badge>

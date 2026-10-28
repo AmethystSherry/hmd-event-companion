@@ -11,6 +11,7 @@ import {
   MapPin,
 } from "@/components/icons";
 import {
+  ArtVideo,
   Banner,
   Button,
   Card,
@@ -21,6 +22,7 @@ import {
   ScreenHeader,
   Ticket,
 } from "@/components/ui";
+import { ART_VIDEO } from "@/lib/artVideo";
 import type { Event } from "@/lib/data/types";
 import { addDays, dateMedium, dateShort, eventStart, firstName } from "@/lib/format";
 import { igDmUrl, igProfileUrl, POTARA_IG, rundownTiles } from "@/lib/invite";
@@ -77,6 +79,7 @@ export function InvitationScreen({
           aria-hidden
           className={inv.art}
         />
+        <ArtVideo fit={ART_VIDEO["t01-invitation-opened"]} />
         <span aria-hidden className={inv.artFade} />
       </div>
       <section className={inv.paper} aria-labelledby="t01-title">

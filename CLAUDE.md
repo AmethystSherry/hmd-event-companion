@@ -541,6 +541,14 @@ Keputusan 25 Okt (default "Keputusan & asumsi" F3-F4-deliverables, kecuali K3/K8
   - Dev: /dev/states/f4 BT03s (ganti BT03-habis), P13, P13-hapus, P13-kosong. Store dev `__hmdStoreF34v3`.
 - (28 Okt) **PIC nggak dikirim ke HP tamu**: `acaraView` mengosongkan `pic` sesi; BT22 tanpa baris PIC,
   subjudul BT04 tanpa PIC (fallback "Berikutnya" / "Belum mulai").
+- (28 Okt) Pintasan layar acara tamu = `GuestTabBar` (components/ui/TabBar, anatomi TabBar panitia): tombol
+  bulat Tanya di kanan (redup + aria-disabled kalau Talkshow belum jalan) + bar gelap ikon Tamu · Rundown · Galeri.
+- (28 Okt) **Ilustrasi bergerak**: `public/figma/*.mp4` (1080×1920, 10 dtk loop, 2,4–4,5 MB) pasangan tiap
+  webp (BT02, F3 open-space/talkshow/office-tour/closing/break/weak-signal, T01a, T01; closing juga di BT12).
+  `ArtVideo` (components/ui) di atas <img> yang sama: posisi dari `lib/artVideo` (s, y diukur dari frame
+  pertama), muncul (fade) setelah `playing`. Cuma diputar kalau sinyal kuat (`useStrongSignal`: online,
+  bukan reduced motion/saveData, effectiveType 4g & downlink ≥ 1,5; iPhone tanpa API = coba putar);
+  layar acara offline (S01) = gambar. SW nggak menangani `.mp4` (range request). T01 video: Pota main terompet.
 - Komponen baru: `TopToast` (S01, BP02d), `EventTickets` (v3, Tiket acara), `GuestCard` (BT05). Kartu kamu (tiket gelap `--cta`) di `components/f4/Sheets`.
 - Server action dari browser pane Claude ditolak Next (origin `null`) → uji tombol dev di browser biasa.
 

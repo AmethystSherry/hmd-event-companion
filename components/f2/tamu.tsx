@@ -17,6 +17,7 @@ import {
 } from "@/components/ui";
 import type { Event } from "@/lib/data/types";
 import { dateShort, firstName } from "@/lib/format";
+import { ART_VIDEO } from "@/lib/artVideo";
 import { POTARA_IG } from "@/lib/invite";
 import f1 from "../f1/f1.module.css";
 import s from "./f2.module.css";
@@ -126,7 +127,7 @@ export function DayTicketScreen({
   // BT02 (Figma 4961:7021): Pota di pintu + panel. Tiket sobek cuma di T05a.
   if (phase === "bt02") {
     return (
-      <IllustratedScreen src={BT02_ART} priority>
+      <IllustratedScreen src={BT02_ART} video={ART_VIDEO["bt02-welcome-at-door"]} priority>
         <p className="t-label c-label-2">{stampText}</p>
         <h1 className="t-title">Selamat datang di rumah baru, {firstName(guestName)}!</h1>
         <div className={s.pills}>

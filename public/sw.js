@@ -29,6 +29,8 @@ self.addEventListener("fetch", (e) => {
   if (req.method !== "GET") return;
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
+  // Video ilustrasi: dibiarkan ke browser (range request 206 nggak bisa masuk Cache API).
+  if (url.pathname.endsWith(".mp4")) return;
 
   const cacheFirst =
     url.pathname.startsWith("/_next/static/") ||

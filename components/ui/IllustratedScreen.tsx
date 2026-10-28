@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { cx } from "@/lib/cx";
+import { ArtVideo, type ArtVideoFit } from "./ArtVideo";
 import styles from "./IllustratedScreen.module.css";
 
 // Layar ilustrasi + fade + panel (BT02 selamat datang; pola sama dengan layar acara F4).
@@ -9,10 +10,12 @@ import styles from "./IllustratedScreen.module.css";
 export function IllustratedScreen({
   src,
   children,
+  video,
   priority,
   className,
 }: {
   src: string;
+  video?: ArtVideoFit; // ilustrasi bergerak di atas gambar (sinyal kuat saja)
   children: ReactNode; // isi panel (gap 14)
   priority?: boolean; // gambar penting di layar pertama → fetchPriority high
   className?: string;
@@ -29,6 +32,7 @@ export function IllustratedScreen({
           fetchPriority={priority ? "high" : undefined}
           decoding="async"
         />
+        {video && <ArtVideo fit={video} />}
         <span aria-hidden className={styles.fade} />
       </div>
       <section className={styles.panel}>{children}</section>
