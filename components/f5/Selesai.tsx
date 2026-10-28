@@ -62,9 +62,14 @@ export function SelesaiScreen({
   useEffect(() => {
     if (preview) return;
     const read = () => setSheet(new URL(window.location.href).searchParams.get("sheet") === SHEET);
+    // Next menyimpan state layar yang pernah dibuka: balik (back) dari kolase setelah kirim buku tamu
+    // bakal nampilin sheet yang masih "kebuka". Effect ini jalan lagi tiap layar tampil → samakan
+    // dengan URL, dan ambil data terbaru (udah isi → tombol "Buku tamu udah diisi").
+    read();
+    router.refresh();
     window.addEventListener("popstate", read);
     return () => window.removeEventListener("popstate", read);
-  }, [preview]);
+  }, [preview, router]);
 
   const open = useCallback(() => {
     if (filled) return router.push(`${kolaseHref}?isi=1`);
