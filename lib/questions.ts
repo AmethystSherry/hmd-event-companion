@@ -108,3 +108,13 @@ function split(rows: QuestionRow[]): QuestionsView {
     .sort((a, b) => b.answeredAt!.localeCompare(a.answeredAt!));
   return { total: rows.length, answeredCount: answered.length, open, answered };
 }
+
+// Riwayat pertanyaan tamu sendiri (sheet Tanya): terbaru dulu, + status dijawab dari P10.
+export type MyQuestion = { id: string; text: string; time: string; answered: boolean };
+
+export function myQuestions(questions: Question[], guestId: string): MyQuestion[] {
+  return questions
+    .filter((q) => q.guestId === guestId)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .map((q) => ({ id: q.id, text: q.text, time: timeWib(q.createdAt), answered: !!q.answeredAt }));
+}

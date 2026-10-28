@@ -66,7 +66,12 @@ export const SCREENS: ScreenDef[] = [
     render: () =>
       acara(talkshow, NOW, {
         sheet: "tanya",
-        tanya: { sent: { text: DEMO_TEXTS[0]!, time: "14.27" } },
+        tanya: {
+          sent: [
+            { id: "q2", text: DEMO_TEXTS[1]!, time: "14.31", answered: false },
+            { id: "q1", text: DEMO_TEXTS[0]!, time: "14.27", answered: true },
+          ],
+        },
       }),
   },
   {

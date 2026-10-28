@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Camera, Info, LockSimple, Trash } from "@/components/icons";
-import { Polaroid, Segmented, Sheet, Toast } from "@/components/ui";
+import { ArrowClockwise, Camera, Info, LockSimple, Trash, WifiSlash } from "@/components/icons";
+import { Banner, Button, Polaroid, Segmented, Sheet, Toast } from "@/components/ui";
 import { timeWib } from "@/lib/format";
 import type { QueuedPhoto } from "@/lib/offline/photoDb";
 import { guestPhotoUrl, MAX_PHOTOS_PER_GUEST, type GuestPhotos } from "@/lib/photo";
 import { lockedToast } from "./NempelSheet";
+import type { SendResult } from "./usePhotoOutbox";
 import s from "./sheets.module.css";
 
 // N4 · BT07d Galeri · Foto saya (sheet di layar acara, ?sheet=galeri). Fotoku terbaru dulu (foto
@@ -16,6 +17,8 @@ import s from "./sheets.module.css";
 // lain dihapus, atau saat sheet ditutup (dianggap final). Tab ditutup < 5 dtk = nggak jadi kehapus.
 // Gagal → foto balik + toast. Berhasil → layar di-refresh (jumlah HP lain & tile panitia lewat rev).
 // Tab "Foto tamu" terkunci sampai acara selesai (lalu tamu pindah ke T15); tap → toast.
+// Foto antre (28 Okt): Banner "{n} foto belum terkirim" + "Kirim sekarang" (antrean juga dicoba
+// otomatis tiap 5 dtk dari layar acara, termasuk setelah halaman di-refresh).
 // TODO desain: tap polaroid belum ada perilakunya.
 
 const TILTS = [2, -2, 1.5, -1.5];
@@ -28,6 +31,7 @@ export function GaleriSheet({
   token,
   data,
   queued,
+  onRetry,
   onClose,
   onDeleted,
   preview,
@@ -35,6 +39,7 @@ export function GaleriSheet({
   token: string;
   data: GuestPhotos;
   queued: QueuedPhoto[];
+  onRetry?: () => Promise<SendResult[]>; // kirim ulang antrean sekarang
   onClose: () => void;
   onDeleted: () => void;
   preview?: { pending?: string }; // /dev/states/n4: tanpa gambar & jaringan (BT07dh: toast beku)
@@ -116,6 +121,28 @@ export function GaleriSheet({
     .sort((a, b) => b.at - a.at);
   const full = items.length >= MAX_PHOTOS_PER_GUEST;
 
+  const [retrying, setRetrying] = useState(false);
+  async function retry() {
+    if (!onRetry || retrying || preview) return;
+    setRetrying(true);
+    try {
+      const results = await onRetry();
+      const sent = results.filter((r) => r.kind === "sent").length;
+      const rejected = results.find((r) => r.kind === "rejected");
+      const stuck = results.find((r) => r.kind === "offline");
+      if (rejected?.kind === "rejected") show(rejected.res.error);
+      else if (stuck?.kind === "offline")
+        show(
+          stuck.server
+            ? "Server lagi bermasalah. Fotonya aman di HP, coba lagi sebentar lagi."
+            : "Masih belum kekirim. Cek sinyal, terus coba lagi.",
+        );
+      else if (sent) show(sent > 1 ? `${sent} foto terkirim` : "Foto terkirim");
+    } finally {
+      setRetrying(false);
+    }
+  }
+
   // 🗑 → langsung hilang + toast Batalkan. Foto sebelumnya yang masih pending langsung final.
   function remove(item: Item) {
     if (preview) return;
@@ -160,6 +187,26 @@ export function GaleriSheet({
             { value: "tamu", label: "Foto tamu", icon: <LockSimple />, locked: true },
           ]}
         />
+        {waiting.length > 0 && (
+          <Banner
+            tone="warning"
+            icon={<WifiSlash />}
+            title={`${waiting.length} foto belum terkirim`}
+            action={
+              <Button
+                size="sm"
+                variant="secondary"
+                icon={<ArrowClockwise />}
+                onClick={retry}
+                aria-disabled={retrying}
+              >
+                {retrying ? "Mengirim…" : "Kirim sekarang"}
+              </Button>
+            }
+          >
+            Fotonya aman di HP ini. Dikirim otomatis begitu sinyal balik.
+          </Banner>
+        )}
         <ul className={s.grid}>
           {items.map((item, i) => {
             const jam = timeWib(new Date(item.at).toISOString());

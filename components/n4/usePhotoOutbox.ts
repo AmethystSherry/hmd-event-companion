@@ -8,11 +8,15 @@ import type { PhotoUploadResponse } from "@/lib/photo";
 // tiap 5 dtk & saat `online`; idempoten per id (kirim ulang aman, server nggak menggandakan).
 
 const RETRY_MS = 5000;
+// Sinyal jelek bisa bikin fetch nggantung lama; tanpa batas, pengurasan antrean ikut macet.
+const DRAIN_TIMEOUT_MS = 30_000;
 
 export type Sent = Extract<PhotoUploadResponse, { ok: true }>;
 export type Rejected = Extract<PhotoUploadResponse, { ok: false }>;
 export type SendResult =
-  { kind: "sent"; res: Sent } | { kind: "rejected"; res: Rejected } | { kind: "offline" };
+  | { kind: "sent"; res: Sent }
+  | { kind: "rejected"; res: Rejected }
+  | { kind: "offline"; server?: boolean }; // server = sampai ke server tapi dijawab 5xx
 
 // Satu kali kirim. Sinyal putus / timeout / server error → "offline" (tetap di antrean);
 // ditolak (4xx: belum masuk, batas foto, acara ditutup) → dibuang dari antrean.
@@ -33,7 +37,7 @@ export async function sendPhoto(row: QueuedPhoto, timeoutMs?: number): Promise<S
   } catch {
     return { kind: "offline" };
   }
-  if (res.status >= 500) return { kind: "offline" };
+  if (res.status >= 500) return { kind: "offline", server: true };
   const json = (await res.json().catch(() => null)) as PhotoUploadResponse | null;
   await removeQueued(row.id);
   if (res.ok && json?.ok) return { kind: "sent", res: json };
@@ -51,7 +55,7 @@ export function drainOutbox(token: string): Promise<SendResult[]> {
     const out: SendResult[] = [];
     try {
       for (const row of await listQueued(token)) {
-        const r = await sendPhoto(row);
+        const r = await sendPhoto(row, DRAIN_TIMEOUT_MS);
         out.push(r);
         if (r.kind === "offline") break; // urutan dijaga; sisanya dicoba putaran berikutnya
       }

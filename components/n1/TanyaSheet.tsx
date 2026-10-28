@@ -7,12 +7,18 @@ import { useServerNow } from "@/components/useServerNow";
 import { cx } from "@/lib/cx";
 import { hms, initials, timeWib } from "@/lib/format";
 import { newPhotoId } from "@/lib/photo";
-import { MAX_QUESTION, QUESTION_COUNTER_FROM, type QuestionPostResponse } from "@/lib/questions";
+import {
+  MAX_QUESTION,
+  QUESTION_COUNTER_FROM,
+  type MyQuestion,
+  type QuestionPostResponse,
+} from "@/lib/questions";
 import { elapsedMs, type SessionView } from "@/lib/rundown";
 import s from "./n1.module.css";
 
-// N1 · sheet "Tanya pembicara" di atas BT21 (?sheet=tanya): BT08 kosong/ngetik · BT09 kartu
-// Terkirim (cuma pertanyaan terakhir) · BT08b gagal kirim (TopToast + "Kirim lagi", teks tetap).
+// N1 · sheet "Tanya pembicara" di atas BT21 (?sheet=tanya): BT08 kosong/ngetik · BT09 riwayat
+// "Pertanyaan kamu" (semua yang pernah dikirim, terbaru dulu, label Udah dijawab / Belum dijawab
+// dari P10; tetap ada setelah sheet ditutup) · BT08b gagal kirim (TopToast + "Kirim lagi").
 // Nggak ada antrean otomatis: draft + clientId disimpan di sessionStorage per token, "Kirim lagi"
 // memakai clientId yang sama selama teksnya sama (server idempoten → nggak dobel).
 
@@ -20,10 +26,9 @@ const draftKey = (token: string) => `hmd-tanya:${token}`;
 const SEND_TIMEOUT_MS = 8000;
 
 type Draft = { text: string; clientId?: string; attempt?: string };
-type Sent = { text: string; time: string };
 type Failure = "offline" | "limit";
 
-export type TanyaPreview = { text?: string; sent?: Sent; failed?: boolean };
+export type TanyaPreview = { text?: string; sent?: MyQuestion[]; failed?: boolean };
 
 // Draft tersimpan dibaca lewat useSyncExternalStore (server: null) → cocok saat hidrasi.
 const noSubscribe = () => () => {};
@@ -52,6 +57,7 @@ function writeDraft(token: string, d: Draft) {
 export function TanyaSheet({
   token,
   session,
+  history = [],
   serverNow,
   onClose,
   onEnded,
@@ -59,6 +65,7 @@ export function TanyaSheet({
 }: {
   token: string;
   session: SessionView; // talkshow yang lagi jalan
+  history?: MyQuestion[]; // dari server, terbaru dulu (ikut LiveRefresh → status dijawab)
   serverNow: string;
   onClose: () => void;
   onEnded: () => void; // 409 bukan-talkshow: sesi keburu selesai
@@ -72,7 +79,12 @@ export function TanyaSheet({
   );
   const [edited, setDraft] = useState<Draft | null>(null);
   const draft = edited ?? parseDraft(storedRaw) ?? { text: preview?.text ?? "" };
-  const [sent, setSent] = useState<Sent | null>(preview?.sent ?? null);
+  // Baru terkirim tapi data server belum ke-refresh → ditampilkan dulu dari respons POST.
+  const [justSent, setJustSent] = useState<MyQuestion[]>([]);
+  const sent = [
+    ...justSent.filter((q) => !history.some((h) => h.id === q.id)),
+    ...(preview?.sent ?? history),
+  ];
   const [failure, setFailure] = useState<Failure | null>(preview?.failed ? "offline" : null);
   const [busy, setBusy] = useState(false);
   const area = useRef<HTMLTextAreaElement>(null);
@@ -110,7 +122,11 @@ export function TanyaSheet({
       });
       const body = (await res.json().catch(() => null)) as QuestionPostResponse | null;
       if (body?.ok) {
-        setSent({ text: body.question.text, time: timeWib(body.question.createdAt) });
+        const q = body.question;
+        setJustSent((l) => [
+          { id: q.id, text: q.text, time: timeWib(q.createdAt), answered: false },
+          ...l.filter((x) => x.id !== q.id),
+        ]);
         setFailure(null);
         update({ text: "" });
         return;
@@ -166,14 +182,6 @@ export function TanyaSheet({
             Tanya pembicara
           </p>
 
-          {sent && (
-            <div className={s.sent} aria-live="polite">
-              <Badge tone="success">Terkirim {sent.time}</Badge>
-              <p className="t-body">{sent.text}</p>
-              <p className="t-caption c-label-3">Langsung masuk ke daftar moderator</p>
-            </div>
-          )}
-
           <label className={s.field}>
             <span className="sr-only">Pertanyaan buat pembicara</span>
             <textarea
@@ -181,7 +189,7 @@ export function TanyaSheet({
               rows={1}
               value={draft.text}
               // BT09 "Ada pertanyaan lain?" (Figma); sebelum kirim pertama belum ada di Figma.
-              placeholder={sent ? "Ada pertanyaan lain?" : "Tulis pertanyaanmu"}
+              placeholder={sent.length ? "Ada pertanyaan lain?" : "Tulis pertanyaanmu"}
               maxLength={MAX_QUESTION + 20}
               className={cx("t-body", s.input, draft.text && s.filled)}
               onChange={(e) => update({ ...draft, text: e.target.value })}
@@ -198,6 +206,27 @@ export function TanyaSheet({
           </Button>
           <p className={cx("t-label c-label-2", s.caption)}>Bisa tanya lebih dari 1 kali</p>
         </div>
+
+        {sent.length > 0 && (
+          <section className={s.history} aria-labelledby="tanya-history">
+            <p id="tanya-history" className="t-label c-label-2">
+              Pertanyaan kamu · {sent.length}
+            </p>
+            <ul className={s.historyList} aria-live="polite">
+              {sent.map((q) => (
+                <li key={q.id} className={s.sent}>
+                  <span className={s.sentHead}>
+                    <Badge tone={q.answered ? "success" : "neutral"}>
+                      {q.answered ? "Udah dijawab" : "Belum dijawab"}
+                    </Badge>
+                    <span className="t-caption c-label-3 tabular">{q.time}</span>
+                  </span>
+                  <p className="t-body">{q.text}</p>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
       </Sheet>
 
       {failure && (

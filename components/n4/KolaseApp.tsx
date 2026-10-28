@@ -11,9 +11,12 @@ import {
 } from "react";
 import {
   ArrowClockwise,
+  ArrowCounterClockwise,
   Camera,
   CameraRotate,
   CameraSlash,
+  Check,
+  DownloadSimple,
   Info,
   Lightning,
   X,
@@ -25,11 +28,13 @@ import { guestPhotoUrl, isInAppBrowser, newPhotoId } from "@/lib/photo";
 import { captureFile, captureVideo, type Captured } from "./capture";
 import s from "./n4.module.css";
 import { useCamera, type CameraStatus } from "./useCamera";
+import { saveFile } from "../f5/saveImage";
 import { sendPhoto } from "./usePhotoOutbox";
 
-// N4 · BT06 Kamera kolase (+BT06b izin ditolak). Jepret → foto masuk antrean IndexedDB dulu →
-// dikirim, ditunggu ≤ 5 dtk (shutter loading) → kamera dimatikan → layar acara + sheet hasil
-// (/acara?sheet=foto&id=…, BT07/BT07b/BT07e). Ditolak server → toast, tetap di kamera.
+// N4 · BT06 Kamera kolase (+BT06b izin ditolak). Jepret → pratinjau hasil (28 Okt): "Tempel ke
+// kulkas" / "Ulangi" / "Simpan" (ke HP, tanpa ngirim). Tempel → foto masuk antrean IndexedDB dulu →
+// dikirim, ditunggu ≤ 5 dtk (loading) → kamera dimatikan → layar acara + sheet hasil
+// (/acara?sheet=foto&id=…, BT07/BT07b/BT07e). Ditolak server → toast, tetap di pratinjau.
 
 const UPLOAD_WAIT_MS = 5000; // lewat → sheet BT07b, antrean lanjut di layar acara
 const TOAST_MS = 4000;
@@ -56,13 +61,17 @@ export function KolaseApp({
   backHref: string; // layar acara
   lastOwnId: string | null; // thumbnail kiri = foto terakhirmu
   // /dev/states/n4: tanpa kamera/jaringan/IndexedDB.
-  preview?: { camera?: CameraStatus };
+  preview?: { camera?: CameraStatus; review?: string }; // review = URL gambar contoh pratinjau
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [flash, setFlash] = useState(0);
   const [toast, setToast] = useState<{ key: number; text: string } | null>(null);
+  // Hasil jepret yang belum dikirim (pratinjau). url = object URL buat <img>.
+  const [captured, setReview] = useState<{ cap: Captured; url: string; file: File } | null>(null);
+  const review =
+    captured ?? (preview?.review ? { url: preview.review, cap: null, file: null } : null);
   const video = useRef<HTMLVideoElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const sheetHref = (id: string) => `/t/${token}/acara?sheet=foto&id=${id}`;
@@ -91,6 +100,11 @@ export function KolaseApp({
 
   // Jepret → simpan di antrean dulu (foto aman walau sinyal putus) → kirim, tunggu ≤ 5 dtk →
   // kamera mati → sheet hasil. Status pasti (✓ / ⌛) dibaca sheet dari server + antrean.
+  useEffect(() => {
+    if (!captured) return;
+    return () => URL.revokeObjectURL(captured.url);
+  }, [captured]);
+
   async function keep(cap: Captured) {
     const row = { id: newPhotoId(), token, ...cap, createdAt: Date.now() };
     await queuePhoto(row);
@@ -106,12 +120,34 @@ export function KolaseApp({
   async function run(task: () => Promise<Captured>) {
     setBusy(true);
     try {
-      await keep(await task());
+      const cap = await task();
+      const file = new File([cap.photo], "foto-hmd.jpg", { type: "image/jpeg" });
+      setReview({ cap, url: URL.createObjectURL(cap.photo), file });
     } catch {
       show("Fotonya gagal diambil, coba lagi");
     } finally {
       setBusy(false);
     }
+  }
+
+  async function send() {
+    if (!review?.cap || busy) return;
+    setBusy(true);
+    try {
+      await keep(review.cap);
+    } catch {
+      show("Fotonya gagal disimpan, coba lagi");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // Simpan ke HP (langsung dari tap: iPhone = share sheet "Simpan Gambar").
+  async function save() {
+    if (!review?.file) return;
+    const out = await saveFile(review.file, "Foto House Moving Day");
+    if (out === "downloaded") show("Fotonya kesimpan di HP");
+    else if (out === "fallback") show("Tekan lama fotonya buat simpan");
   }
 
   function shoot() {
@@ -171,13 +207,19 @@ export function KolaseApp({
               className={cx(cam.facing === "user" && s.mirror)}
             />
           )}
+          {review && (
+            // eslint-disable-next-line @next/next/no-img-element -- object URL hasil jepret
+            <img src={review.url} alt="Hasil jepretanmu" className={s.reviewImg} />
+          )}
           {flash > 0 && <span key={flash} aria-hidden className={s.flash} />}
         </Polaroid>
         {!denied && (
           <p className={cx("t-label", s.hint)}>
-            {inApp
-              ? "Buka di Safari/Chrome biar kamera langsung jalan di sini."
-              : "Jepret sekali, langsung nempel di kulkas bareng."}
+            {review
+              ? "Suka? Tempel ke kulkas, atau ulangi dulu."
+              : inApp
+                ? "Buka di Safari/Chrome biar kamera langsung jalan di sini."
+                : "Jepret sekali, langsung nempel di kulkas bareng."}
           </p>
         )}
       </div>
@@ -198,6 +240,29 @@ export function KolaseApp({
           <Button variant="secondary" icon={<Camera />} onClick={() => fileInput.current?.click()}>
             Pakai kamera HP
           </Button>
+        </div>
+      ) : review ? (
+        <div className={s.reviewPanel}>
+          <Button
+            icon={<Check />}
+            onClick={send}
+            aria-disabled={busy || leaving}
+            aria-busy={busy || leaving}
+          >
+            {busy || leaving ? "Lagi nempel…" : "Tempel ke kulkas"}
+          </Button>
+          <div className={s.reviewRow}>
+            <Button
+              variant="secondary"
+              icon={<ArrowCounterClockwise />}
+              onClick={() => !busy && setReview(null)}
+            >
+              Ulangi
+            </Button>
+            <Button variant="secondary" icon={<DownloadSimple />} onClick={save}>
+              Simpan
+            </Button>
+          </div>
         </div>
       ) : (
         <div className={s.bar}>

@@ -205,3 +205,32 @@ section.list {
   max-width: calc(min(100vw, var(--screen-width)) - 32px);
   transform: translateX(-50%);
 }
+
+/* Riwayat "Pertanyaan kamu" di bawah tombol Kirim. */
+.history {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 8px;
+}
+
+.historyList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sentHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  align-self: stretch;
+  gap: 8px;
+}
+
+.sent p {
+  margin: 0;
+}

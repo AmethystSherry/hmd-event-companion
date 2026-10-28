@@ -17,6 +17,7 @@ import { LiveRefresh } from "@/components/LiveRefresh";
 import { GaleriSheet } from "@/components/n4/GaleriSheet";
 import { NempelSheet, nempelStatus, type NempelStatus } from "@/components/n4/NempelSheet";
 import { TanyaSheet, type TanyaPreview } from "@/components/n1/TanyaSheet";
+import type { MyQuestion } from "@/lib/questions";
 import { KartuSheet, type KartuPreview } from "@/components/n3/KartuSheet";
 import { usePhotoOutbox } from "@/components/n4/usePhotoOutbox";
 import { Badge, Button, EventTickets, TopToast } from "@/components/ui";
@@ -92,12 +93,14 @@ export function AcaraScreen({
   token,
   view: fresh,
   photos,
+  questions = [],
   serverNow,
   initialSheet,
   preview,
 }: {
   token: string;
   view: AcaraView;
+  questions?: MyQuestion[]; // N1: riwayat pertanyaan tamu ini (sheet Tanya)
   photos: GuestPhotos; // N4: foto sendiri + ringkasan tamu lain (sheet foto & galeri)
   serverNow: string;
   initialSheet?: OpenSheet | null; // dari ?sheet=&sesi= (reload / buka ulang)
@@ -454,6 +457,7 @@ export function AcaraScreen({
         <TanyaSheet
           token={token}
           session={active}
+          history={questions}
           serverNow={serverNow}
           onClose={close}
           onEnded={() => {
@@ -486,6 +490,7 @@ export function AcaraScreen({
           token={token}
           data={photos}
           queued={queued}
+          onRetry={outbox.flush}
           onClose={close}
           onDeleted={() => router.refresh()}
           preview={preview ? { pending: preview.galeri?.pending } : undefined}

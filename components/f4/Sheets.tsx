@@ -77,7 +77,6 @@ export function DetailSheet({
         {s.speaker && (
           <ListRow title="Pembicara" subtitle={`${s.speaker.name} · @${s.speaker.ig}`} />
         )}
-        <ListRow title="PIC" subtitle={s.pic} />
         <ListRow title="Durasi" subtitle={durationLabel(s, now)} />
       </div>
       <Button variant="secondary" onClick={onClose}>

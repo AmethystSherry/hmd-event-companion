@@ -247,3 +247,26 @@
   max-width: calc(min(100vw, var(--screen-width)) - 32px);
   transform: translateX(-50%);
 }
+
+/* Pratinjau hasil jepret (28 Okt): foto menutup video di polaroid + tombol Tempel/Ulangi/Simpan. */
+.reviewImg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.reviewPanel {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  padding: 0 var(--margin) max(calc(env(safe-area-inset-bottom) + 4px), 24px);
+}
+
+.reviewRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}

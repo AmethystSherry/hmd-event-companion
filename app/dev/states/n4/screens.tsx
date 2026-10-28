@@ -36,14 +36,14 @@ const FULL = photos([MINE, id(98), id(97)], 34);
 const FIRST = photos([MINE], 0);
 const EMPTY = photos([], 34);
 
-const camera = (status?: CameraStatus) => (
+const camera = (status?: CameraStatus, review?: string) => (
   <KolaseApp
     token="demo-token-n4-preview"
     name="Rara"
     date={polaroidDate(demoEvent.date)}
     backHref="/dev/states/n4"
     lastOwnId={status ? null : MINE}
-    preview={{ camera: status }}
+    preview={{ camera: status, review }}
   />
 );
 
@@ -61,6 +61,12 @@ export const SCREENS: ScreenDef[] = [
     render: () => acara(jeda1, JEDA, {}, FULL),
   },
   { code: "BT06", name: "Kamera kolase", kind: "Utama", render: () => camera() },
+  {
+    code: "BT06r",
+    name: "Pratinjau hasil jepret (Tempel / Ulangi / Simpan)",
+    kind: "Utama",
+    render: () => camera(undefined, "/figma/f3-open-space.webp"),
+  },
   {
     code: "BT07",
     name: "Nempel di kulkas (sheet)",
@@ -91,6 +97,13 @@ export const SCREENS: ScreenDef[] = [
     name: "Foto pertama di kulkas (sheet)",
     kind: "Kasus lain",
     render: () => sheet(FIRST, { status: "sent" }),
+  },
+  {
+    code: "BT07d-antre",
+    name: "Galeri · 2 foto belum terkirim + Kirim sekarang",
+    kind: "Gagal",
+    render: () =>
+      acara(jeda1, JEDA, { sheet: "galeri", photo: { status: "queued", pending: 2 } }, FULL),
   },
   {
     code: "BT07dh",

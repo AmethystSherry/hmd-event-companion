@@ -227,3 +227,14 @@ describe("store lama dilengkapi info sesi (K3)", () => {
     expect(JSON.stringify(data)).toBe(again);
   });
 });
+
+describe("acaraView · PIC", () => {
+  it("PIC sesi nggak ikut ke HP tamu", () => {
+    const { store, rara } = withGuests();
+    store.startSession(HMD_ID, "s02", t("14:00"));
+    const v = view(store, rara.id, "14:05");
+    expect(v.sessions.every((s) => s.pic === "")).toBe(true);
+    expect(v.active?.pic).toBe("");
+    expect(JSON.stringify(v)).not.toContain("Tim Acara");
+  });
+});

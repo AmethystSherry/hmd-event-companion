@@ -8,6 +8,7 @@ import { acaraView } from "@/lib/acara";
 import { getStore } from "@/lib/data";
 import { firstName } from "@/lib/format";
 import { isPhotoId, toGuestPhotos } from "@/lib/photo";
+import { myQuestions } from "@/lib/questions";
 import { guestFromToken } from "@/lib/server/access";
 import { serverNow } from "@/lib/server/clock";
 
@@ -86,6 +87,7 @@ async function EventScreen({
           guestId: guest.id,
           photos: store.listPhotos(event.id),
         })}
+        questions={myQuestions(store.listQuestions(event.id), guest.id)}
         serverNow={now.toISOString()}
         initialSheet={sheetFrom(q.sheet, q.sesi, q.id)}
       />

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { Question } from "./data/types";
 import {
   displayNames,
+  myQuestions,
   parseQuestionBody,
   questionsView,
   talkshowFor,
@@ -101,5 +102,25 @@ describe("talkshowFor", () => {
       "b",
     );
     expect(talkshowFor([s("a", "info", "nanti")])).toBeNull();
+  });
+});
+
+describe("myQuestions", () => {
+  const q = (id: string, guestId: string, at: string, answeredAt?: string): Question => ({
+    id,
+    clientId: uuid,
+    eventId: "e",
+    guestId,
+    sessionId: "s02",
+    text: `Tanya ${id}`,
+    createdAt: t(at),
+    answeredAt,
+  });
+  it("cuma milik tamu itu, terbaru dulu, + status dijawab", () => {
+    const list = [q("a", "g1", "14:05"), q("b", "g2", "14:06"), q("c", "g1", "14:10", t("14:20"))];
+    expect(myQuestions(list, "g1")).toEqual([
+      { id: "c", text: "Tanya c", time: "14.10", answered: true },
+      { id: "a", text: "Tanya a", time: "14.05", answered: false },
+    ]);
   });
 });

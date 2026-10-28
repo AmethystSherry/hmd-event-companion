@@ -343,6 +343,10 @@ Keputusan default 24 Okt (jawaban "Keputusan & asumsi" + "Temuan" di N4-delivera
   jadi kehapus. Gagal → foto balik + toast "Gagal hapus, coba lagi". Berhasil → `router.refresh()`; HP lain
   & tile Foto panitia lewat `rev`. T15b (F5) tetap pakai Dialog.
 - Badge home "Sedang jeda" / "Sedang berjalan" (F3 v3, K15).
+- (28 Okt) **Pratinjau setelah jepret**: foto nggak langsung dikirim — tampil di polaroid + "Tempel ke kulkas"
+  (antre + kirim seperti no. 12) / "Ulangi" / "Simpan" (`saveFile`, ke HP tanpa ngirim). Dev BT06r.
+  Antrean: tiap kirim dari pengurasan dibatasi 30 dtk (fetch nggantung nggak mengunci antrean); 5xx =
+  `offline` + `server`. Galeri BT07d: Banner "{n} foto belum terkirim" + "Kirim sekarang" (dev BT07d-antre).
 13. Hapus foto sendiri: `DELETE /api/t/[token]/foto/[id]` (soft delete `deletedAt` + file dihapus),
     UI di F5 (T15b). Hapus otomatis H+30: lihat "Aturan F5 di kode".
 14. Tile "Foto" BP02 = `photoCount` (realtime lewat `rev`).
@@ -533,6 +537,8 @@ Keputusan 25 Okt (default "Keputusan & asumsi" F3-F4-deliverables, kecuali K3/K8
     zlib). HP fetch foto full lewat proxy panitia (filter aktif), `foto-hmd-{semua|slug-sesi}.zip`,
     file `{nn}-{nama}-{sesi}.jpg` urut lama → baru, download `<a download>`. 0 foto → tombol redup.
   - Dev: /dev/states/f4 BT03s (ganti BT03-habis), P13, P13-hapus, P13-kosong. Store dev `__hmdStoreF34v3`.
+- (28 Okt) **PIC nggak dikirim ke HP tamu**: `acaraView` mengosongkan `pic` sesi; BT22 tanpa baris PIC,
+  subjudul BT04 tanpa PIC (fallback "Berikutnya" / "Belum mulai").
 - Komponen baru: `TopToast` (S01, BP02d), `EventTickets` (v3, Tiket acara), `GuestCard` (BT05). Kartu kamu (tiket gelap `--cta`) di `components/f4/Sheets`.
 - Server action dari browser pane Claude ditolak Next (origin `null`) → uji tombol dev di browser biasa.
 
@@ -569,6 +575,9 @@ Keputusan 25 Okt (prompt N1 + default "Keputusan & asumsi"/"Temuan" N1-deliverab
    (HeroState lingkaran `--card`, subjudul "Talkshow · 0 masuk · mulai {jam}").
 8. **Tile** BP02 Pertanyaan = total pertanyaan talkshow, `StatTile highlight` (border 1,5 accent) cuma
    kalau ada yang belum dijawab (T7). BT12: tile "pertanyaan" = semua pertanyaan event.
+8b. (28 Okt) Sheet Tanya tamu: riwayat "Pertanyaan kamu · n" di bawah Kirim (`myQuestions`, semua pertanyaan
+   tamu itu, terbaru dulu, Badge "Udah dijawab"/"Belum dijawab" dari P10, realtime lewat LiveRefresh);
+   yang baru terkirim ditampilkan dari respons POST sampai data server masuk. Ganti kartu Terkirim BT09.
 9. Belum: sembunyikan pertanyaan iseng (T8); BP02p nggak ada di /dev/states (cek lewat BP02 interaktif).
 
 ## Aturan N3 di kode

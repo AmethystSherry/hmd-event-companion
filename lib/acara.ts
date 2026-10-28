@@ -89,11 +89,13 @@ export function acaraView({ event, sessions, guests, tickets, me, now, rev }: In
   const self = toGuest(me);
   const nextStart = !r.active && r.next ? eventStart(event.date, r.next.startsAt) : null;
   const soon = !!nextStart && now.getTime() >= nextStart.getTime();
+  // PIC cuma buat panitia: nggak ikut dikirim ke HP tamu (28 Okt).
+  const forGuest = (s: SessionView): SessionView => ({ ...s, pic: "" });
   return {
     mode: r.active ? "sesi" : "jeda",
-    sessions: r.sessions,
-    active: r.active,
-    next: r.next,
+    sessions: r.sessions.map(forGuest),
+    active: r.active && forGuest(r.active),
+    next: r.next && forGuest(r.next),
     done: r.done,
     finale: !r.active && !r.next && r.sessions.length > 0 && r.done > 0,
     tickets: r.sessions.map((s) => ({
@@ -136,6 +138,9 @@ export function filterGuests(list: AcaraGuest[], query: string): AcaraGuest[] {
 export function rundownSubtitle(s: SessionView): string {
   if (s.state === "selesai") return "Selesai";
   if (s.state === "berlangsung") return s.room ? `Sedang berjalan · ${s.room}` : "Sedang berjalan";
-  if (s.state === "berikutnya") return `Berikutnya · ${s.speaker?.name ?? s.room ?? s.pic}`;
-  return s.room ?? s.pic;
+  if (s.state === "berikutnya") {
+    const who = s.speaker?.name ?? s.room;
+    return who ? `Berikutnya · ${who}` : "Berikutnya";
+  }
+  return s.room ?? "Belum mulai";
 }
