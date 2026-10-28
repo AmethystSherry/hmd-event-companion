@@ -192,6 +192,11 @@ next.config.ts            header X-Robots-Tag noindex, allowedDevOrigins (HP di 
   pembicara; `<ol>`, aria "Bagian 2, 14.00, Talkshow"; ganjil = terakhir di kiri). Jejak undangan
   dihapus. Nama panjang 2 baris bikin kartu lebih tinggi dari Figma → di 390×844 halaman scroll
   ±25px, tombol tetap di bawah. Sesi ke HP tamu lewat `sessionForGuest` (tanpa PIC).
+- **PE03 Mulai event** (28 Okt): `Event.startedAt` (`eventStarted` di lib/data/eventState: startedAt atau mode
+  ≠ pre). Tombol bawah: belum dimulai = "Mulai event" (redup kalau belum 3/3 siap) → Dialog "Mulai event
+  sekarang?" → server action `startEvent` (store `startEvent` sekali jalan) → Kontrol acara; udah dimulai =
+  "Buka Kontrol acara". Setelah dimulai Edit detail event `aria-disabled` + `updateEvent` ditolak
+  (`event-dimulai`). Hari-H redirect PE03 → BP02 cuma kalau udah dimulai. Dev: PE03m, PE03s.
 - **PE01/PE01a/PE02** (v5.1): toolbar LogoMark 32 + Badge crew "Panitia" | "Keluar"; baris judul
   "Daftar event" (t-title) + `eventCountLabel` "{n} event" rata baseline. Metadata "Daftar event · Panitia".
 - **T02**: Pekerjaan (≤ 40) & Minat (≤ 60) opsional → `Guest.job/interests` (cuma disimpan saat
@@ -286,7 +291,7 @@ Keputusan default 22 Okt (jawaban "Keputusan & asumsi" di F2-deliverables; prd.m
   kalau discan sebelum hari-H (halaman pindah dari T03); dibuka ulang setelah BT02 → langsung T03b.
   T01: "@potarastudio" di caption bawah = link profil IG.
 - Kamera butuh HTTPS di HP (`npx next dev --experimental-https`); gagal/ditolak → P07b.
-- Store dev ada di `globalThis.__hmdStoreF5v2`: naikkan kuncinya tiap method store bertambah (server
+- Store dev ada di `globalThis.__hmdStoreStart`: naikkan kuncinya tiap method store bertambah (server
   dev yang sedang jalan nggak membuat ulang instance lama saat HMR). Server dev yang sudah jalan
   bisa tetap memakai modul server lama (mis. `store.getPhoto is not a function`) → restart `npm run dev`.
 
@@ -439,7 +444,7 @@ Keputusan 24 Okt (rekomendasi atas "Keputusan & asumsi" + "Temuan" di F5-deliver
     `markThanksSent`. `lib/thanks.ts`: `THANKS_TEMPLATE` (copy Figma, read-only, `{nama}` = nama depan),
     `thanksLink` = `/t/{token}/buku-tamu?dari=wa`, `thanksView` (tamu udah check-in urut nama
     `localeCompare id`, `waHref` null kalau tanpa WA, `sent/total`). Hapus H+30 mengosongkan
-    `thanksSentAt`. Store dev `__hmdStoreF5v2`.
+    `thanksSentAt`. Store dev `__hmdStoreStart`.
 - **v2 · layar tamu** (menggantikan no. 8 "T14b/T14c ada back", no. 13 soal `/buku-tamu`, no. 14 layout):
   - **BT12** (`components/f5/Selesai`, client): `IllustratedScreen` `/figma/f3-closing.webp` + panel —
     Badge neutral "Acara selesai", `t-title` "Makasih udah mampir!", "{n} foto · {m} pertanyaan · {k}
@@ -545,7 +550,7 @@ Keputusan 25 Okt (default "Keputusan & asumsi" F3-F4-deliverables, kecuali K3/K8
   bulat Tanya di kanan (redup + aria-disabled kalau Talkshow belum jalan) + bar gelap ikon Tamu · Rundown.
   Galeri = `PhotoStack` (maks 3 thumbnail miring bertumpuk, terbaru di atas, badge merah jumlah fotomu termasuk
   yang antre) di kiri FAB kamera; tanpa foto → satu kartu garis putus + ikon gambar, tanpa badge (galeri tetap bisa dibuka).
-  Navbar nempel di bawah layar (fixed, z 55 di atas Sheet z 50, di luar panel). Tab yang sheet-nya kebuka = pil
+  Navbar nempel di bawah layar (fixed, tengah, hug selebar isi; z 55 di atas Sheet z 50, di luar panel). Tab yang sheet-nya kebuka = pil
   `--tabbar-active` + nama menu (Kartu dari BT05 = Tamu); tap tab aktif = tutup, tab lain = ganti sheet
   (replaceState). Sheet di layar acara dapat ruang 64 di bawah (`[data-sheet]::after`). Tombol bulat tetap hitam.
 - (28 Okt) **Ilustrasi bergerak**: `public/figma/*.mp4` (1080×1920, 10 dtk loop, 2,4–4,5 MB) pasangan tiap

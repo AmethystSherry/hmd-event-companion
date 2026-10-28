@@ -18,6 +18,9 @@ export type Event = {
   createdAt: string;
   // State acara hari-H (prd.md §6). Opsional: .data/store.json lama tetap terbaca (kosong = "pre").
   mode?: EventMode;
+  // (28 Okt) "Mulai event" di PE03: setelah ini detail event (nama & tanggal) dikunci & tombol jadi
+  // "Buka Kontrol acara". Kosong + mode "pre" = belum dimulai (eventStarted).
+  startedAt?: string | null;
   activeSessionId?: string | null;
   nextSessionId?: string | null;
   stateUpdatedAt?: string | null;

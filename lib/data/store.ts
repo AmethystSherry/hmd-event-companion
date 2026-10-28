@@ -1,5 +1,6 @@
 import { randomBytes, randomUUID } from "node:crypto";
 import type { CsvRow } from "../csv";
+import { eventStarted } from "./eventState";
 import { cardOf, sameCard } from "../card";
 import { MAX_IMPROVE, summaryDue } from "../feedback";
 import { toMinutes } from "../format";
@@ -50,7 +51,8 @@ export class StoreError extends Error {
       | "data-dihapus"
       | "bukan-talkshow"
       | "pertanyaan-tidak-ada"
-      | "belum-rsvp",
+      | "belum-rsvp"
+      | "event-dimulai",
     message: string,
   ) {
     super(message);
@@ -396,6 +398,9 @@ export function createStore(
     // PE03e · ubah nama & tanggal. Tamu & rundown tidak berubah.
     updateEvent(id: string, input: { name: string; date: string }): Event {
       const e = event(id);
+      if (eventStarted(e)) {
+        throw new StoreError("event-dimulai", "Event udah dimulai, detailnya nggak bisa diubah");
+      }
       e.name = input.name;
       e.date = input.date;
       commit();
@@ -509,6 +514,14 @@ export function createStore(
     // nggak menghalangi). Sekali jalan: udah ditutup → false, rev tetap (dobel tap / dua HP).
     canClose(eventId: string): boolean {
       return closable(eventId);
+    },
+    // PE03 "Mulai event": sekali jalan (dobel tap / dua HP → false, rev tetap).
+    startEvent(eventId: string, at: string): boolean {
+      const e = event(eventId);
+      if (eventStarted(e)) return false;
+      e.startedAt = at;
+      commit();
+      return true;
     },
     closeEvent(eventId: string, at: string, by: string | null = null): boolean {
       const e = event(eventId);

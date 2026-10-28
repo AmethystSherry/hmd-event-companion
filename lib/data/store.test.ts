@@ -151,6 +151,29 @@ describe("ubah & hapus event (PE03e / PE03h)", () => {
   });
 });
 
+describe("mulai event (PE03, 28 Okt)", () => {
+  it("sekali jalan, rev cuma naik sekali, detail event dikunci", () => {
+    const { store } = fresh();
+    importDummy(store);
+    const rev = store.rev;
+    expect(store.startEvent(HMD_ID, "2026-11-08T05:50:00Z")).toBe(true);
+    expect(store.startEvent(HMD_ID, "2026-11-08T05:51:00Z")).toBe(false);
+    expect(store.rev).toBe(rev + 1);
+    expect(store.getEvent(HMD_ID)?.startedAt).toBe("2026-11-08T05:50:00Z");
+    expect(() => store.updateEvent(HMD_ID, { name: "Lain", date: "2026-11-09" })).toThrow(
+      StoreError,
+    );
+  });
+
+  it("data lama yang state acaranya udah jalan dianggap dimulai", () => {
+    const { store } = fresh();
+    importDummy(store);
+    store.startSession(HMD_ID, "s01", "2026-11-08T06:00:00Z");
+    expect(store.startEvent(HMD_ID, "2026-11-08T06:01:00Z")).toBe(false);
+    expect(() => store.updateEvent(HMD_ID, { name: "Lain", date: "2026-11-09" })).toThrow();
+  });
+});
+
 describe("check-in di pintu (F2)", () => {
   const at = "2026-11-08T06:04:00.000Z"; // 13.04 WIB
   const op = (opId: string, method: "scan" | "manual" = "scan") => ({

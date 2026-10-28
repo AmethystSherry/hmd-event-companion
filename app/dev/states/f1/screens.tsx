@@ -93,13 +93,13 @@ const manager = (
 );
 
 // PE03b dan sheet di atasnya (PE03e / PE03h).
-const filledHome = (initialSheet?: "edit" | "delete") => {
+const filledHome = (initialSheet?: "edit" | "delete" | "start", startedAt?: string) => {
   const v = demoGuestView((gs) => {
     gs[0].inviteStatus = "diundang"; // 13 diundang seperti Figma PE03b
   });
   return (
     <EventHome
-      event={demoEventWithCsv}
+      event={startedAt ? { ...demoEventWithCsv, startedAt } : demoEventWithCsv}
       stats={v.stats}
       sessions={demoSessions}
       now={DEMO_NOW}
@@ -269,6 +269,20 @@ export const SCREENS: ScreenDef[] = [
     lane: "Panitia",
     kind: "Kasus lain",
     render: () => filledHome(),
+  },
+  {
+    code: "PE03m",
+    name: "Mulai event? (dialog)",
+    lane: "Panitia",
+    kind: "Aksi",
+    render: () => filledHome("start"),
+  },
+  {
+    code: "PE03s",
+    name: "Event udah dimulai (detail dikunci)",
+    lane: "Panitia",
+    kind: "Kasus lain",
+    render: () => filledHome(undefined, "2026-11-08T05:55:00Z"),
   },
   {
     code: "PE03e",

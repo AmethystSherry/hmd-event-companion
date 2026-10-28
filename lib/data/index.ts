@@ -7,6 +7,7 @@ import { loadRemote, loadRemoteRev, saveRemote, supabaseEnv } from "./supabase";
 import type { StoreData } from "./types";
 
 export type { DataStore } from "./store";
+export { eventStarted } from "./eventState";
 export { isStoreError, StoreError } from "./store";
 export type * from "./types";
 
@@ -17,7 +18,7 @@ export type * from "./types";
 const DIR = join(process.cwd(), ".data");
 const FILE = join(DIR, "store.json");
 
-const g = globalThis as typeof globalThis & { __hmdStoreF5v2?: DataStore };
+const g = globalThis as typeof globalThis & { __hmdStoreStart?: DataStore };
 
 function load(): StoreData {
   try {
@@ -54,7 +55,7 @@ export async function getStore(): Promise<DataStore> {
       },
     });
   }
-  return (g.__hmdStoreF5v2 ??= createStore(load(), { persist }));
+  return (g.__hmdStoreStart ??= createStore(load(), { persist }));
 }
 
 const MAX_TRIES = 5;

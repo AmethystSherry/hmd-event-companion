@@ -81,9 +81,22 @@ export async function updateEvent(
   await requireCrew();
   const r = cleanEvent(input);
   if (!r.ok) return r;
-  await mutateStore((store) => store.updateEvent(eventId, r.value));
+  try {
+    await mutateStore((store) => store.updateEvent(eventId, r.value));
+  } catch (err) {
+    if (err instanceof StoreError) return { ok: false, error: err.message };
+    throw err;
+  }
   refresh();
   return { ok: true };
+}
+
+// PE03 "Mulai event": tandai event dimulai (detail dikunci), lalu buka Kontrol acara.
+export async function startEvent(eventId: string): Promise<void> {
+  await requireCrew();
+  const at = (await serverNow()).toISOString();
+  await mutateStore((store) => store.startEvent(eventId, at));
+  redirect(`/panitia/event/${eventId}/kontrol`);
 }
 
 // PE03h · hapus event berantai, lalu kembali ke Daftar event (PE01 / PE01a).

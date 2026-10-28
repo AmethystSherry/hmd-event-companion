@@ -3,13 +3,13 @@ import { Suspense } from "react";
 import { EventHome } from "@/components/f1/EventHome";
 import { LiveRefresh } from "@/components/LiveRefresh";
 import { Screen, Skeleton } from "@/components/ui";
-import { getStore } from "@/lib/data";
+import { eventStarted, getStore } from "@/lib/data";
 import { requireCrew } from "@/lib/server/access";
 import { isEventDay, serverNow } from "@/lib/server/clock";
-import { deleteEvent, updateEvent } from "../../actions";
+import { deleteEvent, startEvent, updateEvent } from "../../actions";
 
 // PE03 Home event (kosong) · PE03b udah terisi · PE03e ubah detail · PE03h hapus event.
-// Hari-H (F2): kalau tamu & rundown udah siap, langsung ke BP02 Kontrol acara.
+// Hari-H (F2): kalau event udah dimulai ("Mulai event") & tamu + rundown siap → langsung BP02.
 export default function EventPage({ params }: PageProps<"/panitia/event/[id]">) {
   return (
     <Suspense
@@ -35,7 +35,12 @@ async function Home({ params }: Pick<PageProps<"/panitia/event/[id]">, "params">
   if (!event) notFound();
   const now = await serverNow();
   const sessions = store.listSessions(id);
-  if (isEventDay(event.date, now) && store.listGuests(id).length && sessions.length) {
+  if (
+    eventStarted(event) &&
+    isEventDay(event.date, now) &&
+    store.listGuests(id).length &&
+    sessions.length
+  ) {
     redirect(`/panitia/event/${id}/kontrol`);
   }
   return (
@@ -47,6 +52,7 @@ async function Home({ params }: Pick<PageProps<"/panitia/event/[id]">, "params">
         now={now.toISOString()}
         update={updateEvent}
         remove={deleteEvent}
+        start={startEvent}
       />
       <LiveRefresh />
     </>
