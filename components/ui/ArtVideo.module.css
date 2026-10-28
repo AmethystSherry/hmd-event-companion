@@ -1,32 +1,22 @@
-/* Kotak sama dengan <img> ilustrasi (absolute inset 0). Container query dipakai buat meniru
-   object-fit: cover + posisi tengah gambar, lalu video ditaruh supaya isinya tepat di atas gambar. */
+/* Kotak sama dengan <img> ilustrasi (absolute inset 0). Ukuran & posisi video dihitung JS
+   (ArtVideo) dari ukuran kotak — tanpa container query (Safari iPhone lama nggak menghitungnya →
+   video 1080 px melebarkan halaman). `contain: paint` + overflow memastikan video nggak pernah
+   keluar kotak. */
 .box {
   position: absolute;
   inset: 0;
   overflow: hidden;
-  container-type: size;
+  contain: paint;
   pointer-events: none;
 }
 
-/* Kotak "gambar" hasil cover: rasio gambar asli, menutupi kotak, di tengah. */
-.frame {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: max(100cqw, calc(100cqh * var(--ar)));
-  aspect-ratio: var(--ar);
-  transform: translate(-50%, -50%);
-  container-type: inline-size;
-}
-
-/* Video 9:16: lebar = lebar gambar / s, tengah; tepi atas gambar ada di y × tinggi video. */
 .video {
   position: absolute;
-  top: calc(var(--y) * -1 * (100cqw / var(--s)) * 16 / 9);
-  left: calc(50cqw - 50cqw / var(--s));
-  width: calc(100cqw / var(--s));
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
   max-width: none;
-  aspect-ratio: 9 / 16;
   opacity: 0;
   transition: opacity 400ms ease-out;
 }
