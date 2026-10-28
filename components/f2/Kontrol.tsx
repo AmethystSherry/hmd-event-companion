@@ -327,11 +327,9 @@ export function KontrolScreen({
                   onClick={() => setDetailId(x.id)}
                   aria-label={`Sesi ${x.no}, ${x.startsAt}, ${x.title}. Lihat detail`}
                 >
-                  <span aria-hidden className={s.stepDot}>
-                    {x.no}
-                  </span>
+                  <span aria-hidden className={s.stepDot} />
                   <span className={s.stepBody}>
-                    <span className="t-body">{x.title}</span>
+                    <span className="t-body-emph">{x.title}</span>
                     <span className="t-label c-label-2">{stepStatus(x)}</span>
                   </span>
                   <span className={cx("t-label c-label-2 tabular", s.stepTime)}>{x.startsAt}</span>
