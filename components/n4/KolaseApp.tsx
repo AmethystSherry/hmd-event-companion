@@ -108,11 +108,19 @@ export function KolaseApp({
   async function keep(cap: Captured) {
     const row = { id: newPhotoId(), token, ...cap, createdAt: Date.now() };
     await queuePhoto(row);
-    const r = await sendPhoto(row, UPLOAD_WAIT_MS);
-    if (r.kind === "rejected") {
+    // Kiriman nggak dibatalkan setelah 5 dtk (sinyal HP + server baru bangun bisa lebih lama):
+    // layar pindah ke sheet BT07b, upload tetap jalan di belakang & sheet berubah ke BT07 begitu
+    // sampai (router.refresh dari antrean / LiveRefresh).
+    const upload = sendPhoto(row);
+    const r = await Promise.race([
+      upload,
+      new Promise<null>((res) => setTimeout(() => res(null), UPLOAD_WAIT_MS)),
+    ]);
+    if (r?.kind === "rejected") {
       show(r.res.error);
       return;
     }
+    if (!r) void upload.then((x) => x.kind === "sent" && router.refresh());
     setLeaving(true);
     router.replace(sheetHref(row.id));
   }

@@ -346,7 +346,9 @@ Keputusan default 24 Okt (jawaban "Keputusan & asumsi" + "Temuan" di N4-delivera
 - (28 Okt) **Pratinjau setelah jepret**: foto nggak langsung dikirim — tampil di polaroid + "Tempel ke kulkas"
   (antre + kirim seperti no. 12) / "Ulangi" / "Simpan" (`saveFile`, ke HP tanpa ngirim). Dev BT06r.
   Antrean: tiap kirim dari pengurasan dibatasi 30 dtk (fetch nggantung nggak mengunci antrean); 5xx =
-  `offline` + `server`. Galeri BT07d: Banner "{n} foto belum terkirim" + "Kirim sekarang" (dev BT07d-antre).
+  `offline` + `server`. iPhone (WebKit): antrean IndexedDB disimpan sebagai ArrayBuffer, dibungkus Blob baru saat
+  dibaca (Blob dari IndexedDB gagal dikirim fetch); kiriman pertama nggak di-abort di 5 dtk (cuma layar pindah).
+  Galeri BT07d: Banner "{n} foto belum terkirim" + "Kirim sekarang" (dev BT07d-antre).
 13. Hapus foto sendiri: `DELETE /api/t/[token]/foto/[id]` (soft delete `deletedAt` + file dihapus),
     UI di F5 (T15b). Hapus otomatis H+30: lihat "Aturan F5 di kode".
 14. Tile "Foto" BP02 = `photoCount` (realtime lewat `rev`).
