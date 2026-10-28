@@ -222,6 +222,19 @@ export function AcaraScreen({
     url.searchParams.delete("id");
     history.replaceState(history.state, "", url);
   }, [preview]);
+  // Navbar (tetap kelihatan di atas sheet): tab yang kebuka → tutup; sheet lain kebuka → ganti
+  // sheet di entri riwayat yang sama (back HP tetap langsung balik ke layar acara).
+  const toggle = (kind: SheetKind) => {
+    const current = sheet?.kind === "kartu" ? "tamu" : sheet?.kind;
+    if (current === kind) return close();
+    if (!sheet || preview) return open(kind);
+    setSheet({ kind });
+    const url = new URL(window.location.href);
+    url.searchParams.set("sheet", kind);
+    url.searchParams.delete("sesi");
+    url.searchParams.delete("id");
+    history.replaceState({ ...history.state, hmdFromTamu: false }, "", url);
+  };
 
   // N4 · antrean foto (BT07b): satu pengirim untuk layar ini, foto terkirim → data server baru.
   const outbox = usePhotoOutbox(token, {
@@ -387,26 +400,29 @@ export function AcaraScreen({
             Semua sesi udah selesai. Bentar lagi buku tamu kebuka.
           </p>
         )}
-
-        <GuestTabBar
-          ask={{
-            label: "Tanya pembicara",
-            icon: <ChatCircle size={24} />,
-            onClick: () => open("tanya"),
-            disabled: !talkshowLive,
-            hint: "Tanya (aktif pas Talkshow)",
-          }}
-          tabs={[
-            { id: "tamu", label: "Tamu", icon: <Users size={22} />, onClick: () => open("tamu") },
-            {
-              id: "rundown",
-              label: "Rundown",
-              icon: <ListBullets size={22} />,
-              onClick: () => open("rundown"),
-            },
-          ]}
-        />
       </section>
+
+      {/* Navbar di luar panel (panel punya z-index sendiri) supaya tetap di atas sheet. */}
+      <GuestTabBar
+        className={styles.nav}
+        active={sheet?.kind === "kartu" ? "tamu" : (sheet?.kind ?? null)}
+        ask={{
+          label: "Tanya pembicara",
+          icon: <ChatCircle size={24} />,
+          onClick: () => toggle("tanya"),
+          disabled: !talkshowLive,
+          hint: "Tanya (aktif pas Talkshow)",
+        }}
+        tabs={[
+          { id: "tamu", label: "Tamu", icon: <Users size={22} />, onClick: () => toggle("tamu") },
+          {
+            id: "rundown",
+            label: "Rundown",
+            icon: <ListBullets size={22} />,
+            onClick: () => toggle("rundown"),
+          },
+        ]}
+      />
 
       {/* N3: di sheet Kartu kamu toast gagal simpan yang tampil (posisi sama). */}
       {offline && sheet?.kind !== "kartu" && (

@@ -545,6 +545,9 @@ Keputusan 25 Okt (default "Keputusan & asumsi" F3-F4-deliverables, kecuali K3/K8
   bulat Tanya di kanan (redup + aria-disabled kalau Talkshow belum jalan) + bar gelap ikon Tamu · Rundown.
   Galeri = `PhotoStack` (maks 3 thumbnail miring bertumpuk, terbaru di atas, badge merah jumlah fotomu termasuk
   yang antre) di kiri FAB kamera; tanpa foto → disembunyikan.
+  Navbar nempel di bawah layar (fixed, z 55 di atas Sheet z 50, di luar panel). Tab yang sheet-nya kebuka = pil
+  `--tabbar-active` + nama menu (Kartu dari BT05 = Tamu); tap tab aktif = tutup, tab lain = ganti sheet
+  (replaceState). Sheet di layar acara dapat ruang 64 di bawah (`[data-sheet]::after`). Tombol bulat tetap hitam.
 - (28 Okt) **Ilustrasi bergerak**: `public/figma/*.mp4` (1080×1920, 10 dtk loop, 2,4–4,5 MB) pasangan tiap
   webp (BT02, F3 open-space/talkshow/office-tour/closing/break/weak-signal, T01a, T01; closing juga di BT12).
   `ArtVideo` (components/ui) di atas <img> yang sama: posisi dari `lib/artVideo` (s, y diukur dari frame
@@ -660,6 +663,9 @@ Keputusan 26 Okt (prompt N3 + usulan "Temuan" N3-deliverables T1–T13):
   - Jangan override fill/stroke/efek/warna/radius lewat `className` atau `style`; ubah lewat
     `size`/`variant`, lebar boleh diatur. Ikon selalu ikut warna label (CSS memaksa `currentColor`).
   - Disabled sementara opacity 0,35 + `aria-disabled` (Figma belum punya State=Disabled; T02c, PE03).
+- `Sheet` (28 Okt): geser ke bawah buat nutup kalau dismissible (isi di paling atas + gerak awal vertikal,
+  lepas > 96 px / cepat → tutup, selain itu balik); panel `overflow-x: hidden` — cuma carousel di dalamnya
+  (mis. kartu tamu BT05) yang geser horizontal.
 - `IconButton` = khusus tombol back/close 44 di toolbar (gaya secondary, varian `glass` di kamera).
 - `Screen`: `withBack` (konten mulai 8px), `bottom` + `bottomHeight` (1 tombol 54, 2 tombol 118,
   +caption 28) → fade scroll-edge otomatis di atas aksi bawah.

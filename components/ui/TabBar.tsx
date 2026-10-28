@@ -58,32 +58,40 @@ export function TabBar({
 
 // Varian tamu (layar acara BT03/BT2x, 28 Okt): anatomi sama — tombol bulat terpisah (kanan = Tanya,
 // redup kalau Talkshow belum jalan) + bar gelap berisi pintasan sheet (Tamu · Rundown · Galeri).
-// Tombol (bukan link): tiap item membuka sheet; nggak ada tab aktif → ikon saja + aria-label.
+// Tombol (bukan link): tiap item membuka sheet. Tab yang sheet-nya kebuka = aktif (pil + nama menu,
+// sama dengan TabBar panitia); tab lain ikon saja + aria-label. Tombol bulat tetap hitam.
 export type GuestTab = { id: string; label: string; icon: ReactNode; onClick: () => void };
 
 export function GuestTabBar({
   tabs,
+  active,
   ask,
   className,
 }: {
   tabs: GuestTab[];
+  active?: string | null; // id tab yang sheet-nya lagi kebuka
   ask: { label: string; icon: ReactNode; onClick: () => void; disabled?: boolean; hint?: string };
   className?: string;
 }) {
   return (
     <nav aria-label="Pintasan" className={cx(styles.wrap, styles.guest, className)}>
       <div className={cx(styles.bar, styles.fill)}>
-        {tabs.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            aria-label={t.label}
-            onClick={t.onClick}
-            className={cx(styles.tab, styles.tabFill)}
-          >
-            {t.icon}
-          </button>
-        ))}
+        {tabs.map((t) => {
+          const on = t.id === active;
+          return (
+            <button
+              key={t.id}
+              type="button"
+              aria-label={t.label}
+              aria-pressed={on}
+              onClick={t.onClick}
+              className={cx(styles.tab, styles.tabFill, on && styles.active)}
+            >
+              {t.icon}
+              {on && <span className={styles.label}>{t.label}</span>}
+            </button>
+          );
+        })}
       </div>
       <button
         type="button"

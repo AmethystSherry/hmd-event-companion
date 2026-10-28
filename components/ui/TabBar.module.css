@@ -85,6 +85,13 @@
   cursor: pointer;
 }
 
+/* Tab aktif varian tamu: pil abu + nama menu, lebih lebar dari tab lain. */
+.tabFill.active {
+  flex: 1.8;
+  padding: 0 18px 0 14px;
+  background: var(--tabbar-active);
+}
+
 .scan {
   padding: 0;
   cursor: pointer;
