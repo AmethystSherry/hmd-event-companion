@@ -57,12 +57,16 @@
   box-shadow: var(--shadow-card);
 }
 
-/* FAB "Foto buat kolase" = Button primary icon-only 54, kanan atas panel. */
-.fab {
+/* Kanan atas panel: tumpukan galeri (kalau ada foto) + FAB "Foto buat kolase" (Button primary
+   icon-only 54). */
+.fabs {
   position: absolute;
-  top: 20px;
+  top: 18px;
   right: 20px;
   z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 /* Header kasih ruang kanan 64 supaya judul panjang turun baris, bukan masuk ke bawah FAB. */
@@ -76,7 +80,7 @@
 .header > .status,
 .header > .titleBtn,
 .header > h1 {
-  max-width: calc(100% - 64px);
+  max-width: calc(100% - 140px); /* tumpukan galeri + FAB */
 }
 
 .status {

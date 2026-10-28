@@ -79,7 +79,7 @@ export function InvitationScreen({
           aria-hidden
           className={inv.art}
         />
-        <ArtVideo fit={ART_VIDEO["t01-invitation-opened"]} />
+        <ArtVideo fit={ART_VIDEO["t01-invitation-opened"]} sound />
         <span aria-hidden className={inv.artFade} />
       </div>
       <section className={inv.paper} aria-labelledby="t01-title">

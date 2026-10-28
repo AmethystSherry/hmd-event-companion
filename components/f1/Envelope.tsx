@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import { preload } from "react-dom";
 import { HandWaving } from "@/components/icons";
-import { ArtVideo, Button, Pill, Screen } from "@/components/ui";
+import { ArtVideo, Button, Pill, playArtSound, Screen } from "@/components/ui";
 import { ART_VIDEO } from "@/lib/artVideo";
 import { cx } from "@/lib/cx";
 import { firstName } from "@/lib/format";
@@ -53,6 +53,7 @@ export function InviteGate({
 
   const open = useCallback(() => {
     if (phase !== "closed") return;
+    playArtSound(); // dari tap: video T01 di bawah amplop mulai dengan suara
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const finish = () => {
       setPhase("done");

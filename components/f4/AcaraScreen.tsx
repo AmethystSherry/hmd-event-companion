@@ -8,7 +8,6 @@ import {
   CaretRight,
   ChatCircle,
   Check,
-  Image as ImageIcon,
   ListBullets,
   Users,
   WifiSlash,
@@ -20,7 +19,16 @@ import { TanyaSheet, type TanyaPreview } from "@/components/n1/TanyaSheet";
 import type { MyQuestion } from "@/lib/questions";
 import { KartuSheet, type KartuPreview } from "@/components/n3/KartuSheet";
 import { usePhotoOutbox } from "@/components/n4/usePhotoOutbox";
-import { ArtVideo, Badge, Button, EventTickets, GuestTabBar, TopToast } from "@/components/ui";
+import {
+  ArtVideo,
+  Badge,
+  Button,
+  EventTickets,
+  GuestTabBar,
+  PhotoStack,
+  TopToast,
+  type StackPhoto,
+} from "@/components/ui";
 import { ART_VIDEO } from "@/lib/artVideo";
 import { useServerNow } from "@/components/useServerNow";
 import type { AcaraView } from "@/lib/acara";
@@ -28,7 +36,7 @@ import { cx } from "@/lib/cx";
 import { initials, timeWib } from "@/lib/format";
 import type { GuestCard } from "@/lib/data/types";
 import type { QueuedPhoto } from "@/lib/offline/photoDb";
-import type { GuestPhotos } from "@/lib/photo";
+import { guestPhotoUrl, type GuestPhotos } from "@/lib/photo";
 import type { SessionView } from "@/lib/rundown";
 import { DetailSheet, RundownSheet, SpeakerSheet, TamuSheet, type SheetKind } from "./Sheets";
 import styles from "./f4.module.css";
@@ -234,6 +242,26 @@ export function AcaraScreen({
     [preview, token],
   );
   const queued = preview ? previewQueued : outbox.queued;
+  // Tumpukan galeri: foto antre (Blob di HP) + foto terkirim (thumbnail proxy), terbaru dulu.
+  const waiting = useMemo(
+    () =>
+      queued
+        .filter((q) => !photos.mine.some((m) => m.id === q.id))
+        .sort((a, b) => b.createdAt - a.createdAt),
+    [queued, photos.mine],
+  );
+  const waitingUrls = useMemo(
+    () => waiting.map((q) => (q.thumb.size ? URL.createObjectURL(q.thumb) : undefined)),
+    [waiting],
+  );
+  useEffect(() => () => waitingUrls.forEach((u) => u && URL.revokeObjectURL(u)), [waitingUrls]);
+  const stack: StackPhoto[] = [
+    ...waiting.map((q, i) => ({ id: q.id, src: waitingUrls[i] })),
+    ...photos.mine.map((m) => ({
+      id: m.id,
+      src: preview ? undefined : guestPhotoUrl(token, m.id),
+    })),
+  ];
   const photoId = sheet?.kind === "foto" ? sheet.photoId : undefined;
   const photoStatus = photoId
     ? (preview?.photo?.status ?? nempelStatus(photoId, photos, queued))
@@ -287,13 +315,23 @@ export function AcaraScreen({
       </div>
 
       <section className={styles.panel}>
-        <Button
-          iconOnly
-          label="Foto buat kolase"
-          icon={<Camera size={24} />}
-          href={`/t/${token}/foto`}
-          className={styles.fab}
-        />
+        {/* Galeri = tumpukan fotomu (terbaru di atas + jumlah) di samping tombol kamera. */}
+        <div className={styles.fabs}>
+          {stack.length > 0 && (
+            <PhotoStack
+              photos={stack}
+              count={stack.length}
+              label={`Galeri foto · ${stack.length} foto kamu`}
+              onClick={() => open("galeri")}
+            />
+          )}
+          <Button
+            iconOnly
+            label="Foto buat kolase"
+            icon={<Camera size={24} />}
+            href={`/t/${token}/foto`}
+          />
+        </div>
 
         {active ? (
           <header className={styles.header}>
@@ -365,12 +403,6 @@ export function AcaraScreen({
               label: "Rundown",
               icon: <ListBullets size={22} />,
               onClick: () => open("rundown"),
-            },
-            {
-              id: "galeri",
-              label: "Galeri",
-              icon: <ImageIcon size={22} />,
-              onClick: () => open("galeri"),
             },
           ]}
         />
