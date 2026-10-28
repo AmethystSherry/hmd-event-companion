@@ -65,3 +65,36 @@
 .tab:active {
   transform: scale(var(--press-scale));
 }
+
+/* Varian tamu: tombol bulat di kanan, bar mengisi sisa lebar, tab dibagi rata. */
+.guest {
+  gap: 10px;
+}
+
+.fill {
+  flex: 1;
+  min-width: 0;
+}
+
+.tabFill {
+  flex: 1;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+.scan {
+  padding: 0;
+  cursor: pointer;
+}
+
+.off {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.off:active {
+  transform: none;
+}

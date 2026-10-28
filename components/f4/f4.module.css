@@ -181,46 +181,6 @@
   background: var(--card-2);
 }
 
-.shortcuts {
-  display: flex;
-  gap: 8px;
-}
-
-.tile {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-  padding: 12px 0;
-  border: 0;
-  border-radius: 16px;
-  background: var(--card-2);
-  color: var(--label);
-  font: inherit;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.tile:active {
-  transform: scale(var(--press-scale));
-}
-
-/* Tanya disorot cuma pas Talkshow jalan; selain itu redup & nggak bisa di-tap. */
-.tileHot {
-  background: var(--accent-soft);
-}
-
-.tileOff {
-  opacity: 0.4;
-  cursor: default;
-}
-
-.tileOff:active {
-  transform: none;
-}
-
 /* ---- Sheet (BT22 / BT21p / BT04 / BT05) ---- */
 .sheet {
   align-items: stretch;

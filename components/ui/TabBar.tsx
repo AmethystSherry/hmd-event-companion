@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { ChatCircle, ListBullets, QrCode, Users } from "@/components/icons";
 import { cx } from "@/lib/cx";
 import styles from "./TabBar.module.css";
@@ -51,6 +52,48 @@ export function TabBar({
       >
         <QrCode size={24} />
       </Link>
+    </nav>
+  );
+}
+
+// Varian tamu (layar acara BT03/BT2x, 28 Okt): anatomi sama — tombol bulat terpisah (kanan = Tanya,
+// redup kalau Talkshow belum jalan) + bar gelap berisi pintasan sheet (Tamu · Rundown · Galeri).
+// Tombol (bukan link): tiap item membuka sheet; nggak ada tab aktif → ikon saja + aria-label.
+export type GuestTab = { id: string; label: string; icon: ReactNode; onClick: () => void };
+
+export function GuestTabBar({
+  tabs,
+  ask,
+  className,
+}: {
+  tabs: GuestTab[];
+  ask: { label: string; icon: ReactNode; onClick: () => void; disabled?: boolean; hint?: string };
+  className?: string;
+}) {
+  return (
+    <nav aria-label="Pintasan" className={cx(styles.wrap, styles.guest, className)}>
+      <div className={cx(styles.bar, styles.fill)}>
+        {tabs.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            aria-label={t.label}
+            onClick={t.onClick}
+            className={cx(styles.tab, styles.tabFill)}
+          >
+            {t.icon}
+          </button>
+        ))}
+      </div>
+      <button
+        type="button"
+        aria-label={ask.disabled ? (ask.hint ?? ask.label) : ask.label}
+        aria-disabled={ask.disabled || undefined}
+        onClick={ask.disabled ? undefined : ask.onClick}
+        className={cx(styles.scan, ask.disabled && styles.off)}
+      >
+        {ask.icon}
+      </button>
     </nav>
   );
 }

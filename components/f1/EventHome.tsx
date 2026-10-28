@@ -112,7 +112,7 @@ export function EventHome({
             <Badge tone={phase.tone}>{phase.label}</Badge>
           </div>
         }
-        eyebrow={`${dateLong(event.date)} · ${event.startsAt}`}
+        eyebrow={dateLong(event.date)}
         title={event.name}
       />
       {!allReady && (
