@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { ArrowClockwise, PaperPlaneTilt, WifiSlash } from "@/components/icons";
-import { Button, Chip, Field, Segmented, Sheet, StarRating } from "@/components/ui";
+import { Button, Chip, Field, Sheet, StarRating } from "@/components/ui";
 import { cx } from "@/lib/cx";
 import { MAX_IMPROVE, type FeedbackPostResponse } from "@/lib/feedback";
 import { newPhotoId } from "@/lib/photo";
@@ -13,6 +13,11 @@ import s from "./f5.module.css";
 // BT12 (tanpa back/eyebrow, isi tanpa Card). T14d (udah pernah isi) = /kolase?isi=1.
 // Sheet ditutup = isian tetap di HP (draft). Isian disimpan di localStorage per token tiap berubah; clientId ikut
 // disimpan supaya kirim ulang (sinyal putus, tombol "Coba lagi", event online) nggak dobel.
+
+const INVITE_OPTIONS = [
+  { value: "mau", label: "Mau dong", art: "/figma/pota-happy.webp" },
+  { value: "nanti", label: "Nanti dulu", art: "/figma/pota-sad.webp" },
+] as const;
 
 export type BukuTamuDraft = {
   clientId: string;
@@ -202,15 +207,27 @@ export function BukuTamuSheet({
         />
         <section className={s.bukuTamuPart}>
           <p className="t-label c-label-2">Mau diundang lagi?</p>
-          <Segmented
-            label="Mau diundang lagi?"
-            options={[
-              { value: "mau", label: "Mau dong" },
-              { value: "nanti", label: "Nanti dulu" },
-            ]}
-            value={draft.invite}
-            onChange={(invite) => update({ invite })}
-          />
+          {/* (28 Okt) 2 kartu kecil ber-ilustrasi Pota (senang / sedih), bukan Segmented. Opsional:
+              tap kartu yang udah kepilih = batal pilih. */}
+          <div role="radiogroup" aria-label="Mau diundang lagi?" className={s.inviteCards}>
+            {INVITE_OPTIONS.map((o) => {
+              const on = draft.invite === o.value;
+              return (
+                <button
+                  key={o.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={on}
+                  onClick={() => update({ invite: on ? null : o.value })}
+                  className={cx(s.inviteCard, on && s.inviteOn)}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element -- ilustrasi statis kecil */}
+                  <img src={o.art} alt="" aria-hidden width={44} height={44} />
+                  <span className="t-body-emph">{o.label}</span>
+                </button>
+              );
+            })}
+          </div>
         </section>
         <Button
           icon={failed ? <ArrowClockwise /> : <PaperPlaneTilt />}

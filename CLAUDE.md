@@ -461,6 +461,8 @@ Keputusan 24 Okt (rekomendasi atas "Keputusan & asumsi" + "Temuan" di F5-deliver
     sekali per HP (localStorage `hmd-buku-tamu-auto:{token}`, 600 ms setelah layar muncul).
     Tiap BT12 tampil lagi (mis. back dari kolase setelah kirim) sheet disamakan dengan URL + `router.refresh()`
     (state layar yang disimpan Next dulu bikin sheet kebuka lagi).
+  - (28 Okt) T14 "Mau diundang lagi?" = 2 kartu kecil radiogroup (Pota senang `/figma/pota-happy.webp` "Mau dong",
+    sedih `pota-sad.webp` "Nanti dulu", 144 px), ganti Segmented; tap kartu terpilih = batal (opsional).
   - **T14/T14b/T14c** = `BukuTamuSheet` (`Sheet strong`) di BT12, `?sheet=buku-tamu` (pushState, back HP/
     backdrop/Esc menutup, draft tetap). Header `t-card-title` + "± 1 menit. Cuma bintang yang wajib.",
     bagian tanpa Card, T14b = baris merah WifiSlash (bukan Banner), tombol di dalam sheet. Tiket extra →

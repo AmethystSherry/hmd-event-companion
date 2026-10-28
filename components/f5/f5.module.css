@@ -463,3 +463,43 @@
   flex-shrink: 0;
   margin-top: 1px;
 }
+
+/* T14 "Mau diundang lagi?": 2 kartu kecil, Pota di kiri, teks di kanan. Kepilih = border accent. */
+.inviteCards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.inviteCard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 64px;
+  padding: 10px 12px;
+  border: 1.5px solid var(--separator);
+  border-radius: var(--radius-inner);
+  background: var(--card);
+  color: var(--label);
+  text-align: left;
+  transition:
+    border-color 150ms ease-out,
+    background-color 150ms ease-out,
+    transform var(--press-ms) ease-out;
+}
+
+.inviteCard:active {
+  transform: scale(var(--press-scale));
+}
+
+.inviteCard img {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
+
+.inviteOn {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
