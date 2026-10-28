@@ -544,7 +544,7 @@ Keputusan 25 Okt (default "Keputusan & asumsi" F3-F4-deliverables, kecuali K3/K8
 - (28 Okt) Pintasan layar acara tamu = `GuestTabBar` (components/ui/TabBar, anatomi TabBar panitia): tombol
   bulat Tanya di kanan (redup + aria-disabled kalau Talkshow belum jalan) + bar gelap ikon Tamu · Rundown.
   Galeri = `PhotoStack` (maks 3 thumbnail miring bertumpuk, terbaru di atas, badge merah jumlah fotomu termasuk
-  yang antre) di kiri FAB kamera; tanpa foto → disembunyikan.
+  yang antre) di kiri FAB kamera; tanpa foto → satu kartu garis putus + ikon gambar, tanpa badge (galeri tetap bisa dibuka).
   Navbar nempel di bawah layar (fixed, z 55 di atas Sheet z 50, di luar panel). Tab yang sheet-nya kebuka = pil
   `--tabbar-active` + nama menu (Kartu dari BT05 = Tamu); tap tab aktif = tutup, tab lain = ganti sheet
   (replaceState). Sheet di layar acara dapat ruang 64 di bawah (`[data-sheet]::after`). Tombol bulat tetap hitam.

@@ -1,9 +1,11 @@
+import { Image as ImageIcon } from "@/components/icons";
 import { cx } from "@/lib/cx";
 import styles from "./PhotoStack.module.css";
 
 // Tumpukan foto (28 Okt, galeri tamu di samping tombol kamera): maks 3 thumbnail berkotak
 // membulat, miring bertumpuk, terbaru paling atas + badge jumlah. Tap = buka galeri.
 // `src` = URL thumbnail (foto antre: object URL dari pemanggil); kosong = kotak abu.
+// Belum ada foto → satu kartu kosong dengan ikon gambar, tanpa badge (galeri tetap bisa dibuka).
 export type StackPhoto = { id: string; src?: string };
 
 const TILTS = [0, -12, -24]; // atas → bawah
@@ -31,6 +33,11 @@ export function PhotoStack({
       onClick={onClick}
       aria-label={label}
     >
+      {top.length === 0 && (
+        <span aria-hidden className={cx(styles.card, styles.empty, styles.blank)}>
+          <ImageIcon size={22} />
+        </span>
+      )}
       {top
         .map((p, i) => (
           <span

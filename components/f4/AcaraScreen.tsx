@@ -328,16 +328,18 @@ export function AcaraScreen({
       </div>
 
       <section className={styles.panel}>
-        {/* Galeri = tumpukan fotomu (terbaru di atas + jumlah) di samping tombol kamera. */}
+        {/* Galeri = tumpukan fotomu (terbaru di atas + jumlah) di samping tombol kamera; kosong = kartu ikon. */}
         <div className={styles.fabs}>
-          {stack.length > 0 && (
-            <PhotoStack
-              photos={stack}
-              count={stack.length}
-              label={`Galeri foto · ${stack.length} foto kamu`}
-              onClick={() => open("galeri")}
-            />
-          )}
+          <PhotoStack
+            photos={stack}
+            count={stack.length}
+            label={
+              stack.length
+                ? `Galeri foto · ${stack.length} foto kamu`
+                : "Galeri foto · belum ada foto"
+            }
+            onClick={() => open("galeri")}
+          />
           <Button
             iconOnly
             label="Foto buat kolase"
