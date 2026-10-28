@@ -100,6 +100,8 @@ export function DoorApp({
   const [toast, setToast] = useState<ToastState | null>(null);
   const [query, setQuery] = useState(preview?.query ?? "");
   const [filter, setFilter] = useState<DoorFilter>("semua");
+  // Dibuka dari tile Check-in BP02 (`?status=udah&dari=kontrol`): back balik ke Kontrol acara.
+  const [fromKontrol, setFromKontrol] = useState(false);
   const [walkIn, setWalkIn] = useState(preview?.walkIn ?? false);
   const [profileId, setProfileId] = useState<string | null>(preview?.profile ?? null);
   const lastScan = useRef({ text: "", at: 0 });
@@ -143,6 +145,17 @@ export function DoorApp({
     },
     [base, preview],
   );
+  // Next (cacheComponents) menyimpan state route yang pernah dibuka: /scan/cari yang dipindah ke
+  // Scan lewat pushState tetap di Scan saat dibuka lagi dari BP02. Effect ini jalan lagi tiap route
+  // kelihatan lagi → layar, filter & asal disamakan dengan URL.
+  useEffect(() => {
+    if (preview) return;
+    const url = new URL(window.location.href);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sinkron dengan URL saat route tampil
+    setView(url.pathname.endsWith("/cari") ? "cari" : "scan");
+    setFilter(url.searchParams.get("status") === "udah" ? "udah" : "semua");
+    setFromKontrol(url.searchParams.get("dari") === "kontrol");
+  }, [preview]);
   useEffect(() => {
     const onPop = () => setView(window.location.pathname.endsWith("/cari") ? "cari" : "scan");
     window.addEventListener("popstate", onPop);
@@ -342,11 +355,19 @@ export function DoorApp({
       <ScreenHeader
         leading={
           <div className={f1.topBar}>
-            <IconButton
-              label="Kembali ke Scan tiket"
-              icon={<CaretLeft />}
-              onClick={() => go("scan")}
-            />
+            {fromKontrol ? (
+              <IconButton
+                label="Kembali ke Kontrol acara"
+                icon={<CaretLeft />}
+                href={`/panitia/event/${eventId}/kontrol`}
+              />
+            ) : (
+              <IconButton
+                label="Kembali ke Scan tiket"
+                icon={<CaretLeft />}
+                onClick={() => go("scan")}
+              />
+            )}
             <Button
               size="sm"
               variant="secondary"

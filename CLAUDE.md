@@ -256,6 +256,7 @@ Keputusan default 22 Okt (jawaban "Keputusan & asumsi" di F2-deliverables; prd.m
   dobel tap / dua HP → `false`, `rev` tetap. Server action `startSession`/`finishSession` pakai
   `serverNow()`. Status per sesi & stopwatch diturunkan di `lib/rundown.ts`; stopwatch = jam server
   − `startedAt` (HP cuma memutar detiknya). Sesi yang sudah selesai bisa dimulai lagi (BP01b).
+- BP02 (28 Okt): Rundown = timeline ke bawah tanpa progress bar, tap baris → Sheet detail sesi (baca saja). Tile Check-in → P07 `?status=udah&dari=kontrol` (filter Udah masuk, back ke BP02).
 - BP02: carousel scroll-snap dibuka di sesi yang jalan (atau berikutnya); "Scan tiket" = tombol
   bawah, tanpa TabBar. Konfirmasi pakai `Dialog` (tengah layar), bukan Sheet.
 - **F2 v4 (26 Okt)**: Badge kartu sesi dari `SESSION_CARD_BADGE` (lib/rundown): Live "**Sedang
@@ -445,7 +446,7 @@ Keputusan 24 Okt (rekomendasi atas "Keputusan & asumsi" + "Temuan" di F5-deliver
     sheet=buku-tamu`, udah isi → `/kolase?isi=1`, belum masuk → `/selesai`.
   - **T15**: chip & label kaca "**Foto saya**" (kunci filter internal tetap `fotoku`), pin `PhotoPin
     frame`. Chip sesi T14/T15 & P13 + caption pakai `sessionShort`.
-- **v2 · P12 Kirim makasih** (`GuestManager` tab ke-3 "Makasih", prop `thanks` = `thanksView` +
+- **v2 · P12 Kirim makasih** (`GuestManager`; ada `thanks` = acara ditutup → cuma layar Makasih, tanpa tab Undangan/Pengingat H-1 (28 Okt); prop `thanks` = `thanksView` +
   `dateLabel`, cuma kalau `closed` & belum `purgedAt`; `?tab=makasih`): eyebrow "{tanggal} · setelah
   acara", kartu "{n} tamu yang datang" + "{x}/{n} terkirim" / cek bulat kalau semua (K11), template
   read-only, baris Avatar + nama + Badge "Terkirim" / sm "Kirim WA" (`wa.me`, pola P04b:

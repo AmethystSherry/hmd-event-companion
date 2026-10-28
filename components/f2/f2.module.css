@@ -272,25 +272,120 @@
   padding: 18px 20px 0;
 }
 
-.progress {
-  display: grid;
-  grid-auto-flow: column;
-  gap: 4px;
-  padding: 12px 20px 4px;
+/* BP02 rundown: timeline ke bawah. Titik bernomor + garis penghubung; garis setelah sesi yang
+   udah selesai jadi oranye. Baris = tombol → sheet detail sesi (baca saja). */
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: 8px 8px 10px;
 }
 
-.progress span {
-  height: 4px;
-  border-radius: 2px;
+.step {
+  position: relative;
+}
+
+.step:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  left: 25px;
+  top: 40px;
+  bottom: -6px;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--separator);
+}
+
+.step_selesai:not(:last-child)::before {
+  background: var(--accent);
+}
+
+.stepButton {
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  align-items: start;
+  column-gap: 14px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.stepButton:active {
   background: var(--card-2);
 }
 
-.progress .past {
-  background: var(--accent-soft);
+.stepButton:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
 }
 
-.progress .done {
+.stepDot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--card-2);
+  color: var(--label-2);
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.step_selesai .stepDot {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+
+.step_berlangsung .stepDot {
   background: var(--accent);
+  color: var(--on-cta);
+  box-shadow: 0 0 0 4px var(--accent-soft);
+}
+
+.step_berikutnya .stepDot {
+  background: var(--card);
+  color: var(--accent-text);
+  box-shadow: inset 0 0 0 1.5px var(--accent);
+}
+
+.stepBody {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding-top: 3px;
+}
+
+.stepBody p {
+  margin: 0;
+}
+
+.stepTime {
+  padding-top: 5px;
+}
+
+/* Sheet detail sesi (baca saja) */
+.detailList {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px 16px;
+  margin: 0;
+}
+
+.detailList dt {
+  color: var(--label-2);
+}
+
+.detailList dd {
+  margin: 0;
+  overflow-wrap: anywhere;
 }
 
 /* P05 viewfinder: kotak gelap (warna tetap) + bingkai sudut + video kamera. */
@@ -583,4 +678,23 @@
 .finaleCard > a:first-of-type,
 .finaleCard > button:first-of-type {
   margin-top: 8px;
+}
+
+/* BP02 sheet detail sesi (dari timeline rundown, baca saja) */
+.detail {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 4px 20px calc(env(safe-area-inset-bottom) + 20px);
+}
+
+.detailHead {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.detailHead p {
+  margin: 0;
 }

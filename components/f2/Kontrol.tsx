@@ -15,15 +15,14 @@ import {
 } from "@/components/icons";
 import { useServerNow } from "@/components/useServerNow";
 import {
-  Avatar,
   Badge,
   Button,
   Card,
   Dialog,
   IconButton,
-  ListRow,
   Screen,
   ScreenHeader,
+  Sheet,
   StatTile,
   Toast,
   TopToast,
@@ -122,6 +121,19 @@ export function KontrolScreen({
   const [closeDialog, setCloseDialog] = useState(!!initialCloseDialog);
   const [conflict, setConflict] = useState<string | null>(initialConflict ?? null);
   const { sessions, active } = rundown;
+  // Sheet detail sesi dari timeline rundown (baca saja; ubah tetap lewat PE04).
+  const [detailId, setDetailId] = useState<string | null>(null);
+  const detail = sessions.find((x) => x.id === detailId) ?? null;
+  const stepStatus = (x: SessionView) =>
+    x.state === "selesai"
+      ? actualMin(x) !== null
+        ? `Selesai · ${actualMin(x)} mnt`
+        : "Selesai"
+      : x.state === "berlangsung"
+        ? `Lagi jalan · ${msLabel(elapsedMs(x, now))}`
+        : x.state === "berikutnya"
+          ? `Berikutnya · PIC ${x.pic}`
+          : `PIC ${x.pic}`;
 
   // BP02d "HP 7K2Q udah mulai Open space duluan. Layarmu ikut update."
   const conflictText = (by: string, action: StateAction | null) => {
@@ -276,7 +288,7 @@ export function KontrolScreen({
           icon={<Users size={18} />}
           value={`${checkIn.checkedIn}/${checkIn.expected}`}
           label="Check-in"
-          href={`${base}/scan/cari`}
+          href={`${base}/scan/cari?status=udah&dari=kontrol`}
         />
         <StatTile
           icon={<Camera size={18} />}
@@ -305,35 +317,95 @@ export function KontrolScreen({
                   : "Belum mulai"}
             </p>
           </div>
-          <div aria-hidden className={s.progress}>
+          {/* Timeline ke bawah (tanpa progress bar: carousel di atas udah kasih "sesi x dari n"). */}
+          <ol className={s.timeline}>
             {sessions.map((x) => (
-              <span
-                key={x.id}
-                className={cx(x.state === "berlangsung" && s.done, x.state === "selesai" && s.past)}
-              />
+              <li key={x.id} className={cx(s.step, s[`step_${x.state}`])}>
+                <button
+                  type="button"
+                  className={s.stepButton}
+                  onClick={() => setDetailId(x.id)}
+                  aria-label={`Sesi ${x.no}, ${x.startsAt}, ${x.title}. Lihat detail`}
+                >
+                  <span aria-hidden className={s.stepDot}>
+                    {x.no}
+                  </span>
+                  <span className={s.stepBody}>
+                    <span className="t-body">{x.title}</span>
+                    <span className="t-label c-label-2">{stepStatus(x)}</span>
+                  </span>
+                  <span className={cx("t-label c-label-2 tabular", s.stepTime)}>{x.startsAt}</span>
+                </button>
+              </li>
             ))}
-          </div>
-          {sessions.map((x) => (
-            <ListRow
-              key={x.id}
-              leading={<Avatar name={String(x.no)} />}
-              title={x.title}
-              subtitle={
-                x.state === "selesai"
-                  ? actualMin(x) !== null
-                    ? `Selesai · ${actualMin(x)} mnt`
-                    : "Selesai"
-                  : x.state === "berlangsung"
-                    ? `Lagi jalan · ${msLabel(elapsedMs(x, now))}`
-                    : x.state === "berikutnya"
-                      ? `Berikutnya · PIC ${x.pic}`
-                      : `PIC ${x.pic}`
-              }
-              trailing={<span className="tabular">{x.startsAt}</span>}
-            />
-          ))}
+          </ol>
         </Card>
       )}
+
+      <Sheet
+        open={!!detail}
+        onClose={() => setDetailId(null)}
+        title={detail ? `Detail sesi ${detail.title}` : "Detail sesi"}
+      >
+        {detail && (
+          <div className={s.detail}>
+            <div className={s.detailHead}>
+              <Badge
+                tone={SESSION_CARD_BADGE[detail.state].tone}
+                pulse={detail.state === "berlangsung"}
+              >
+                {SESSION_CARD_BADGE[detail.state].label}
+              </Badge>
+              <p aria-hidden className="t-card-title">
+                {detail.title}
+              </p>
+              <p className="t-label c-label-2">
+                Sesi {String(detail.no).padStart(2, "0")} · {stepStatus(detail)}
+              </p>
+            </div>
+            <dl className={cx("t-label", s.detailList)}>
+              <dt>Jam</dt>
+              <dd className="tabular">
+                {detail.startsAt}–{detail.endsAt} · {detail.durationMin} mnt
+              </dd>
+              {detail.room && (
+                <>
+                  <dt>Ruang</dt>
+                  <dd>{detail.roomNote ? `${detail.room} · ${detail.roomNote}` : detail.room}</dd>
+                </>
+              )}
+              <dt>Tipe</dt>
+              <dd>{detail.type === "talkshow" ? "Talkshow" : "Info"}</dd>
+              {detail.topic && (
+                <>
+                  <dt>Topik</dt>
+                  <dd>{detail.topic}</dd>
+                </>
+              )}
+              {detail.speaker && (
+                <>
+                  <dt>Pembicara</dt>
+                  <dd>
+                    {detail.speaker.name}
+                    {detail.speaker.ig ? ` · @${detail.speaker.ig}` : ""}
+                  </dd>
+                </>
+              )}
+              {detail.description && (
+                <>
+                  <dt>Deskripsi</dt>
+                  <dd>{detail.description}</dd>
+                </>
+              )}
+              <dt>PIC</dt>
+              <dd>{detail.pic}</dd>
+            </dl>
+            <Button variant="secondary" onClick={() => setDetailId(null)}>
+              Tutup
+            </Button>
+          </div>
+        )}
+      </Sheet>
 
       <Dialog
         open={!!confirm}

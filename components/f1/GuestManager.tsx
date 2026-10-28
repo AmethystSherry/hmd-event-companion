@@ -126,8 +126,9 @@ export function GuestManager({
   initialSwiped?: string; // pratinjau P04s: baris dengan panel Hapus terbuka
   thanks?: ThanksView & { dateLabel: string }; // P12; kosong = tab Makasih nggak ada
 }) {
+  // Setelah acara ditutup (`thanks` ada) cuma P12 Makasih; Undangan & Pengingat H-1 udah lewat.
   const [tab, setTab] = useState<Tab>(
-    initialTab === "makasih" && !thanks ? "undangan" : initialTab,
+    thanks ? "makasih" : initialTab === "makasih" ? "undangan" : initialTab,
   );
   const [filter, setFilter] = useState<Filter>(initialFilter);
   const [sheet, setSheet] = useState<SheetState>(initialSheet);
@@ -251,7 +252,6 @@ export function GuestManager({
       options={[
         { value: "undangan", label: "Undangan" },
         { value: "pengingat", label: "Pengingat H-1" },
-        ...(thanks ? [{ value: "makasih" as const, label: "Makasih" }] : []),
       ]}
     />
   );
@@ -313,7 +313,6 @@ export function GuestManager({
           eyebrow={`${thanks.dateLabel} · setelah acara`}
           title="Kirim makasih"
         />
-        {segmented}
         <Card>
           <div className={styles.fileRow}>
             <span className={f1.iconBox}>
