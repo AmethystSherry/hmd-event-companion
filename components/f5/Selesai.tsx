@@ -176,8 +176,13 @@ export function SelesaiLuarScreen({ followHref }: { followHref: string }) {
           Instagram kami.
         </p>
       </div>
-      <Button variant="secondary" href={followHref} icon={<InstagramLogo />}>
-        Follow @potarastudio
+      <Button
+        variant="secondary"
+        href={followHref}
+        icon={<InstagramLogo />}
+        aria-label="Dapetin info event lainnya di Instagram @potarastudio"
+      >
+        Dapetin info event lainnya
       </Button>
     </IllustratedScreen>
   );
