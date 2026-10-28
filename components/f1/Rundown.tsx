@@ -233,6 +233,23 @@ export function Rundown({
               />
             )}
           </div>
+          <div className={f1.stack}>
+            <p className="t-label c-label-2">Tipe sesi</p>
+            <Segmented<SessionType>
+              label="Tipe sesi"
+              value={form.type}
+              onChange={(type) => set("type", type)}
+              options={[
+                { value: "info", label: "Info" },
+                { value: "talkshow", label: "Talkshow" },
+              ]}
+            />
+            {form.type === "info" && (
+              <p className={`t-caption c-label-2 ${styles.typeHint}`}>
+                Info: tamu cuma lihat detail sesi, nggak ada kolom Tanya.
+              </p>
+            )}
+          </div>
           <Field
             label="Nama sesi"
             value={form.title}
@@ -266,23 +283,6 @@ export function Rundown({
             maxLength={20}
             onChange={(e) => set("room", e.target.value)}
           />
-          <div className={f1.stack}>
-            <p className="t-label c-label-2">Tipe sesi</p>
-            <Segmented<SessionType>
-              label="Tipe sesi"
-              value={form.type}
-              onChange={(type) => set("type", type)}
-              options={[
-                { value: "info", label: "Info" },
-                { value: "talkshow", label: "Talkshow" },
-              ]}
-            />
-            {form.type === "info" && (
-              <p className={`t-caption c-label-2 ${styles.typeHint}`}>
-                Info: tamu cuma lihat detail sesi, nggak ada kolom Tanya.
-              </p>
-            )}
-          </div>
           {form.type === "talkshow" && (
             <>
               <Field
