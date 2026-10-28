@@ -454,6 +454,9 @@ Keputusan 24 Okt (rekomendasi atas "Keputusan & asumsi" + "Temuan" di F5-deliver
     kulkas · {n} foto" + 4 thumbnail + "+{n−4}" (satu `Link` ke T15, tanpa tombol bersarang; 0 foto →
     "Belum ada foto"). Tanpa tombol bawah. Belum check-in → `SelesaiLuarScreen` kerangka sama +
     "Acaranya udah selesai" + Follow (copy bukan Figma).
+  - (28 Okt) BT12: buku tamu = tombol di bawah panel (belum isi: primary "Isi buku tamu · ± 1 menit"; udah: secondary
+    "Buku tamu udah diisi" → kolase + T14d), tiket `extra` nggak dipakai lagi. Belum isi → sheet T14 kebuka sendiri
+    sekali per HP (localStorage `hmd-buku-tamu-auto:{token}`, 600 ms setelah layar muncul).
   - **T14/T14b/T14c** = `BukuTamuSheet` (`Sheet strong`) di BT12, `?sheet=buku-tamu` (pushState, back HP/
     backdrop/Esc menutup, draft tetap). Header `t-card-title` + "± 1 menit. Cuma bintang yang wajib.",
     bagian tanpa Card, T14b = baris merah WifiSlash (bukan Banner), tombol di dalam sheet. Tiket extra →
@@ -644,6 +647,8 @@ Keputusan 26 Okt (prompt N3 + usulan "Temuan" N3-deliverables T1–T13):
 - Token: `app/tokens.css` — warna semantik light (utama) + dark (`prefers-color-scheme`, atau paksa
   dengan `data-theme="light|dark"` di `html` atau elemen mana pun), radius, spacing, shadow, motion,
   kelas tipografi `t-*` (Clean/* dari Figma; tracking Figma dalam persen → `em`).
+- (28 Okt) `globals.css`: di layar sentuh semua input/textarea/select minimal 16 px (`!important`) — Safari iPhone
+  nge-zoom halaman kalau kolom < 16 px difokus (dulu: Tanya 15 px, minat T11 13 px, ucapan T02b).
 - **App selalu light** (25 Okt): `app/layout.tsx` memasang `<html data-theme="light">` + `themeColor`
   satu warna, jadi setting dark HP nggak berpengaruh. Dark cuma lewat `data-theme="dark"` per elemen
   (pratinjau `/dev/ui`). CSS `prefers-color-scheme` baru wajib dijaga `:root:not([data-theme="light"])`.

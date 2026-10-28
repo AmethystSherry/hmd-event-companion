@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { CaretRight, InstagramLogo } from "@/components/icons";
+import { BookOpen, CaretRight, Check, InstagramLogo } from "@/components/icons";
 import {
   Badge,
   Button,
@@ -21,9 +21,13 @@ import s from "./f5.module.css";
 // sesi + tiket "SATU LAGI · Isi buku tamu"), kartu "Kolase kulkas · {n} foto". Tanpa tombol bawah.
 // Buku tamu (T14/T14b/T14c) = sheet lewat `?sheet=buku-tamu` (pushState, back HP menutup).
 // Udah isi → tiket jadi sobekan ke-5 (K2), tap → kolase + toast T14d.
+// (28 Okt) Buku tamu bukan tiket lagi tapi tombol di bawah panel (jelas bisa di-tap): belum isi =
+// primary "Isi buku tamu", udah = secondary "Buku tamu udah diisi" → kolase + T14d. Belum isi →
+// sheet buku tamu kebuka sendiri sekali per HP (localStorage) begitu layar ini muncul.
 
 const ART = "/figma/f3-closing.webp";
 const SHEET = "buku-tamu";
+const autoKey = (token: string) => `hmd-buku-tamu-auto:${token}`;
 
 export function SelesaiScreen({
   token,
@@ -71,6 +75,19 @@ export function SelesaiScreen({
     history.pushState({ ...history.state, hmdSheet: true }, "", url);
   }, [filled, kolaseHref, preview, router]);
 
+  // Acara selesai → minta isi buku tamu langsung (sekali per HP; tutup = nggak muncul lagi).
+  useEffect(() => {
+    if (preview || filled || initialSheet || !token) return;
+    try {
+      if (localStorage.getItem(autoKey(token))) return;
+      localStorage.setItem(autoKey(token), "1");
+    } catch {
+      return;
+    }
+    const t = setTimeout(open, 600); // panel muncul dulu, baru sheet naik
+    return () => clearTimeout(t);
+  }, [preview, filled, initialSheet, token, open]);
+
   const close = useCallback(() => {
     setSheet(false);
     if (preview) return;
@@ -93,20 +110,7 @@ export function SelesaiScreen({
             {photoCount} foto · {questionCount} pertanyaan · {guestCount} tamu
           </p>
         </div>
-        <EventTickets
-          tickets={tickets}
-          caption={ticketCaption}
-          extra={{
-            kicker: "SATU LAGI",
-            title: "Isi buku tamu",
-            meta: "± 1 menit",
-            done: filled,
-            label: filled
-              ? "Buku tamu udah diisi, lihat kolase"
-              : "Isi buku tamu, kira-kira 1 menit",
-            onOpen: open,
-          }}
-        />
+        <EventTickets tickets={tickets} caption={ticketCaption} />
         <Link href={kolaseHref} className={s.kolaseCard}>
           <span className={s.kolaseHead}>
             <span className="t-label-emph">
@@ -130,6 +134,15 @@ export function SelesaiScreen({
             <span className="t-label c-label-2">Belum ada foto</span>
           )}
         </Link>
+        {filled ? (
+          <Button variant="secondary" icon={<Check />} onClick={open}>
+            Buku tamu udah diisi
+          </Button>
+        ) : (
+          <Button icon={<BookOpen />} onClick={open}>
+            Isi buku tamu · ± 1 menit
+          </Button>
+        )}
       </IllustratedScreen>
       <BukuTamuSheet
         token={token}
