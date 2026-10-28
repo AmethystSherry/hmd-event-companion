@@ -503,3 +503,9 @@
   border-color: var(--accent);
   background: var(--accent-soft);
 }
+
+/* Udah pilih satu → ilustrasi kartu yang nggak kepilih memudar (40%). */
+.invitePicked .inviteCard:not(.inviteOn) img {
+  opacity: 0.4;
+  transition: opacity 150ms ease-out;
+}

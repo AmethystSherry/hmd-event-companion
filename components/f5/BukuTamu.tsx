@@ -209,7 +209,11 @@ export function BukuTamuSheet({
           <p className="t-label c-label-2">Mau diundang lagi?</p>
           {/* (28 Okt) 2 kartu kecil ber-ilustrasi Pota (senang / sedih), bukan Segmented. Opsional:
               tap kartu yang udah kepilih = batal pilih. */}
-          <div role="radiogroup" aria-label="Mau diundang lagi?" className={s.inviteCards}>
+          <div
+            role="radiogroup"
+            aria-label="Mau diundang lagi?"
+            className={cx(s.inviteCards, draft.invite && s.invitePicked)}
+          >
             {INVITE_OPTIONS.map((o) => {
               const on = draft.invite === o.value;
               return (
