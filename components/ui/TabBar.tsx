@@ -58,8 +58,8 @@ export function TabBar({
 
 // Varian tamu (layar acara BT03/BT2x, 28 Okt): anatomi sama — tombol bulat terpisah (kanan = Tanya,
 // redup kalau Talkshow belum jalan) + bar gelap berisi pintasan sheet (Tamu · Rundown · Galeri).
-// Tombol (bukan link): tiap item membuka sheet. Tab yang sheet-nya kebuka = aktif (pil + nama menu,
-// sama dengan TabBar panitia); tab lain ikon saja + aria-label. Tombol bulat tetap hitam.
+// Tombol (bukan link): tiap item membuka sheet. Bar hug (selebar isi); tab yang sheet-nya kebuka =
+// aktif (pil + nama menu, sama dengan TabBar panitia); tab lain ikon saja. Tombol bulat tetap hitam.
 export type GuestTab = { id: string; label: string; icon: ReactNode; onClick: () => void };
 
 export function GuestTabBar({

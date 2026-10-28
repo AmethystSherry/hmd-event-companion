@@ -65,7 +65,8 @@
   bottom: calc(env(safe-area-inset-bottom) + 14px);
   left: 50%;
   z-index: 55;
-  width: calc(min(100vw, var(--screen-width)) - 40px);
+  width: max-content;
+  max-width: calc(min(100vw, var(--screen-width)) - 40px);
   transform: translateX(-50%);
 }
 

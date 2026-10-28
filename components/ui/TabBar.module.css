@@ -66,29 +66,26 @@
   transform: scale(var(--press-scale));
 }
 
-/* Varian tamu: tombol bulat di kanan, bar mengisi sisa lebar, tab dibagi rata. */
+/* Varian tamu (hug): bar selebar isinya — tab ikon 22 + padding 21 (sama TabBar panitia), tab aktif
+   melebar ikut nama menu. Tombol bulat di kanan bar. */
 .guest {
+  justify-content: center;
   gap: 10px;
+  width: auto;
 }
 
 .fill {
-  flex: 1;
-  min-width: 0;
+  flex: 0 0 auto;
 }
 
 .tabFill {
-  flex: 1;
-  padding: 0;
   border: 0;
   background: none;
   font: inherit;
   cursor: pointer;
 }
 
-/* Tab aktif varian tamu: pil abu + nama menu, lebih lebar dari tab lain. */
 .tabFill.active {
-  flex: 1.8;
-  padding: 0 18px 0 14px;
   background: var(--tabbar-active);
 }
 
