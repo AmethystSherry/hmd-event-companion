@@ -245,7 +245,7 @@ export const SCREENS: ScreenDef[] = [
   },
   {
     code: "T15",
-    name: "Kolase kulkas",
+    name: "Kolase foto",
     kind: "Utama",
     lane: "Tamu",
     render: () => kolase(PHOTOS, {}),

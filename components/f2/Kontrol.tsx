@@ -258,7 +258,7 @@ export function KontrolScreen({
             <span className="t-label c-label-2 tabular">± {finale!.endsAt}</span>
           </div>
           <p className="t-title">Tutup acara</p>
-          <p className="t-body c-label-2">Layar semua tamu pindah ke buku tamu & kolase kulkas.</p>
+          <p className="t-body c-label-2">Layar semua tamu pindah ke buku tamu & kolase foto.</p>
           <Button
             icon={<BookOpen />}
             aria-disabled={pending}

@@ -16,7 +16,7 @@ describe("pesan makasih", () => {
     const link = thanksLink("https://hmd.example", "abc");
     expect(link).toBe("https://hmd.example/t/abc/buku-tamu?dari=wa");
     expect(thanksMessage("Rara Wening", link)).toBe(
-      "Makasih udah mampir ke rumah baru, Rara! Isi buku tamu ± 1 menit & lihat kolase kulkasnya di sini: https://hmd.example/t/abc/buku-tamu?dari=wa",
+      "Makasih udah mampir ke rumah baru, Rara! Isi buku tamu ± 1 menit & lihat kolase fotonya di sini: https://hmd.example/t/abc/buku-tamu?dari=wa",
     );
     expect(THANKS_TEMPLATE).toContain("{nama}");
   });

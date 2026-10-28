@@ -11,7 +11,7 @@ import { toKolasePhotos } from "@/lib/kolase";
 import { polaroidDate } from "@/lib/photo";
 import { closedGuest } from "@/lib/server/feedback";
 
-export const metadata = { title: "Kolase kulkas · House Moving Day" };
+export const metadata = { title: "Kolase foto · House Moving Day" };
 
 // F5 · T15 Kolase kulkas (+ T15b ?foto={id}, T15c/T15e simpan & bagikan, T15d kosong,
 // T14d ?isi=1). Foto lewat route proxy; daftar ikut berubah lewat rev → SSE.

@@ -653,6 +653,8 @@ Keputusan 26 Okt (prompt N3 + usulan "Temuan" N3-deliverables T1–T13):
   kelas tipografi `t-*` (Clean/* dari Figma; tracking Figma dalam persen → `em`).
 - (28 Okt) `globals.css`: di layar sentuh semua input/textarea/select minimal 16 px (`!important`) — Safari iPhone
   nge-zoom halaman kalau kolom < 16 px difokus (dulu: Tanya 15 px, minat T11 13 px, ucapan T02b).
+- (28 Okt) Nama "Kolase kulkas" di UI jadi **"Kolase foto"** (judul T15, kartu BT12, BP04b, judul share, metadata
+  /kolase, template WA makasih). Kiasan kulkas lain ("Tempel ke kulkas", "Kulkas polaroid") tetap.
 - **App selalu light** (25 Okt): `app/layout.tsx` memasang `<html data-theme="light">` + `themeColor`
   satu warna, jadi setting dark HP nggak berpengaruh. Dark cuma lewat `data-theme="dark"` per elemen
   (pratinjau `/dev/ui`). CSS `prefers-color-scheme` baru wajib dijaga `:root:not([data-theme="light"])`.

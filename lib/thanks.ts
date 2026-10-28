@@ -7,7 +7,7 @@ import { fillTemplate, waLink } from "./invite";
 
 // Copy Figma P12 (read-only, K13). {nama} = nama depan, {link} = link buku tamu tamu itu.
 export const THANKS_TEMPLATE =
-  "Makasih udah mampir ke rumah baru, {nama}! Isi buku tamu ± 1 menit & lihat kolase kulkasnya di sini: {link}";
+  "Makasih udah mampir ke rumah baru, {nama}! Isi buku tamu ± 1 menit & lihat kolase fotonya di sini: {link}";
 
 // Link di pesan makasih: buka buku tamu (sheet di BT12, atau kolase kalau udah isi).
 export function thanksLink(origin: string, token: string): string {

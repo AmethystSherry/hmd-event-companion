@@ -18,7 +18,7 @@ import s from "./f5.module.css";
 
 // F5 v2 · BT12 Acara selesai (Figma 5060:28710): kerangka layar acara — ilustrasi Closing + panel.
 // Badge "Acara selesai", judul, baris "{n} foto · {m} pertanyaan · {k} tamu", Tiket acara (sobekan
-// sesi + tiket "SATU LAGI · Isi buku tamu"), kartu "Kolase kulkas · {n} foto". Tanpa tombol bawah.
+// sesi + tiket "SATU LAGI · Isi buku tamu"), kartu "Kolase foto · {n} foto". Tanpa tombol bawah.
 // Buku tamu (T14/T14b/T14c) = sheet lewat `?sheet=buku-tamu` (pushState, back HP menutup).
 // Udah isi → tiket jadi sobekan ke-5 (K2), tap → kolase + toast T14d.
 // (28 Okt) Buku tamu bukan tiket lagi tapi tombol di bawah panel (jelas bisa di-tap): belum isi =
@@ -119,7 +119,7 @@ export function SelesaiScreen({
         <Link href={kolaseHref} className={s.kolaseCard}>
           <span className={s.kolaseHead}>
             <span className="t-label-emph">
-              Kolase kulkas <span className="c-label-2">· {photoCount} foto</span>
+              Kolase foto <span className="c-label-2">· {photoCount} foto</span>
             </span>
             <CaretRight size={16} className="c-label-3" />
           </span>
