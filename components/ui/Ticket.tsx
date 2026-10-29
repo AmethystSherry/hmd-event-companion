@@ -31,6 +31,7 @@ export function Ticket({
   qr,
   stamp,
   torn = state === "sobek",
+  fadeQr,
   className,
 }: {
   data: TicketData;
@@ -38,6 +39,9 @@ export function Ticket({
   qr?: ReactNode; // QR 140 di kepala; tidak dirender saat sobek (kepala balik ke ikon kunci)
   stamp?: { time: string; guestNo: number | null; total: number };
   torn?: boolean; // T05a: badge "Valid" tapi tiket sudah sobek (potongan dirender terpisah)
+  // T05a (29 Okt): QR di kepala memudar jadi ikon kunci di tempat yang sama (tinggi tetap) —
+  // tanpa ini kepala tiket "meloncat" dari QR ke ikon pas sobek.
+  fadeQr?: boolean;
   className?: string;
 }) {
   return (
@@ -46,7 +50,14 @@ export function Ticket({
       className={cx(styles.ticket, torn && styles.torn, className)}
     >
       <header className={styles.head}>
-        {torn ? (
+        {torn && fadeQr && qr ? (
+          <div className={styles.qrSwap}>
+            <div className={cx(styles.qrBox, styles.qrOut)}>{qr}</div>
+            <span className={cx(styles.keyIcon, styles.keyIn)}>
+              <Key size={20} />
+            </span>
+          </div>
+        ) : torn ? (
           <span className={styles.keyIcon}>
             <Key size={20} />
           </span>

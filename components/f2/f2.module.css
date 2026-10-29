@@ -47,47 +47,61 @@
   flex-direction: column;
   width: 100%;
   max-width: var(--content-width);
+  overflow-x: clip; /* potongan yang jatuh miring nggak boleh melebarkan halaman */
 }
 
+/* Animasi sobek (29 Okt, dihaluskan): satu gerakan utuh per potongan.
+   Kepala: sentakan kecil pas ditarik (0–14%), lalu naik sedikit & menetap (spring).
+   Potongan: ketarik (0–14%), miring lepas (14–38%, ease-out), jatuh pakai gravitasi (38–100%, ease-in)
+   sambil terus berputar; pudar baru di 30% terakhir. */
 .tearHead {
-  animation: tear-head 900ms var(--ease-spring) both;
+  animation: tear-head 1150ms both;
 }
 
-/* 150–450 ms potongan miring 4°, 450–900 ms jatuh +420 & memudar (easing gravitasi). */
 .tearStub {
-  transform-origin: 0 0;
-  animation:
-    tear-tilt 300ms 150ms ease-out both,
-    tear-fall 450ms 450ms var(--ease-gravity) forwards;
-}
-
-@keyframes tear-tilt {
-  from {
-    transform: translateY(0) rotate(0);
-  }
-  to {
-    transform: translateY(6px) rotate(4deg);
-  }
-}
-
-@keyframes tear-fall {
-  from {
-    transform: translateY(6px) rotate(4deg);
-    opacity: 1;
-  }
-  to {
-    transform: translateY(420px) rotate(14deg);
-    opacity: 0;
-  }
+  transform-origin: 8% 0;
+  animation: tear-stub 1150ms both;
 }
 
 @keyframes tear-head {
-  0%,
-  50% {
+  0% {
     transform: translateY(0);
+    animation-timing-function: ease-out;
+  }
+  14% {
+    transform: translateY(2px);
+    animation-timing-function: ease-in-out;
+  }
+  38% {
+    transform: translateY(-6px);
+    animation-timing-function: var(--ease-spring);
   }
   100% {
     transform: translateY(-4px);
+  }
+}
+
+@keyframes tear-stub {
+  0% {
+    transform: translateY(0) rotate(0);
+    opacity: 1;
+    animation-timing-function: ease-out;
+  }
+  14% {
+    transform: translateY(3px) rotate(-1.5deg);
+    animation-timing-function: cubic-bezier(0.2, 0.8, 0.3, 1);
+  }
+  38% {
+    transform: translateY(10px) rotate(6deg);
+    opacity: 1;
+    animation-timing-function: var(--ease-gravity);
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(460px) rotate(16deg);
+    opacity: 0;
   }
 }
 

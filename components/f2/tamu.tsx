@@ -38,7 +38,7 @@ type TicketProps = {
   stamp: Stamp | null;
 };
 
-const TEAR_MS = 900; // design.md "Animasi sobek"
+const TEAR_MS = 1150; // design.md "Animasi sobek" (29 Okt: dihaluskan, 900 → 1150)
 const HOLD_MS = 700; // jeda di T05a sebelum BT02
 const WELCOME_SEC = 3;
 export const BT02_ART = "/figma/bt02-welcome-at-door.webp";
@@ -113,7 +113,7 @@ export function DayTicketScreen({
           title={<span className={s.success}>Tiket valid!</span>}
         />
         <div className={s.tearWrap}>
-          <Ticket state="valid" torn data={data} className={s.tearHead} />
+          <Ticket state="valid" torn fadeQr qr={qr} data={data} className={s.tearHead} />
           <TicketStub code={code} className={s.tearStub} />
         </div>
       </Screen>

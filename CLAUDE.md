@@ -294,6 +294,9 @@ Keputusan default 22 Okt (jawaban "Keputusan & asumsi" di F2-deliverables; prd.m
 - (28 Okt) `Ticket`: QR di kepala tiket (ganti ikon kunci) selama belum sobek; potongan bawah cuma kode +
   "Tunjukkan ke panitia di pintu". Tamu yang baru masuk (< 10 mnt) selalu mulai dari sobek T05a, juga
   kalau discan sebelum hari-H (halaman pindah dari T03); dibuka ulang setelah BT02 → langsung T03b.
+  (29 Okt) Sobek T05a dihaluskan (1150 ms, `TEAR_MS`): satu keyframe per potongan (ketarik → miring lepas →
+  jatuh gravitasi, pudar di 30% akhir; kepala sentak kecil lalu naik spring). `Ticket fadeQr`: QR di kepala
+  memudar jadi ikon kunci di slot yang sama (nggak loncat). `.tearWrap` overflow-x clip.
   T01: "@potarastudio" di caption bawah = link profil IG.
   (28 Okt) + baris follow di akhir kartu T01 (`inv.follow`, accent-soft, logo IG + "Follow @potarastudio" +
   Button sm "Follow" → profil IG, tab baru). T02 toggle follow: "Syarat hadir · Buka profil IG" (link, tab baru).
@@ -665,7 +668,8 @@ Keputusan 26 Okt (prompt N3 + usulan "Temuan" N3-deliverables T1–T13):
 - (28 Okt) `globals.css`: di layar sentuh semua input/textarea/select minimal 16 px (`!important`) — Safari iPhone
   nge-zoom halaman kalau kolom < 16 px difokus (dulu: Tanya 15 px, minat T11 13 px, ucapan T02b).
 - (28 Okt) Nama "Kolase kulkas" di UI jadi **"Kolase foto"** (judul T15, kartu BT12, BP04b, judul share, metadata
-  /kolase, template WA makasih). Kiasan kulkas lain ("Tempel ke kulkas", "Kulkas polaroid") tetap.
+  /kolase, template WA makasih). (29 Okt) Sisa kiasan kulkas juga diganti: "Masukin ke kolase", "Masuk kolase!",
+  pill kamera "Kolase foto", "Kolasenya masih sepi/kosong", subjudul gambar 9:16 "Kolase foto · {tanggal}".
 - **App selalu light** (25 Okt): `app/layout.tsx` memasang `<html data-theme="light">` + `themeColor`
   satu warna, jadi setting dark HP nggak berpengaruh. Dark cuma lewat `data-theme="dark"` per elemen
   (pratinjau `/dev/ui`). CSS `prefers-color-scheme` baru wajib dijaga `:root:not([data-theme="light"])`.

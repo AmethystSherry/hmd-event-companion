@@ -246,3 +246,41 @@
 .stubTopSpacer {
   height: 14px;
 }
+
+/* T05a: QR memudar → ikon kunci muncul di tengah slot yang sama (tinggi slot = QR, nggak loncat). */
+.qrSwap {
+  position: relative;
+  display: grid;
+  place-items: center;
+  margin-bottom: 6px;
+}
+
+.qrOut {
+  animation: qr-out 360ms 380ms ease-out both;
+}
+
+.keyIn {
+  position: absolute;
+  animation: key-in 420ms 560ms var(--ease-spring) both;
+}
+
+@keyframes qr-out {
+  to {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+}
+
+@keyframes key-in {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qrOut,
+  .keyIn {
+    animation-duration: 1ms;
+  }
+}
