@@ -157,7 +157,7 @@ export function FotoMasukScreen({
 
       {visible.length === 0 ? (
         <HeroState icon={<ImageIcon size={30} />} title="Belum ada foto">
-          Foto tamu muncul di sini begitu nempel di kulkas.
+          Foto tamu muncul di sini begitu masuk kolase.
         </HeroState>
       ) : (
         <>

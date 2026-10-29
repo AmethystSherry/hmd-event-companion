@@ -190,7 +190,7 @@ export function KolaseScreen({
     try {
       const blob = await renderKolase(kolaseItems, {
         title: "potara · HMD",
-        subtitle: `Kulkas polaroid · ${shortDate}`,
+        subtitle: `Kolase foto · ${shortDate}`,
       });
       if (making.current !== kolaseKey) return;
       const file = new File([blob], KOLASE_FILE, { type: "image/jpeg" });
@@ -329,10 +329,10 @@ export function KolaseScreen({
           <HeroState
             icon={<ImageIcon size={30} />}
             tone="accent"
-            title="Kulkasnya masih kosong"
+            title="Kolasenya masih kosong"
             className={s.empty}
           >
-            Nggak ada foto yang nempel di kulkas selama acara ini.
+            Nggak ada foto yang masuk kolase selama acara ini.
           </HeroState>
         ) : (
           <>

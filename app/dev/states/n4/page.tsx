@@ -64,7 +64,7 @@ async function DevTools() {
           otomatis pakai kamera bawaan HP. Matikan Wi-Fi di HP untuk lihat BT07b (antre).
         </p>
         <p className="t-body-emph">
-          {photos.length} foto di kulkas · {inside.length} tamu udah masuk
+          {photos.length} foto di kolase · {inside.length} tamu udah masuk
         </p>
         <div className={styles.links}>
           <form action={checkInAll}>

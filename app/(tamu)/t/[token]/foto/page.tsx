@@ -8,7 +8,7 @@ import { firstName } from "@/lib/format";
 import { polaroidDate } from "@/lib/photo";
 import { guestFromToken } from "@/lib/server/access";
 
-export const metadata = { title: "Kulkas polaroid · House Moving Day" };
+export const metadata = { title: "Kolase foto · House Moving Day" };
 
 // N4 · Kamera kolase (BT06/BT06b). Hasil jepret = sheet di layar acara (?sheet=foto&id=…).
 // Hanya tamu yang udah check-in; acara ditutup → BT12 (kolase lengkap T15). Kamera & kompres jalan

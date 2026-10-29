@@ -178,7 +178,7 @@ export function KolaseApp({
       <header className={s.toolbar}>
         <IconButton variant="glass" href={backHref} label="Tutup kamera" icon={<X />} />
         <Pill glass icon={<span className={s.dot} />}>
-          Kulkas polaroid
+          Kolase foto
         </Pill>
         {status === "live" && cam.torch.supported ? (
           <IconButton
@@ -224,10 +224,10 @@ export function KolaseApp({
         {!denied && (
           <p className={cx("t-label", s.hint)}>
             {review
-              ? "Suka? Tempel ke kulkas, atau ulangi dulu."
+              ? "Suka? Masukin ke kolase, atau ulangi dulu."
               : inApp
                 ? "Buka di Safari/Chrome biar kamera langsung jalan di sini."
-                : "Jepret sekali, langsung nempel di kulkas bareng."}
+                : "Jepret sekali, langsung masuk kolase bareng."}
           </p>
         )}
       </div>
@@ -257,7 +257,7 @@ export function KolaseApp({
             aria-disabled={busy || leaving}
             aria-busy={busy || leaving}
           >
-            {busy || leaving ? "Lagi nempel…" : "Tempel ke kulkas"}
+            {busy || leaving ? "Lagi masukin…" : "Masukin ke kolase"}
           </Button>
           <div className={s.reviewRow}>
             <Button

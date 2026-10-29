@@ -69,7 +69,7 @@ export const SCREENS: ScreenDef[] = [
   },
   {
     code: "BT07",
-    name: "Nempel di kulkas (sheet)",
+    name: "Masuk kolase (sheet)",
     kind: "Utama",
     render: () => sheet(FULL, { status: "sent" }),
   },
@@ -94,7 +94,7 @@ export const SCREENS: ScreenDef[] = [
   },
   {
     code: "BT07e",
-    name: "Foto pertama di kulkas (sheet)",
+    name: "Foto pertama di kolase (sheet)",
     kind: "Kasus lain",
     render: () => sheet(FIRST, { status: "sent" }),
   },

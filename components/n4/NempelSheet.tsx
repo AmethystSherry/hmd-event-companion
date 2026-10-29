@@ -111,13 +111,13 @@ export function NempelSheet({
         </div>
         <div className={s.text}>
           <p className="t-card-title">
-            {!sent ? "Fotomu lagi antre" : first ? "Kamu yang pertama!" : "Nempel di kulkas!"}
+            {!sent ? "Fotomu lagi antre" : first ? "Kamu yang pertama!" : "Masuk kolase!"}
           </p>
           <p className="t-body c-label-2">
             {!sent
               ? "Sinyalnya lemah. Fotomu aman di HP dan dikirim otomatis begitu sinyal balik."
               : first
-                ? "Kulkasnya masih sepi. Ajak yang lain ikut foto, ya."
+                ? "Kolasenya masih sepi. Ajak yang lain ikut foto, ya."
                 : `Fotomu udah nempel bareng ${data.others} foto tamu lain.`}
           </p>
         </div>
