@@ -265,6 +265,32 @@ export const SCREENS: ScreenDef[] = [
     render: () => acara(talkshow, "14:10:00", { sheet: "pembicara" }),
   },
   {
+    code: "BT-rumah",
+    name: "Info rumah (sheet, Wi-Fi + alamat)",
+    kind: "Kasus",
+    lane: "Tamu",
+    render: () =>
+      acara(
+        (st) => {
+          jeda1(st);
+          st.setHouseInfo(HMD_ID, {
+            wifiName: "Potara Guest",
+            wifiPassword: "rumahbaru2026",
+            address: "Jl. Contoh No. 8, Bandung",
+          });
+        },
+        "13:48:00",
+        { sheet: "rumah" },
+      ),
+  },
+  {
+    code: "BT-rumah-kosong",
+    name: "Info rumah belum diisi panitia",
+    kind: "Kasus",
+    lane: "Tamu",
+    render: () => acara(jeda1, "13:48:00", { sheet: "rumah" }),
+  },
+  {
     code: "BT04",
     name: "Rundown (sheet)",
     kind: "Kasus",

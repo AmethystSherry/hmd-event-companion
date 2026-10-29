@@ -18,8 +18,8 @@ describe("CSV buku tamu", () => {
     const csv = feedbackCsv([row]);
     expect(csv.startsWith("﻿")).toBe(true);
     expect(csv.slice(1).split("\r\n")).toEqual([
-      "nama,ig,rating,paling_seru,perbaikan,mau_diundang,waktu_isi",
-      "Rara Wening,rara.w,5,Talkshow,,ya,2026-11-08 17.10",
+      "nama,ig,rating,paling_seru,perbaikan,pesan_rumah,mau_diundang,waktu_isi",
+      "Rara Wening,rara.w,5,Talkshow,,,ya,2026-11-08 17.10",
       "",
     ]);
   });

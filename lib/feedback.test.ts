@@ -18,6 +18,7 @@ describe("body POST buku tamu", () => {
       highlightSessionId: null,
       improve: null,
       inviteAgain: null,
+      wish: null,
     });
   });
 
@@ -27,6 +28,7 @@ describe("body POST buku tamu", () => {
     expect(parseFeedbackBody({ clientId: ID, rating: "4" })).toBeNull();
     expect(parseFeedbackBody({ clientId: ID, rating: 4, inviteAgain: "ya" })).toBeNull();
     expect(parseFeedbackBody({ clientId: ID, rating: 4, improve: 3 })).toBeNull();
+    expect(parseFeedbackBody({ clientId: ID, rating: 4, wish: 3 })).toBeNull();
   });
 });
 

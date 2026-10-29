@@ -6,7 +6,7 @@ import { Screen, Skeleton } from "@/components/ui";
 import { eventStarted, getStore } from "@/lib/data";
 import { requireCrew } from "@/lib/server/access";
 import { isEventDay, serverNow } from "@/lib/server/clock";
-import { deleteEvent, startEvent, updateEvent } from "../../actions";
+import { deleteEvent, saveHouseInfo, startEvent, updateEvent } from "../../actions";
 
 // PE03 Home event (kosong) · PE03b udah terisi · PE03e ubah detail · PE03h hapus event.
 // Hari-H (F2): kalau event udah dimulai ("Mulai event") & tamu + rundown siap → langsung BP02.
@@ -53,6 +53,7 @@ async function Home({ params }: Pick<PageProps<"/panitia/event/[id]">, "params">
         update={updateEvent}
         remove={deleteEvent}
         start={startEvent}
+        saveHouse={saveHouseInfo}
       />
       <LiveRefresh />
     </>

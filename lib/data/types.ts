@@ -21,6 +21,8 @@ export type Event = {
   // (28 Okt) "Mulai event" di PE03: setelah ini detail event (nama & tanggal) dikunci & tombol jadi
   // "Buka Kontrol acara". Kosong + mode "pre" = belum dimulai (eventStarted).
   startedAt?: string | null;
+  // (29 Okt) Info rumah buat tamu (sheet di layar acara): Wi-Fi & alamat. Bisa diubah kapan aja.
+  houseInfo?: HouseInfo | null;
   activeSessionId?: string | null;
   nextSessionId?: string | null;
   stateUpdatedAt?: string | null;
@@ -179,6 +181,12 @@ export type GuestStats = {
 
 // F5 · buku tamu (T14). Satu isian per tamu, nggak bisa diubah. id = clientId (UUID dari HP) →
 // kirim ulang (sinyal putus) = isian yang sama.
+export type HouseInfo = {
+  wifiName: string | null;
+  wifiPassword: string | null;
+  address: string | null;
+};
+
 export type Feedback = {
   id: string;
   eventId: string;
@@ -187,12 +195,13 @@ export type Feedback = {
   highlightSessionId: string | null; // "Bagian paling seru"
   improve: string | null; // "Satu hal yang bisa kami perbaiki", ≤ 280 huruf
   inviteAgain: boolean | null; // "Mau diundang lagi?" — belum dipilih = null
+  wish?: string | null; // (29 Okt) "Pesan buat rumah baru", ≤ 140 huruf, opsional
   createdAt: string;
 };
 
 export type FeedbackInput = Pick<
   Feedback,
-  "id" | "rating" | "highlightSessionId" | "improve" | "inviteAgain"
+  "id" | "rating" | "highlightSessionId" | "improve" | "inviteAgain" | "wish"
 >;
 
 // Rekap P11. Pembagi = tamu yang udah check-in (yang bisa isi buku tamu). Tanpa nama: jawaban

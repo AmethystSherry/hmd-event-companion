@@ -2,12 +2,13 @@ import { randomBytes, randomUUID } from "node:crypto";
 import type { CsvRow } from "../csv";
 import { eventStarted } from "./eventState";
 import { cardOf, sameCard } from "../card";
-import { MAX_IMPROVE, summaryDue } from "../feedback";
+import { MAX_IMPROVE, MAX_WISH, summaryDue } from "../feedback";
 import { toMinutes } from "../format";
 import { MAX_PHOTOS_PER_GUEST } from "../photo";
 import { MAX_QUESTION } from "../questions";
 import { backfillSessionInfo, sessionShort } from "./sessionInfo";
 import type {
+  HouseInfo,
   CheckInMethod,
   CheckInResult,
   DoorStats,
@@ -515,6 +516,15 @@ export function createStore(
     canClose(eventId: string): boolean {
       return closable(eventId);
     },
+    // (29 Okt) Info rumah (Wi-Fi & alamat) — boleh diubah kapan aja. Isi sama → false, rev tetap.
+    setHouseInfo(eventId: string, info: HouseInfo): boolean {
+      const e = event(eventId);
+      const next = info.wifiName || info.wifiPassword || info.address ? info : null;
+      if (JSON.stringify(e.houseInfo ?? null) === JSON.stringify(next)) return false;
+      e.houseInfo = next;
+      commit();
+      return true;
+    },
     // PE03 "Mulai event": sekali jalan (dobel tap / dua HP → false, rev tetap).
     startEvent(eventId: string, at: string): boolean {
       const e = event(eventId);
@@ -906,11 +916,13 @@ export function createStore(
         throw new StoreError("sudah-isi", "Kamu sudah isi buku tamu");
       }
       const improve = input.improve?.trim() || null;
+      const wish = input.wish?.trim() || null;
       if (
         !Number.isInteger(input.rating) ||
         input.rating < 1 ||
         input.rating > 5 ||
         (improve !== null && improve.length > MAX_IMPROVE) ||
+        (wish !== null && wish.length > MAX_WISH) ||
         (input.highlightSessionId !== null &&
           !sessionsOf(e.id).some((s) => s.id === input.highlightSessionId))
       ) {
@@ -924,6 +936,7 @@ export function createStore(
         highlightSessionId: input.highlightSessionId,
         improve,
         inviteAgain: input.inviteAgain,
+        wish,
         createdAt: at,
       };
       (data.feedback ??= []).push(feedback);

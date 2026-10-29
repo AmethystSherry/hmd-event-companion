@@ -16,6 +16,7 @@ import { LOCATION } from "@/lib/data/seed";
 import { rundownView } from "@/lib/rundown";
 import { DEFAULT_DM_TEMPLATE } from "@/lib/invite";
 import { cleanSession, type SessionForm } from "@/lib/sessionForm";
+import { cleanHouseInfo, type HouseInfoInput } from "@/lib/houseInfo";
 import {
   clientKey,
   endCrewSession,
@@ -87,6 +88,16 @@ export async function updateEvent(
     if (err instanceof StoreError) return { ok: false, error: err.message };
     throw err;
   }
+  refresh();
+  return { ok: true };
+}
+
+// (29 Okt) PE03 Info rumah (Wi-Fi & alamat buat tamu).
+export async function saveHouseInfo(eventId: string, input: HouseInfoInput): Promise<FormResult> {
+  await requireCrew();
+  const r = cleanHouseInfo(input);
+  if (!r.ok) return r;
+  await mutateStore((store) => store.setHouseInfo(eventId, r.value));
   refresh();
   return { ok: true };
 }

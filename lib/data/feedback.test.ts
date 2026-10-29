@@ -123,6 +123,9 @@ describe("buku tamu (T14)", () => {
     expect(() => store.addFeedback(g, input(1, { improve: "a".repeat(281) }), t("17:10"))).toThrow(
       StoreError,
     );
+    expect(() => store.addFeedback(g, input(1, { wish: "a".repeat(141) }), t("17:10"))).toThrow(
+      StoreError,
+    );
     expect(store.listFeedback(HMD_ID)).toHaveLength(0);
   });
 
@@ -328,5 +331,15 @@ describe("makasih via WA (P12, F5 v2)", () => {
     expect(() => store.markThanksSent(inside[0].id, "2026-12-08T01:00:00+07:00")).toThrow(
       expect.objectContaining({ code: "data-dihapus" }),
     );
+  });
+});
+
+describe("pesan buat rumah baru (29 Okt)", () => {
+  it("opsional, di-trim, kosong → null", () => {
+    const { store, inside } = closedWith(2);
+    store.addFeedback(inside[0].id, input(1, { wish: "  Rumahnya betah!  " }), t("17:10"));
+    store.addFeedback(inside[1].id, input(2, { wish: "   " }), t("17:11"));
+    expect(store.feedbackFor(inside[0].id)?.wish).toBe("Rumahnya betah!");
+    expect(store.feedbackFor(inside[1].id)?.wish).toBeNull();
   });
 });

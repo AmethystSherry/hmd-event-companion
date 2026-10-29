@@ -5,7 +5,7 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { ArrowClockwise, PaperPlaneTilt, WifiSlash } from "@/components/icons";
 import { Button, Chip, Field, Sheet, StarRating } from "@/components/ui";
 import { cx } from "@/lib/cx";
-import { MAX_IMPROVE, type FeedbackPostResponse } from "@/lib/feedback";
+import { MAX_IMPROVE, MAX_WISH, type FeedbackPostResponse } from "@/lib/feedback";
 import { newPhotoId } from "@/lib/photo";
 import s from "./f5.module.css";
 
@@ -24,6 +24,7 @@ export type BukuTamuDraft = {
   rating: number;
   highlight: string | null;
   improve: string;
+  wish: string; // (29 Okt) "Pesan buat rumah baru"
   invite: "mau" | "nanti" | null; // belum dipilih = null (keputusan F5)
 };
 
@@ -53,6 +54,7 @@ const EMPTY: BukuTamuDraft = {
   rating: 0,
   highlight: null,
   improve: "",
+  wish: "",
   invite: null,
 };
 
@@ -113,6 +115,7 @@ export function BukuTamuSheet({
           rating: draft.rating,
           highlightSessionId: draft.highlight,
           improve: draft.improve.trim() || null,
+          wish: (draft.wish ?? "").trim() || null,
           inviteAgain: draft.invite === null ? null : draft.invite === "mau",
         }),
         signal: ctrl.signal,
@@ -233,6 +236,15 @@ export function BukuTamuSheet({
             })}
           </div>
         </section>
+        <Field
+          multiline
+          label="Pesan buat rumah baru"
+          placeholder="Satu harapan buat rumah baru Potara"
+          rows={2}
+          maxLength={MAX_WISH}
+          value={draft.wish ?? ""}
+          onChange={(e) => update({ wish: e.target.value })}
+        />
         <Button
           icon={failed ? <ArrowClockwise /> : <PaperPlaneTilt />}
           aria-disabled={!draft.rating || status === "sending" || undefined}

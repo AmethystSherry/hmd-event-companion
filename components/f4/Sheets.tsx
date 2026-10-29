@@ -1,10 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { MagnifyingGlass, PencilSimple } from "@/components/icons";
+import { Copy, MagnifyingGlass, MapPin, PencilSimple, WifiHigh } from "@/components/icons";
 import { Badge, Button, GuestCard, HeroState, ListRow, SearchField, Sheet } from "@/components/ui";
 import { filterGuests, rundownSubtitle, type AcaraView } from "@/lib/acara";
 import { cx } from "@/lib/cx";
+import { copyText } from "@/lib/clipboard";
+import type { HouseInfo } from "@/lib/data/types";
+import { hasHouseInfo, mapsUrl } from "@/lib/houseInfo";
 import { initials } from "@/lib/format";
 import { igProfileUrl } from "@/lib/invite";
 import { actualMin, elapsedMs, roomLabel, type SessionView } from "@/lib/rundown";
@@ -16,7 +19,7 @@ import styles from "./f4.module.css";
 // "foto" (hasil jepret BT07/BT07b/BT07e) & "galeri" (BT07d) = sheet N4 di components/n4;
 // "tanya" (BT08/BT09/BT08b) = sheet N1 di components/n1; "kartu" (T11/T11e) = sheet N3 di components/n3.
 export type SheetKind =
-  "detail" | "pembicara" | "rundown" | "tamu" | "kartu" | "foto" | "galeri" | "tanya";
+  "detail" | "pembicara" | "rundown" | "tamu" | "kartu" | "foto" | "galeri" | "tanya" | "rumah";
 
 const STATE_BADGE = {
   berlangsung: { tone: "live", label: "Sedang berjalan" },
@@ -222,6 +225,81 @@ export function TamuSheet({
         </HeroState>
       ) : (
         <p className="t-label c-label-2">Belum ada tamu lain.</p>
+      )}
+    </Sheet>
+  );
+}
+
+// (29 Okt) Info rumah: Wi-Fi (salin password) & alamat kantor (buka di Maps). Data dari panitia (PE03).
+export function RumahSheet({
+  house,
+  onClose,
+  onCopied,
+}: {
+  house: HouseInfo | null;
+  onClose: () => void;
+  onCopied: (ok: boolean) => void;
+}) {
+  const copy = async () => {
+    if (house?.wifiPassword) onCopied(await copyText(house.wifiPassword));
+  };
+  return (
+    <Sheet open onClose={onClose} title="Info rumah" className={styles.sheet}>
+      <div className={styles.sheetHead}>
+        <p aria-hidden className="t-card-title">
+          Info rumah
+        </p>
+        <p className="t-label c-label-2">Biar nggak perlu nanya panitia.</p>
+      </div>
+      {hasHouseInfo(house) ? (
+        <div className={styles.house}>
+          {(house.wifiName || house.wifiPassword) && (
+            <div className={styles.houseRow}>
+              <span aria-hidden className={styles.houseIcon}>
+                <WifiHigh size={20} />
+              </span>
+              <div className={styles.houseText}>
+                <p className="t-caption c-label-2">Wi-Fi</p>
+                <p className="t-body-emph">{house.wifiName ?? "—"}</p>
+                {house.wifiPassword && (
+                  <p className="t-label c-label-2">
+                    Password{" "}
+                    <span className={cx("t-code", styles.housePass)}>{house.wifiPassword}</span>
+                  </p>
+                )}
+              </div>
+              {house.wifiPassword && (
+                <Button size="sm" variant="secondary" icon={<Copy />} onClick={copy}>
+                  Salin
+                </Button>
+              )}
+            </div>
+          )}
+          {house.address && (
+            <div className={styles.houseRow}>
+              <span aria-hidden className={styles.houseIcon}>
+                <MapPin size={20} />
+              </span>
+              <div className={styles.houseText}>
+                <p className="t-caption c-label-2">Alamat</p>
+                <p className="t-body">{house.address}</p>
+              </div>
+              <Button
+                size="sm"
+                variant="secondary"
+                href={mapsUrl(house.address)}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Maps
+              </Button>
+            </div>
+          )}
+        </div>
+      ) : (
+        <p className="t-body c-label-2">
+          Panitia belum isi info rumah. Tanya panitia di pintu, ya.
+        </p>
       )}
     </Sheet>
   );

@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import {
   CalendarBlank,
   CaretLeft,
+  House,
   Info,
   ListBullets,
   Plus,
@@ -27,10 +28,11 @@ import { cx } from "@/lib/cx";
 import type { Event, GuestStats, Session } from "@/lib/data/types";
 import { dateLong, eventPhase, fromMinutes, timeWib, toMinutes } from "@/lib/format";
 import { eventStarted } from "@/lib/data/eventState";
+import { hasHouseInfo, HOUSE_LIMITS, type HouseInfoInput } from "@/lib/houseInfo";
 import f1 from "./f1.module.css";
 import styles from "./panitia.module.css";
 
-type SheetState = "edit" | "delete" | "start" | null;
+type SheetState = "edit" | "delete" | "start" | "house" | null;
 
 // PE03 Home event (kosong) · PE03b udah terisi · PE03e sheet Ubah detail event ·
 // PE03h sheet konfirmasi Hapus event. "Buka Kontrol acara" baru aktif kalau detail, tamu, dan
@@ -45,6 +47,7 @@ export function EventHome({
   update,
   remove,
   start: startEventAction,
+  saveHouse,
   initialSheet = null,
 }: {
   event: Event;
@@ -54,6 +57,7 @@ export function EventHome({
   update?: (eventId: string, input: { name: string; date: string }) => Promise<FormResult>;
   remove?: (eventId: string) => Promise<void>;
   start?: (eventId: string) => Promise<void>;
+  saveHouse?: (eventId: string, input: HouseInfoInput) => Promise<FormResult>;
   initialSheet?: SheetState;
 }) {
   const [sheet, setSheet] = useState<SheetState>(initialSheet);
@@ -72,6 +76,30 @@ export function EventHome({
     : "";
   const phase = eventPhase(event.date, new Date(now));
   const started = eventStarted(event);
+  // (29 Okt) Info rumah: Wi-Fi & alamat buat tamu (sheet "Info rumah" di layar acara).
+  const house = event.houseInfo;
+  const [houseDraft, setHouseDraft] = useState<HouseInfoInput>({
+    wifiName: "",
+    wifiPassword: "",
+    address: "",
+  });
+  const openHouse = () => {
+    setHouseDraft({
+      wifiName: house?.wifiName ?? "",
+      wifiPassword: house?.wifiPassword ?? "",
+      address: house?.address ?? "",
+    });
+    setError(null);
+    setSheet("house");
+  };
+  const saveHouseNow = () => {
+    if (!saveHouse) return;
+    start(async () => {
+      const res = await saveHouse(event.id, houseDraft);
+      if (res.ok) setSheet(null);
+      else setError(res);
+    });
+  };
   const startNow = () => {
     if (!startEventAction) return;
     start(() => startEventAction(event.id));
@@ -239,6 +267,73 @@ export function EventHome({
           <p className="t-label c-label-2">Tambah bagian acara, jam, tipe sesi, dan PIC.</p>
         )}
       </Card>
+
+      <Card>
+        <div className={styles.homeHead}>
+          <span className={cx(f1.iconBox, hasHouseInfo(house) && f1.iconBoxInk)}>
+            <House size={20} />
+          </span>
+          <div className={styles.grow}>
+            <p className="t-body-emph">Info rumah</p>
+            {hasHouseInfo(house) ? (
+              <p className={`t-label ${f1.green}`}>
+                {[house.wifiName && `Wi-Fi ${house.wifiName}`, house.address && "alamat"]
+                  .filter(Boolean)
+                  .join(" · ") || "Udah diisi"}
+              </p>
+            ) : (
+              <p className="t-label c-label-2">Wi-Fi & alamat buat tamu (opsional)</p>
+            )}
+          </div>
+          <Button size="sm" variant="secondary" onClick={openHouse}>
+            {hasHouseInfo(house) ? "Edit" : "Isi"}
+          </Button>
+        </div>
+      </Card>
+
+      <Sheet open={sheet === "house"} onClose={() => setSheet(null)} title="Info rumah">
+        <div className={f1.sheetBody}>
+          <div className={f1.sheetHead}>
+            <p className="t-card-title">Info rumah</p>
+            <p className="t-label c-label-2">
+              Muncul di tombol Info rumah di HP tamu yang udah masuk. Bisa diubah kapan aja.
+            </p>
+          </div>
+          <Field
+            label="Nama Wi-Fi"
+            value={houseDraft.wifiName}
+            placeholder="Mis. Potara Guest"
+            maxLength={HOUSE_LIMITS.wifiName}
+            onChange={(e) => setHouseDraft((d) => ({ ...d, wifiName: e.target.value }))}
+            error={error?.field === "wifiName" ? error.error : undefined}
+          />
+          <Field
+            label="Password Wi-Fi"
+            value={houseDraft.wifiPassword}
+            maxLength={HOUSE_LIMITS.wifiPassword}
+            autoCapitalize="none"
+            autoCorrect="off"
+            onChange={(e) => setHouseDraft((d) => ({ ...d, wifiPassword: e.target.value }))}
+            error={error?.field === "wifiPassword" ? error.error : undefined}
+          />
+          <Field
+            label="Alamat kantor"
+            value={houseDraft.address}
+            placeholder="Jalan, nomor, kota"
+            maxLength={HOUSE_LIMITS.address}
+            onChange={(e) => setHouseDraft((d) => ({ ...d, address: e.target.value }))}
+            error={error?.field === "address" ? error.error : undefined}
+          />
+          <div className={f1.sheetActions}>
+            <Button onClick={saveHouseNow} aria-disabled={pending}>
+              {pending ? "Menyimpan…" : "Simpan info rumah"}
+            </Button>
+            <Button variant="secondary" onClick={() => setSheet(null)}>
+              Batal
+            </Button>
+          </div>
+        </div>
+      </Sheet>
 
       <Dialog
         open={sheet === "start"}

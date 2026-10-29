@@ -22,6 +22,7 @@ export async function GET(_req: Request, ctx: RouteContext<"/api/panitia/event/[
       rating: f.rating,
       highlight: f.highlightSessionId ? (titles.get(f.highlightSessionId) ?? null) : null,
       improve: f.improve,
+      wish: f.wish ?? null,
       inviteAgain: f.inviteAgain,
       at: `${wibDate(new Date(f.createdAt))} ${timeWib(f.createdAt)}`,
     };

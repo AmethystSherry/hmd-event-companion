@@ -252,6 +252,7 @@ export type FeedbackCsvRow = {
   rating: number;
   highlight: string | null; // judul sesi
   improve: string | null;
+  wish?: string | null; // "Pesan buat rumah baru"
   inviteAgain: boolean | null;
   at: string; // "2026-11-08 17.10" (WIB)
 };
@@ -262,6 +263,7 @@ export const FEEDBACK_CSV_HEADER = [
   "rating",
   "paling_seru",
   "perbaikan",
+  "pesan_rumah",
   "mau_diundang",
   "waktu_isi",
 ] as const;
@@ -285,6 +287,7 @@ export function feedbackCsv(rows: FeedbackCsvRow[]): string {
         r.rating,
         r.highlight,
         r.improve,
+        r.wish ?? null,
         r.inviteAgain === null ? "" : r.inviteAgain ? "ya" : "nggak",
         r.at,
       ]

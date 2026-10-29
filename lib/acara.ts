@@ -1,4 +1,4 @@
-import type { Event, Guest, Session, Ticket } from "./data/types";
+import type { Event, Guest, Session, Ticket, HouseInfo } from "./data/types";
 import { cardOf } from "./card";
 import { eventStart } from "./format";
 import { rundownView, type SessionView } from "./rundown";
@@ -47,6 +47,7 @@ export type AcaraView = {
   guests: AcaraGuest[]; // tamu lain di BT05, urut: terbaru datang → belum datang
   total: number; // "20 tamu · 18 udah di sini" (termasuk kamu)
   hereCount: number;
+  house: HouseInfo | null; // (29 Okt) Info rumah: Wi-Fi & alamat (null = panitia belum isi)
 };
 
 type Input = {
@@ -124,6 +125,7 @@ export function acaraView({ event, sessions, guests, tickets, me, now, rev }: In
     guests: others,
     total: others.length + 1,
     hereCount: others.filter((g) => g.here).length + (self.here ? 1 : 0),
+    house: event.houseInfo ?? null,
   };
 }
 

@@ -8,6 +8,7 @@ import {
   CaretRight,
   ChatCircle,
   Check,
+  House,
   ListBullets,
   Users,
   WifiSlash,
@@ -38,7 +39,14 @@ import type { GuestCard } from "@/lib/data/types";
 import type { QueuedPhoto } from "@/lib/offline/photoDb";
 import { guestPhotoUrl, type GuestPhotos } from "@/lib/photo";
 import type { SessionView } from "@/lib/rundown";
-import { DetailSheet, RundownSheet, SpeakerSheet, TamuSheet, type SheetKind } from "./Sheets";
+import {
+  DetailSheet,
+  RumahSheet,
+  RundownSheet,
+  SpeakerSheet,
+  TamuSheet,
+  type SheetKind,
+} from "./Sheets";
 import styles from "./f4.module.css";
 
 // F4 · layar acara tamu (/t/[token]/acara): satu layar, dua mode dari state acara (prd §6).
@@ -206,6 +214,12 @@ export function AcaraScreen({
   // Kartu yang baru disimpan dipakai selama data server masih rev lama.
   const [savedCard, setSavedCard] = useState<{ card: GuestCard; rev: number } | null>(null);
   const [cardToast, setCardToast] = useState(!!preview?.kartu?.saved);
+  const [copyToast, setCopyToast] = useState<"ok" | "gagal" | null>(null);
+  useEffect(() => {
+    if (!copyToast) return;
+    const t = setTimeout(() => setCopyToast(null), 2500);
+    return () => clearTimeout(t);
+  }, [copyToast]);
   useEffect(() => {
     if (!cardToast || preview) return;
     const t = setTimeout(() => setCardToast(false), 3000);
@@ -423,6 +437,12 @@ export function AcaraScreen({
             icon: <ListBullets size={22} />,
             onClick: () => toggle("rundown"),
           },
+          {
+            id: "rumah",
+            label: "Info rumah",
+            icon: <House size={22} />,
+            onClick: () => toggle("rumah"),
+          },
         ]}
       />
 
@@ -446,6 +466,20 @@ export function AcaraScreen({
       )}
       {sheet?.kind === "pembicara" && (active ?? next)?.speaker && (
         <SpeakerSheet session={(active?.speaker ? active : next)!} onClose={close} />
+      )}
+      {sheet?.kind === "rumah" && (
+        <RumahSheet
+          house={view.house ?? null}
+          onClose={close}
+          onCopied={(ok) => setCopyToast(ok ? "ok" : "gagal")}
+        />
+      )}
+      {copyToast && (
+        <TopToast
+          tone="dark"
+          icon={<Check size={18} />}
+          title={copyToast === "ok" ? "Password Wi-Fi disalin" : "Gagal nyalin, ketik manual ya"}
+        />
       )}
       {sheet?.kind === "rundown" && (
         <RundownSheet

@@ -21,6 +21,7 @@ const SHEETS: SheetKind[] = [
   "galeri",
   "tanya",
   "kartu",
+  "rumah",
 ];
 // ?sheet=&sesi=&id= (reload / back-forward / dari kamera N4) → sheet yang sama kebuka lagi.
 function sheetFrom(sheet: unknown, sesi: unknown, id: unknown) {

@@ -197,6 +197,11 @@ next.config.ts            header X-Robots-Tag noindex, allowedDevOrigins (HP di 
   sekarang?" → server action `startEvent` (store `startEvent` sekali jalan) → Kontrol acara; udah dimulai =
   "Buka Kontrol acara". Setelah dimulai Edit detail event `aria-disabled` + `updateEvent` ditolak
   (`event-dimulai`). Hari-H redirect PE03 → BP02 cuma kalau udah dimulai. Dev: PE03m, PE03s.
+- **Info rumah** (29 Okt): `Event.houseInfo {wifiName, wifiPassword, address}` (lib/houseInfo: `cleanHouseInfo`
+  batas 40/63/160, `hasHouseInfo`, `mapsUrl`). PE03 kartu "Info rumah" + Sheet (bisa diubah kapan aja, juga
+  setelah event dimulai) → server action `saveHouseInfo` → store `setHouseInfo` (isi sama → false). Tamu:
+  `acaraView.house`, tab navbar "Info rumah" (House) → `RumahSheet` (`?sheet=rumah`): Wi-Fi + "Salin"
+  password (TopToast gelap) & alamat + "Maps". Kosong → "Panitia belum isi info rumah…". Dev f4 BT-rumah(-kosong).
 - **PE01/PE01a/PE02** (v5.1): toolbar LogoMark 32 + Badge crew "Panitia" | "Keluar"; baris judul
   "Daftar event" (t-title) + `eventCountLabel` "{n} event" rata baseline. Metadata "Daftar event · Panitia".
 - **T02**: Pekerjaan (≤ 40) & Minat (≤ 60) opsional → `Guest.job/interests` (cuma disimpan saat
@@ -293,7 +298,7 @@ Keputusan default 22 Okt (jawaban "Keputusan & asumsi" di F2-deliverables; prd.m
   (28 Okt) + baris follow di akhir kartu T01 (`inv.follow`, accent-soft, logo IG + "Follow @potarastudio" +
   Button sm "Follow" → profil IG, tab baru). T02 toggle follow: "Syarat hadir · Buka profil IG" (link, tab baru).
 - Kamera butuh HTTPS di HP (`npx next dev --experimental-https`); gagal/ditolak → P07b.
-- Store dev ada di `globalThis.__hmdStoreStart`: naikkan kuncinya tiap method store bertambah (server
+- Store dev ada di `globalThis.__hmdStoreHouse`: naikkan kuncinya tiap method store bertambah (server
   dev yang sedang jalan nggak membuat ulang instance lama saat HMR). Server dev yang sudah jalan
   bisa tetap memakai modul server lama (mis. `store.getPhoto is not a function`) → restart `npm run dev`.
 
@@ -446,7 +451,7 @@ Keputusan 24 Okt (rekomendasi atas "Keputusan & asumsi" + "Temuan" di F5-deliver
     `markThanksSent`. `lib/thanks.ts`: `THANKS_TEMPLATE` (copy Figma, read-only, `{nama}` = nama depan),
     `thanksLink` = `/t/{token}/buku-tamu?dari=wa`, `thanksView` (tamu udah check-in urut nama
     `localeCompare id`, `waHref` null kalau tanpa WA, `sent/total`). Hapus H+30 mengosongkan
-    `thanksSentAt`. Store dev `__hmdStoreStart`.
+    `thanksSentAt`. Store dev `__hmdStoreHouse`.
 - **v2 · layar tamu** (menggantikan no. 8 "T14b/T14c ada back", no. 13 soal `/buku-tamu`, no. 14 layout):
   - **BT12** (`components/f5/Selesai`, client): `IllustratedScreen` `/figma/f3-closing.webp` + panel —
     Badge neutral "Acara selesai", `t-title` "Makasih udah mampir!", "{n} foto · {m} pertanyaan · {k}
@@ -464,6 +469,9 @@ Keputusan 24 Okt (rekomendasi atas "Keputusan & asumsi" + "Temuan" di F5-deliver
   - (28 Okt) T14 "Mau diundang lagi?" = 2 kartu kecil radiogroup (Pota senang `/figma/pota-happy.webp` "Mau dong",
     sedih `pota-sad.webp` "Nanti dulu", 144 px), ganti Segmented; tap kartu terpilih = batal (opsional).
     Udah pilih satu → ilustrasi kartu lain opacity 40%.
+  - (29 Okt) T14 field terakhir "Pesan buat rumah baru" (placeholder "Satu harapan buat rumah baru Potara",
+    opsional, ≤ 140 `MAX_WISH`) → `Feedback.wish` (body POST `wish`), kolom CSV `pesan_rumah`. Nggak ikut
+    ringkasan Claude.
   - **T14/T14b/T14c** = `BukuTamuSheet` (`Sheet strong`) di BT12, `?sheet=buku-tamu` (pushState, back HP/
     backdrop/Esc menutup, draft tetap). Header `t-card-title` + "± 1 menit. Cuma bintang yang wajib.",
     bagian tanpa Card, T14b = baris merah WifiSlash (bukan Banner), tombol di dalam sheet. Tiket extra →

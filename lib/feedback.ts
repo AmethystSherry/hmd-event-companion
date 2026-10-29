@@ -4,6 +4,7 @@ import { isPhotoId } from "./photo";
 // F5 · buku tamu & rekap: aturan tanpa secret (dipakai server, tes, dan nanti HP tamu).
 
 export const MAX_IMPROVE = 280; // huruf, "Satu hal yang bisa kami perbaiki"
+export const MAX_WISH = 140; // huruf, "Pesan buat rumah baru" (29 Okt)
 export const SUMMARY_MIN = 3; // ringkasan Claude baru dibuat kalau sudah ada ≥ 3 jawaban
 export const SUMMARY_REFRESH = 3; // dibuat ulang otomatis tiap ≥ 3 jawaban baru
 export const SUMMARY_PENDING_MS = 30_000; // flag "sedang dibuat" kedaluwarsa (Claude timeout 15 dtk)
@@ -22,18 +23,20 @@ export type FeedbackPostResponse =
 export function parseFeedbackBody(body: unknown): FeedbackInput | null {
   if (!body || typeof body !== "object") return null;
   const b = body as Record<string, unknown>;
-  const { clientId, rating, highlightSessionId, improve, inviteAgain } = b;
+  const { clientId, rating, highlightSessionId, improve, inviteAgain, wish } = b;
   if (typeof clientId !== "string" || !isPhotoId(clientId)) return null;
   if (typeof rating !== "number") return null;
   if (highlightSessionId != null && typeof highlightSessionId !== "string") return null;
   if (improve != null && typeof improve !== "string") return null;
   if (inviteAgain != null && typeof inviteAgain !== "boolean") return null;
+  if (wish != null && typeof wish !== "string") return null;
   return {
     id: clientId,
     rating,
     highlightSessionId: highlightSessionId ?? null,
     improve: improve ?? null,
     inviteAgain: inviteAgain ?? null,
+    wish: wish ?? null,
   };
 }
 
