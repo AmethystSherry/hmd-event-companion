@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
-import { CalendarBlank, CaretRight, ListBullets, Plus, Users } from "@/components/icons";
+import { useEffect, useRef, useState, useTransition } from "react";
+import { CalendarBlank, CaretRight, ListBullets, Plus, Trash, Users } from "@/components/icons";
 import {
   Badge,
   Button,
@@ -14,6 +14,8 @@ import {
   Pill,
   Screen,
   Sheet,
+  SwipeRow,
+  Toast,
 } from "@/components/ui";
 import type { FormResult } from "@/app/panitia/actions";
 import { eventCountLabel } from "@/lib/view";
@@ -31,16 +33,23 @@ export type EventCardData = {
 
 // PE01 Daftar event · PE01a belum ada event · PE02 sheet Buat event (nama + tanggal).
 // Header v5.1 (26 Okt): LogoMark + Badge "Panitia" | Keluar, lalu "Daftar event" + "{n} event".
+// (30 Okt) Hapus event: geser kartu ke kiri → panel Hapus (SwipeRow, pola P04s) → kartu langsung
+// hilang + Toast "{nama} dihapus" Batalkan 5 dtk; hapus di server baru jalan saat toast habis, hapus
+// berikutnya, atau halaman ditinggal (pagehide). Hapus = berantai (tamu, rundown, foto, buku tamu).
 export function EventList({
   events,
   logout,
   create,
+  remove,
+  initialSwiped,
   initialSheet = false,
   initialDraft = { name: "", date: "" },
 }: {
   events: EventCardData[];
   logout?: () => Promise<void>;
   create?: (input: { name: string; date: string }) => Promise<FormResult>;
+  remove?: (eventId: string) => Promise<void>;
+  initialSwiped?: string; // pratinjau PE01s: kartu dengan panel Hapus terbuka
   initialSheet?: boolean;
   initialDraft?: { name: string; date: string };
 }) {
@@ -50,6 +59,35 @@ export function EventList({
   const [error, setError] = useState<{ field?: string; error: string } | null>(null);
   const [pending, start] = useTransition();
   const ready = draft.name.trim() && draft.date;
+
+  // ---- Hapus + Batalkan ----
+  const [hidden, setHidden] = useState<string[]>([]);
+  const [toast, setToast] = useState<{ id: string; name: string } | null>(null);
+  const pendingDelete = useRef<string | null>(null);
+  const removeRef = useRef(remove);
+  useEffect(() => {
+    removeRef.current = remove;
+  });
+  const commitDelete = (id: string | null = pendingDelete.current) => {
+    if (!id || pendingDelete.current !== id) return;
+    pendingDelete.current = null;
+    void removeRef.current?.(id);
+  };
+  useEffect(() => {
+    const flush = () => commitDelete();
+    window.addEventListener("pagehide", flush);
+    return () => {
+      window.removeEventListener("pagehide", flush);
+      flush();
+    };
+  }, []);
+  const removeCard = (e: EventCardData) => {
+    commitDelete();
+    pendingDelete.current = e.id;
+    setHidden((h) => [...h, e.id]);
+    setToast({ id: e.id, name: e.name });
+  };
+  const shown = events.filter((e) => !hidden.includes(e.id));
 
   const submit = () => {
     if (!create || !ready) return;
@@ -83,43 +121,75 @@ export function EventList({
       </div>
       <header className={styles.listHead}>
         <h1 className="t-title">Daftar event</h1>
-        <p className="t-label c-label-2">{eventCountLabel(events.length)}</p>
+        <p className="t-label c-label-2">{eventCountLabel(shown.length)}</p>
       </header>
-      {events.length === 0 ? (
+      {shown.length === 0 ? (
         <HeroState icon={<CalendarBlank size={30} />} title="Belum ada event">
           Bikin event pertama dulu, nanti rundown sama daftar tamunya bisa diisi pelan-pelan.
         </HeroState>
       ) : (
         <>
-          {events.map((e) => {
+          {shown.map((e) => {
             const draftEvent = e.guests === 0 && e.sessions === 0;
             return (
-              <Link key={e.id} href={`/panitia/event/${e.id}`} className={styles.cardLink}>
-                <Card className={styles.eventCard}>
-                  <div className={f1.between}>
-                    {draftEvent ? (
-                      <Badge tone="neutral">Draft</Badge>
-                    ) : (
-                      <Badge tone={e.phase.tone}>{e.phase.label}</Badge>
-                    )}
-                    <CaretRight size={16} className="c-label-3" />
-                  </div>
-                  <p className="t-card-title">{e.name}</p>
-                  <p className={`t-label c-label-2 ${f1.rowTight}`}>
-                    <CalendarBlank size={16} />
-                    {e.dateLabel}
-                  </p>
-                  <div className={f1.pills}>
-                    <Pill icon={<Users />}>{e.guests ? `${e.guests} tamu` : "Belum ada tamu"}</Pill>
-                    <Pill icon={<ListBullets />}>
-                      {e.sessions ? `Rundown ${e.sessions} sesi` : "Rundown kosong"}
-                    </Pill>
-                  </div>
-                </Card>
-              </Link>
+              <SwipeRow
+                key={e.id}
+                className={styles.eventSwipe}
+                deleteLabel={`Hapus ${e.name}`}
+                initialOpen={initialSwiped === e.id}
+                onDelete={remove ? () => removeCard(e) : undefined}
+              >
+                <Link href={`/panitia/event/${e.id}`} className={styles.cardLink}>
+                  <Card className={styles.eventCard}>
+                    <div className={f1.between}>
+                      {draftEvent ? (
+                        <Badge tone="neutral">Draft</Badge>
+                      ) : (
+                        <Badge tone={e.phase.tone}>{e.phase.label}</Badge>
+                      )}
+                      <CaretRight size={16} className="c-label-3" />
+                    </div>
+                    <p className="t-card-title">{e.name}</p>
+                    <p className={`t-label c-label-2 ${f1.rowTight}`}>
+                      <CalendarBlank size={16} />
+                      {e.dateLabel}
+                    </p>
+                    <div className={f1.pills}>
+                      <Pill icon={<Users />}>
+                        {e.guests ? `${e.guests} tamu` : "Belum ada tamu"}
+                      </Pill>
+                      <Pill icon={<ListBullets />}>
+                        {e.sessions ? `Rundown ${e.sessions} sesi` : "Rundown kosong"}
+                      </Pill>
+                    </div>
+                  </Card>
+                </Link>
+              </SwipeRow>
             );
           })}
         </>
+      )}
+
+      {toast && (
+        <div className={f1.toastDock}>
+          <Toast
+            key={toast.id}
+            icon={<Trash />}
+            undo={{
+              onUndo: () => {
+                pendingDelete.current = null;
+                setHidden((h) => h.filter((id) => id !== toast.id));
+                setToast(null);
+              },
+              onExpire: () => {
+                commitDelete(toast.id);
+                setToast(null);
+              },
+            }}
+          >
+            {toast.name} dihapus
+          </Toast>
+        </div>
       )}
 
       <Sheet open={open} onClose={() => setOpen(false)} title="Buat event baru">

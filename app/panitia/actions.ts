@@ -110,6 +110,15 @@ export async function startEvent(eventId: string): Promise<void> {
   redirect(`/panitia/event/${eventId}/kontrol`);
 }
 
+// (30 Okt) PE01 · hapus event dari Daftar event (geser kiri + Batalkan 5 dtk), tanpa pindah halaman.
+export async function removeEvent(eventId: string): Promise<void> {
+  await requireCrew();
+  await mutateStore((store) => {
+    if (store.getEvent(eventId)) store.deleteEvent(eventId);
+  });
+  refresh();
+}
+
 // PE03h · hapus event berantai, lalu kembali ke Daftar event (PE01 / PE01a).
 export async function deleteEvent(eventId: string): Promise<void> {
   await requireCrew();

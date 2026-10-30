@@ -5,7 +5,7 @@ import { Screen, Skeleton } from "@/components/ui";
 import { getStore } from "@/lib/data";
 import { isCrew } from "@/lib/server/access";
 import { toEventCard } from "@/lib/view";
-import { createEvent, loginWithPin, logout } from "./actions";
+import { createEvent, loginWithPin, logout, removeEvent } from "./actions";
 
 export const metadata = { title: "Daftar event · Panitia" };
 
@@ -39,5 +39,5 @@ async function Gate() {
         now,
       ),
     );
-  return <EventList events={events} logout={logout} create={createEvent} />;
+  return <EventList events={events} logout={logout} create={createEvent} remove={removeEvent} />;
 }

@@ -235,6 +235,13 @@ export const SCREENS: ScreenDef[] = [
     render: () => <EventList events={cards} />,
   },
   {
+    code: "PE01s",
+    name: "Hapus event (geser kiri)",
+    lane: "Panitia",
+    kind: "Aksi",
+    render: () => <EventList events={cards} initialSwiped={cards[0]?.id} />,
+  },
+  {
     code: "PE01a",
     name: "Belum ada event",
     lane: "Panitia",

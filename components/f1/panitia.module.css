@@ -12,6 +12,11 @@
   transform: scale(0.99);
 }
 
+/* PE01: kartu event bisa digeser kiri buat hapus (panel merah ikut radius kartu). */
+.eventSwipe {
+  border-radius: var(--radius-card);
+}
+
 .eventCard {
   gap: 10px;
 }

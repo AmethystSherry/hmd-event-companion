@@ -204,6 +204,9 @@ next.config.ts            header X-Robots-Tag noindex, allowedDevOrigins (HP di 
   password (TopToast gelap) & alamat + "Maps". Kosong → "Panitia belum isi info rumah…". Dev f4 BT-rumah(-kosong).
 - **PE01/PE01a/PE02** (v5.1): toolbar LogoMark 32 + Badge crew "Panitia" | "Keluar"; baris judul
   "Daftar event" (t-title) + `eventCountLabel` "{n} event" rata baseline. Metadata "Daftar event · Panitia".
+- **PE01 hapus event** (30 Okt): geser kartu ke kiri → panel Hapus (`SwipeRow`, `.eventSwipe` radius kartu) → kartu
+  hilang + Toast Batalkan 5 dtk → server action `removeEvent` (tanpa redirect, hapus berantai) saat toast habis /
+  hapus berikutnya / pagehide. Dev PE01s. Event contoh HMD seed dihapus panitia lewat cara ini di production.
 - **T02**: Pekerjaan (≤ 40) & Minat (≤ 60) opsional → `Guest.job/interests` (cuma disimpan saat
   Hadir; jawab "Nggak bisa" nggak menghapus), ikut prefill "Ubah jawaban", belum ditampilkan (N3).
 - **T02b titip ucapan**: chip cepat mengisi field, ≤ 140 huruf, `sendFarewell` → `Guest.farewellMessage/
