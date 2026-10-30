@@ -83,13 +83,17 @@
   line-height: 18px;
 }
 
-/* Chip filter: scroll horizontal, bleed sampai tepi kanan layar. */
+/* Chip filter: scroll horizontal, bleed sampai tepi kanan layar. Sumbu Y dikunci (overflow-x auto
+   bikin Y ikut auto → baris bisa diseret naik-turun karena bayangan chip); padding 4 + margin −4 biar
+   bayangan nggak kepotong. */
 .filterRow {
   display: flex;
   gap: 8px;
-  margin-right: calc(-1 * var(--bleed));
-  padding-right: var(--bleed);
+  margin: -4px calc(-1 * var(--bleed)) -4px 0;
+  padding: 4px var(--bleed) 4px 0;
   overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
   scrollbar-width: none;
 }
 
