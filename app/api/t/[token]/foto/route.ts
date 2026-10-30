@@ -79,7 +79,7 @@ export async function POST(req: Request, ctx: RouteContext<"/api/t/[token]/foto"
     if (!known) await deletePhotoFiles(guest.eventId, id).catch(() => {});
     if (err.code === "foto-dihapus")
       return reply({ ok: false, code: err.code, error: err.message }, 410);
-    const code = err.code === "acara-ditutup" ? err.code : undefined;
+    const code = err.code === "foto-penuh" || err.code === "acara-ditutup" ? err.code : undefined;
     return reply({ ok: false, code, error: err.message }, 409);
   }
 }

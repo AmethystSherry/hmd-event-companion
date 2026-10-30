@@ -3,6 +3,8 @@ import type { Photo } from "./data/types";
 // N4 · logika foto kolase tanpa secret/DOM — dipakai di HP (kompres, kemiringan) dan server
 // (validasi upload). Bagian canvas ada di components/n4/capture.ts.
 
+// Per tamu, foto yang dihapus nggak dihitung. 30 Okt: 20 → 10 (hemat kuota Supabase Free).
+export const MAX_PHOTOS_PER_GUEST = 10;
 export const PHOTO_RATIO = 5 / 6; // viewfinder 300×360 (lebar/tinggi)
 export const PHOTO_LONG_SIDE = 1280;
 export const THUMB_LONG_SIDE = 320;
@@ -114,5 +116,5 @@ export type PhotoUploadResponse =
   | {
       ok: false;
       error: string;
-      code?: "acara-ditutup" | "belum-masuk" | "foto-dihapus";
+      code?: "foto-penuh" | "acara-ditutup" | "belum-masuk" | "foto-dihapus";
     };

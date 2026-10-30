@@ -6,7 +6,7 @@ import { ArrowClockwise, Camera, Info, LockSimple, Trash, WifiSlash } from "@/co
 import { Banner, Button, Polaroid, Segmented, Sheet, Toast } from "@/components/ui";
 import { timeWib } from "@/lib/format";
 import type { QueuedPhoto } from "@/lib/offline/photoDb";
-import { guestPhotoUrl, type GuestPhotos } from "@/lib/photo";
+import { guestPhotoUrl, MAX_PHOTOS_PER_GUEST, type GuestPhotos } from "@/lib/photo";
 import { lockedToast } from "./NempelSheet";
 import type { SendResult } from "./usePhotoOutbox";
 import s from "./sheets.module.css";
@@ -119,6 +119,7 @@ export function GaleriSheet({
   ]
     .filter((item) => !hidden.includes(item.id)) // pending hapus nggak dihitung di HP ini
     .sort((a, b) => b.at - a.at);
+  const full = items.length >= MAX_PHOTOS_PER_GUEST;
 
   const [retrying, setRetrying] = useState(false);
   async function retry() {
@@ -235,17 +236,20 @@ export function GaleriSheet({
               </li>
             );
           })}
-          <li>
-            <Link href={`/t/${token}/foto`} className={s.addTile}>
-              <Camera size={28} />
-              <span className="t-label">Foto lagi</span>
-            </Link>
-          </li>
+          {!full && (
+            <li>
+              <Link href={`/t/${token}/foto`} className={s.addTile}>
+                <Camera size={28} />
+                <span className="t-label">Foto lagi</span>
+              </Link>
+            </li>
+          )}
         </ul>
         {items.length === 0 && (
           // TODO copy: galeri kosong belum didesain (usulan N4-deliverables v2).
           <p className="t-label c-label-2">Belum ada foto. Jepret yang pertama!</p>
         )}
+        {full && <p className="t-caption c-label-2">Maks {MAX_PHOTOS_PER_GUEST} foto</p>}
       </Sheet>
 
       {toast?.kind === "undo" && (

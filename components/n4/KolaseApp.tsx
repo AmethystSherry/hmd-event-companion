@@ -268,7 +268,7 @@ export function KolaseApp({
               Ulangi
             </Button>
             <Button variant="secondary" icon={<DownloadSimple />} onClick={save}>
-              Simpan
+              Download foto
             </Button>
           </div>
         </div>

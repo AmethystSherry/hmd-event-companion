@@ -123,7 +123,7 @@ export function FotoDetail({
                 </div>
                 <div className={s.detailActions}>
                   <Button variant="secondary" icon={<DownloadSimple />} onClick={() => onSave(p)}>
-                    Simpan foto
+                    Download foto
                   </Button>
                   {p.mine && (
                     <Button

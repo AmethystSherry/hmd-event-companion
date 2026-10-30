@@ -398,9 +398,9 @@ export function KolaseScreen({
                 {fetching
                   ? `Menyiapkan ${fetching.done} dari ${fetching.total}…`
                   : pickedFiles
-                    ? `Simpan ${pickedFiles.length} foto ke HP`
+                    ? `Download ${pickedFiles.length} foto ke HP`
                     : pickedCount
-                      ? `Unduh ${pickedCount} foto`
+                      ? `Download ${pickedCount} foto`
                       : "Pilih fotonya dulu"}
               </Button>
             ) : empty ? (
@@ -409,7 +409,7 @@ export function KolaseScreen({
               </Button>
             ) : (
               <Button icon={<DownloadSimple />} onClick={() => setSheet(true)}>
-                Simpan kolase
+                Download kolase
               </Button>
             )}
             {picked ? (
@@ -449,7 +449,7 @@ export function KolaseScreen({
                 icon={<DownloadSimple />}
                 onClick={startPicking}
               >
-                Unduh foto
+                Download foto
               </Button>
             )
           }
@@ -549,9 +549,9 @@ export function KolaseScreen({
         Fotonya hilang dari kolase semua tamu.
       </Dialog>
 
-      <Sheet open={sheet} onClose={() => setSheet(false)} title="Simpan kolase">
+      <Sheet open={sheet} onClose={() => setSheet(false)} title="Download kolase">
         <div className={s.sheetHead}>
-          <h2 className="t-headline">Simpan kolase</h2>
+          <h2 className="t-headline">Download kolase</h2>
           <p className="t-label c-label-2">Ukuran 9:16, pas buat story</p>
         </div>
         <div className={s.storyFrame}>
@@ -583,22 +583,22 @@ export function KolaseScreen({
             Acak
           </Button>
         </div>
-        <div className={s.sheetActions}>
-          <Button
-            variant="secondary"
-            icon={<ShareNetwork />}
-            aria-disabled={!ready || undefined}
-            onClick={ready ? onShare : undefined}
-          >
-            Bagikan
-          </Button>
+        <div className={s.bottomRow}>
           <Button
             icon={<DownloadSimple />}
             aria-disabled={!ready || undefined}
             onClick={ready ? onSaveKolase : undefined}
           >
-            Simpan
+            Download kolase
           </Button>
+          <Button
+            variant="secondary"
+            iconOnly
+            label="Bagikan kolase"
+            icon={<ShareNetwork />}
+            aria-disabled={!ready || undefined}
+            onClick={ready ? onShare : undefined}
+          />
         </div>
       </Sheet>
 

@@ -321,7 +321,8 @@ Keputusan default 24 Okt (jawaban "Keputusan & asumsi" + "Temuan" di N4-delivera
 3. Disimpan = foto mentah crop tengah **5:6**; bingkai polaroid digambar UI (`Polaroid`).
 4. Kompres di HP (`components/n4/capture.ts`): sisi panjang 1280, JPEG kualitas 0,85 → 0,5, lalu
    diperkecil ×0,85 sampai ≤ 400 KB; thumbnail 320 ≤ 40 KB. Server menolak > 480/80 KB & non-JPEG.
-5. ~~Maks 20 foto per tamu~~ **tanpa batas** (feedback 30 Okt; `MAX_PHOTOS_PER_GUEST` & `foto-penuh` dihapus).
+5. **Maks 10 foto per tamu** (`MAX_PHOTOS_PER_GUEST`, foto yang dihapus nggak dihitung; 30 Okt: 20 → sempat tanpa
+   batas → 10, hemat kuota Supabase Free). Penuh → upload 409 `foto-penuh`.
 6. Strip BT07 = 4 foto **tamu lain** terbaru (teaser, boleh); "+N" = foto tamu lain − 4, tap → toast
    BT07c "Kolase lengkap kebuka pas acara selesai (± {endsAt})" (ikut alur sheet di atas tombol).
    0 foto tamu lain → **BT07e** "Kamu yang pertama!" + strip = fotomu sendiri (maks 4), tanpa "+N".
@@ -353,7 +354,8 @@ Keputusan default 24 Okt (jawaban "Keputusan & asumsi" + "Temuan" di N4-delivera
   `caption` & slot `action`. Miring tetap `photoTilt` (±4°); galeri berganti +2°/−2°/+1,5°/−1,5°.
 - **BT07d Galeri**: `Segmented` "Foto saya · {n}" / 🔒 "Foto tamu" (opsi `locked` + `onLocked` → toast
   BT07c). Grid 2 kolom fotoku terbaru dulu (foto antre ikut, badge ⌛, tanpa hapus); caption "{nama} ·
-  {jam}" + Trash 16 (area tap 44). Tile "Foto lagi" (dashed accent) selalu ada (tanpa batas foto, 30 Okt). Kosong → tile + "Belum ada foto. Jepret yang pertama!" (TODO copy). Tap polaroid = belum ada (TODO).
+  {jam}" + Trash 16 (area tap 44). Tile "Foto lagi" (dashed accent) disembunyikan di 10 foto → "Maks 10
+  foto". Kosong → tile + "Belum ada foto. Jepret yang pertama!" (TODO copy). Tap polaroid = belum ada (TODO).
 - **BT07dh hapus (v3 26 Okt)**: foto sendiri bisa dihapus **kapan aja** (server tetap: sampai H+30). 🗑 →
   **tanpa Dialog**: foto disembunyikan di HP (nggak dihitung di "Foto saya · n" & batas 20) + `Toast undo`
   5 dtk (Trash + "Foto dihapus dari kolase" + "Batalkan", dock lebar penuh − 20, radius 12). Batalkan →
@@ -678,6 +680,9 @@ Keputusan 26 Okt (prompt N3 + usulan "Temuan" N3-deliverables T1–T13):
   kelas tipografi `t-*` (Clean/* dari Figma; tracking Figma dalam persen → `em`).
 - (28 Okt) `globals.css`: di layar sentuh semua input/textarea/select minimal 16 px (`!important`) — Safari iPhone
   nge-zoom halaman kalau kolom < 16 px difokus (dulu: Tanya 15 px, minat T11 13 px, ucapan T02b).
+- (30 Okt) Copy unduh: gambar kolase 9:16 = **"Download kolase"** (tombol T15, judul & tombol sheet T15c — sheet:
+  "Download kolase" lebar + ikon Bagikan); foto satuan / pilih banyak = **"Download foto"** (T15b, header T15p,
+  "Download {n} foto", pratinjau kamera BT06r).
 - (28 Okt) Nama "Kolase kulkas" di UI jadi **"Kolase foto"** (judul T15, kartu BT12, BP04b, judul share, metadata
   /kolase, template WA makasih). (29 Okt) Sisa kiasan kulkas juga diganti: "Masukin ke kolase", "Masuk kolase!",
   pill kamera "Kolase foto", "Kolasenya masih sepi/kosong", subjudul gambar 9:16 "Kolase foto · {tanggal}".
