@@ -43,6 +43,7 @@ export {
   QrCode,
   Scroll,
   ShareNetwork,
+  Shuffle,
   Sparkle,
   Star,
   Sun,

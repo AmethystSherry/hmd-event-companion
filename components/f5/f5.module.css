@@ -509,3 +509,12 @@
   opacity: 0.4;
   transition: opacity 150ms ease-out;
 }
+
+/* T15c · baris jumlah foto + tombol Acak susunan (feedback 30 Okt). */
+.shuffleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}

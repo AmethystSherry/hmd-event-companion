@@ -15,7 +15,14 @@ import {
 } from "@/components/ui";
 import { cx } from "@/lib/cx";
 import { deviceLabel } from "@/lib/device";
-import { filterPhotos, pinCaption, type KolaseFilter, type KolasePhoto } from "@/lib/kolase";
+import {
+  fileSlug,
+  filterPhotos,
+  photoFileName,
+  pinCaption,
+  type KolaseFilter,
+  type KolasePhoto,
+} from "@/lib/kolase";
 import { crewPhotoUrl } from "@/lib/photo";
 import { zipStored } from "@/lib/zip";
 import s from "./f3.module.css";
@@ -26,13 +33,6 @@ import s from "./f3.module.css";
 // belum ada perilaku (K21). Realtime: LiveRefresh di halaman (foto baru / dihapus HP lain).
 
 export type FotoMasukSession = { id: string; title: string };
-
-const slug = (t: string) =>
-  t
-    .toLowerCase()
-    .normalize("NFKD")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
 
 export function FotoMasukScreen({
   eventId,
@@ -101,9 +101,8 @@ export function FotoMasukScreen({
         shown.map(async (p, i) => {
           const res = await fetch(crewPhotoUrl(p.id, "full"));
           if (!res.ok) throw new Error(String(res.status));
-          const n = String(shown.length - i).padStart(2, "0");
           return {
-            name: `${n}-${slug(p.first)}-${slug(p.session ?? "acara")}.jpg`,
+            name: photoFileName(p, shown.length - i),
             data: new Uint8Array(await res.arrayBuffer()),
           };
         }),
@@ -111,7 +110,7 @@ export function FotoMasukScreen({
       const label =
         active === "semua"
           ? "semua"
-          : slug(chips.find((x) => `sesi:${x.id}` === active)?.title ?? "sesi");
+          : fileSlug(chips.find((x) => `sesi:${x.id}` === active)?.title ?? "sesi");
       const blob = new Blob([zipStored(files.reverse()) as BlobPart], { type: "application/zip" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");

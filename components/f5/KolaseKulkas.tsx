@@ -10,6 +10,7 @@ import {
   Image as ImageIcon,
   Info,
   ShareNetwork,
+  Shuffle,
   X,
 } from "@/components/icons";
 import {
@@ -32,19 +33,32 @@ import {
   filterPhotos,
   KOLASE_FILE,
   KOLASE_MAX,
+  photoFileName,
   pinCaption,
+  seededRandom,
+  shuffled,
   type KolaseFilter,
   type KolasePhoto,
 } from "@/lib/kolase";
-import { guestPhotoUrl } from "@/lib/photo";
+import { guestPhotoUrl, isInAppBrowser } from "@/lib/photo";
 import { FotoDetail } from "./FotoDetail";
 import { renderKolase } from "./kolaseCanvas";
-import { saveFile, shareFile, type SaveOutcome } from "./saveImage";
+import {
+  canShareFiles,
+  downloadFiles,
+  isIOS,
+  saveFile,
+  shareFile,
+  shareFiles,
+  type SaveOutcome,
+} from "./saveImage";
 import s from "./f5.module.css";
 
 // T15 · Kolase foto (masonry 2 kolom, filter Semua/Foto saya/per sesi; pin bingkai F5 v2) + T15b detail foto
 // (?foto={id}, back HP menutup) + T15c sheet gambar 9:16 + T15e share sheet HP + T15d kosong +
 // T14d toast "udah pernah isi" (?isi=1). Foto baru/terhapus ikut muncul lewat rev → SSE.
+// Feedback 30 Okt: gambar 9:16 = kolase dinding acak (tombol "Acak" di T15c) + T15p "Unduh foto":
+// mode pilih (semua terpilih dulu), tiap foto diunduh sebagai file sendiri.
 
 const SHARE_TITLE = "Kolase foto · potara HMD";
 const TOAST_MS = 3000;
@@ -54,6 +68,7 @@ type Preview = {
   openId?: string;
   sheet?: boolean;
   filledToast?: boolean;
+  picking?: boolean; // T15p
 };
 
 export function KolaseScreen({
@@ -93,6 +108,12 @@ export function KolaseScreen({
   const [confirm, setConfirm] = useState<KolasePhoto | null>(null);
   const [fallback, setFallback] = useState<string | null>(null); // gambar buat tekan-lama
   const pushed = useRef(false);
+  // T15p: null = bukan mode pilih. Default semua foto terpilih.
+  const [picked, setPicked] = useState<Set<string> | null>(
+    preview?.picking ? new Set(photos.map((p) => p.id)) : null,
+  );
+  const [fetching, setFetching] = useState<{ done: number; total: number } | null>(null);
+  const [pickedFiles, setPickedFiles] = useState<File[] | null>(null); // iPhone: tap kedua = share
 
   const show = useCallback((text: string, ok?: boolean) => {
     setToast({ key: Date.now(), text, ok });
@@ -164,21 +185,18 @@ export function KolaseScreen({
 
   // ---- Gambar 9:16 (T15c). Dibuat di HP; disiapkan duluan supaya share() tetap dipanggil
   // langsung dari tap (Safari iOS menolak share setelah menunggu lama). ----
+  // Lebih dari KOLASE_MAX foto → tiap susunan ambil foto acak (seed sama dengan susunan).
+  const [seed, setSeed] = useState(1);
   const kolaseItems = useMemo(
     () =>
-      shown.slice(0, KOLASE_MAX).map((p) => ({
-        id: p.id,
-        src: full(p),
-        width: p.width,
-        height: p.height,
-        name: p.name,
-        caption: pinCaption(p),
-        tone: p.tone,
-      })),
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- full() cuma bergantung pada token
-    [shown, token],
+      (shown.length > KOLASE_MAX
+        ? shuffled(shown, seededRandom(seed)).slice(0, KOLASE_MAX)
+        : shown
+      ).map((p) => ({ id: p.id, src: full(p), thumb: thumb(p), tone: p.tone })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- full()/thumb() cuma bergantung pada token
+    [shown, token, seed],
   );
-  const kolaseKey = kolaseItems.map((x) => x.id).join(",");
+  const kolaseKey = `${seed}:${kolaseItems.map((x) => x.id).join(",")}`;
   const [image, setImage] = useState<{ key: string; file: File; url: string } | null>(null);
   const [imageError, setImageError] = useState(false);
   const making = useRef<string | null>(null);
@@ -188,10 +206,11 @@ export function KolaseScreen({
     making.current = kolaseKey;
     setImageError(false);
     try {
-      const blob = await renderKolase(kolaseItems, {
-        title: "potara · HMD",
-        subtitle: `Kolase foto · ${shortDate}`,
-      });
+      const blob = await renderKolase(
+        kolaseItems,
+        { title: "potara · HMD", subtitle: `Kolase foto · ${shortDate}` },
+        seed,
+      );
       if (making.current !== kolaseKey) return;
       const file = new File([blob], KOLASE_FILE, { type: "image/jpeg" });
       setImage((prev) => {
@@ -203,7 +222,7 @@ export function KolaseScreen({
     } finally {
       if (making.current === kolaseKey) making.current = null;
     }
-  }, [kolaseItems, kolaseKey, shortDate]);
+  }, [kolaseItems, kolaseKey, shortDate, seed]);
 
   const ready = image?.key === kolaseKey ? image : null;
 
@@ -270,6 +289,85 @@ export function KolaseScreen({
     afterSave(await saveFile(file, SHARE_TITLE), file);
   }
 
+  // ---- T15p: pilih & unduh foto satu-satu ----
+  const pickedCount = picked?.size ?? 0;
+  const allShownPicked = !!picked && shown.every((p) => picked.has(p.id));
+
+  function editPicked(fn: (next: Set<string>) => void) {
+    setPicked((prev) => {
+      const next = new Set(prev);
+      fn(next);
+      return next;
+    });
+    setPickedFiles(null); // pilihan berubah → file iPhone disiapkan ulang
+  }
+
+  function startPicking() {
+    setPicked(new Set(photos.map((p) => p.id)));
+    setPickedFiles(null);
+  }
+
+  function stopPicking() {
+    setPicked(null);
+    setPickedFiles(null);
+    setFetching(null);
+  }
+
+  const togglePick = (id: string) =>
+    editPicked((next) => {
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+    });
+
+  const toggleAllShown = () =>
+    editPicked((next) => {
+      for (const p of shown) {
+        if (allShownPicked) next.delete(p.id);
+        else next.add(p.id);
+      }
+    });
+
+  async function onDownloadPicked() {
+    if (!picked?.size || fetching) return;
+    if (pickedFiles) {
+      // iPhone: share sheet wajib dari tap langsung → file udah disiapkan di tap pertama.
+      const outcome = await shareFiles(pickedFiles, SHARE_TITLE);
+      if (outcome === "fallback") show("Browser ini belum bisa simpan banyak foto sekaligus");
+      if (outcome === "shared") stopPicking();
+      return;
+    }
+    if (!token) return show("Pratinjau: nggak ada file foto");
+    if (isInAppBrowser(navigator.userAgent)) {
+      return show("Buka di Safari/Chrome buat unduh banyak foto");
+    }
+    const list = photos.filter((p) => picked.has(p.id)).reverse(); // lama → baru
+    let done = 0;
+    setFetching({ done, total: list.length });
+    const files: File[] = new Array(list.length);
+    try {
+      let next = 0;
+      const worker = async () => {
+        while (next < list.length) {
+          const i = next++;
+          const res = await fetch(guestPhotoUrl(token, list[i].id, "full"));
+          if (!res.ok) throw new Error(String(res.status));
+          const blob = await res.blob();
+          files[i] = new File([blob], photoFileName(list[i], i + 1), { type: "image/jpeg" });
+          setFetching({ done: ++done, total: list.length });
+        }
+      };
+      await Promise.all(Array.from({ length: Math.min(4, list.length) }, worker));
+    } catch {
+      setFetching(null);
+      return show("Ada foto yang gagal diunduh, coba lagi");
+    }
+    setFetching(null);
+    if (isIOS() && canShareFiles(files)) return setPickedFiles(files);
+    await downloadFiles(files);
+    show(`${files.length} foto diunduh`, true);
+    stopPicking();
+  }
+
   async function onDelete(p: KolasePhoto) {
     setConfirm(null);
     if (!token) return show("Pratinjau: foto nggak dihapus");
@@ -291,7 +389,21 @@ export function KolaseScreen({
         withBack
         bottom={
           <div className={s.bottomRow}>
-            {empty ? (
+            {picked ? (
+              <Button
+                icon={<DownloadSimple />}
+                aria-disabled={!pickedCount || !!fetching || undefined}
+                onClick={pickedCount && !fetching ? onDownloadPicked : undefined}
+              >
+                {fetching
+                  ? `Menyiapkan ${fetching.done} dari ${fetching.total}…`
+                  : pickedFiles
+                    ? `Simpan ${pickedFiles.length} foto ke HP`
+                    : pickedCount
+                      ? `Unduh ${pickedCount} foto`
+                      : "Pilih fotonya dulu"}
+              </Button>
+            ) : empty ? (
               <Button variant="secondary" href={backHref} icon={<CaretLeft />}>
                 Kembali
               </Button>
@@ -300,14 +412,24 @@ export function KolaseScreen({
                 Simpan kolase
               </Button>
             )}
-            <Button
-              variant="secondary"
-              iconOnly
-              label="Bagikan kolase"
-              icon={<Export />}
-              aria-disabled={empty || undefined}
-              onClick={empty ? undefined : onShare}
-            />
+            {picked ? (
+              <Button
+                variant="secondary"
+                iconOnly
+                label="Batal pilih foto"
+                icon={<X />}
+                onClick={stopPicking}
+              />
+            ) : (
+              <Button
+                variant="secondary"
+                iconOnly
+                label="Bagikan kolase"
+                icon={<Export />}
+                aria-disabled={empty || undefined}
+                onClick={empty ? undefined : onShare}
+              />
+            )}
           </div>
         }
       >
@@ -315,12 +437,30 @@ export function KolaseScreen({
           leading={<IconButton href={backHref} label="Kembali" icon={<CaretLeft />} />}
           eyebrow={greeting}
           title="Kolase foto"
+          trailing={
+            empty ? undefined : picked ? (
+              <TextAction onClick={toggleAllShown}>
+                {allShownPicked ? "Kosongkan" : "Pilih semua"}
+              </TextAction>
+            ) : (
+              <Button
+                size="sm"
+                variant="secondary"
+                icon={<DownloadSimple />}
+                onClick={startPicking}
+              >
+                Unduh foto
+              </Button>
+            )
+          }
         />
         <div className={s.meta}>
           <p className="t-label c-label-2">
-            {empty
-              ? `Belum ada foto · ${dateLabel}`
-              : `${photos.length} foto dari ${photoGuests} tamu · ${dateLabel}`}
+            {picked
+              ? `${pickedCount} dari ${photos.length} foto dipilih`
+              : empty
+                ? `Belum ada foto · ${dateLabel}`
+                : `${photos.length} foto dari ${photoGuests} tamu · ${dateLabel}`}
           </p>
           <TextAction href={followHref}>Follow @potarastudio</TextAction>
         </div>
@@ -368,8 +508,9 @@ export function KolaseScreen({
                   caption={pinCaption(p)}
                   mine={p.mine}
                   tone={p.tone}
-                  label={`Buka foto dari ${p.first}`}
-                  onOpen={() => openPhoto(p)}
+                  label={picked ? `Pilih foto dari ${p.first}` : `Buka foto dari ${p.first}`}
+                  onOpen={picked ? () => togglePick(p.id) : () => openPhoto(p)}
+                  selected={picked ? picked.has(p.id) : undefined}
                   frame
                 />
               )}
@@ -425,6 +566,22 @@ export function KolaseScreen({
           ) : (
             <Skeleton height={360} radius={16} />
           )}
+        </div>
+        <div className={s.shuffleRow}>
+          <p className="t-label c-label-2">
+            {shown.length > KOLASE_MAX
+              ? `${KOLASE_MAX} dari ${shown.length} foto, dipilih acak`
+              : `${shown.length} foto · susunan acak`}
+          </p>
+          <Button
+            size="sm"
+            variant="secondary"
+            icon={<Shuffle />}
+            aria-disabled={!ready || undefined}
+            onClick={ready ? () => setSeed(Math.floor(Math.random() * 2 ** 31)) : undefined}
+          >
+            Acak
+          </Button>
         </div>
         <div className={s.sheetActions}>
           <Button

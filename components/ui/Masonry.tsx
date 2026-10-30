@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
+import { Check } from "@/components/icons";
 import { cx } from "@/lib/cx";
 import { masonry } from "@/lib/kolase";
 import { Avatar } from "./ListRow";
@@ -42,6 +43,7 @@ export function Masonry<T>({
 // + "{nama} · {sesi}". Tanpa `src` = placeholder gradasi (pratinjau / belum dimuat).
 // `frame` (P13 Foto masuk): kartu putih radius 4 (padding 8/8/10, shadow 0 6 7), foto radius 2;
 // `action` = tombol di ujung kanan caption (P13: hapus).
+// `selected` (T15 mode pilih): lingkaran cek di pojok kanan atas, tap = pilih/batal (aria-pressed).
 export function PhotoPin({
   src,
   width,
@@ -54,6 +56,7 @@ export function PhotoPin({
   label,
   frame,
   action,
+  selected,
 }: {
   src?: string;
   width: number;
@@ -66,6 +69,7 @@ export function PhotoPin({
   label?: string; // aria-label tombol ("Buka foto Rara")
   frame?: boolean;
   action?: ReactNode;
+  selected?: boolean; // undefined = bukan mode pilih
 }) {
   const photo = (
     <span
@@ -75,12 +79,25 @@ export function PhotoPin({
       {/* eslint-disable-next-line @next/next/no-img-element -- route proxy, bukan aset statis */}
       {src && <img src={src} alt="" loading="lazy" decoding="async" draggable={false} />}
       {mine && <span className={cx("t-label-emph", styles.mine)}>Foto saya</span>}
+      {selected !== undefined && (
+        <span className={cx(styles.check, selected && styles.checked)} aria-hidden>
+          {selected && <Check size={16} weight="bold" />}
+        </span>
+      )}
     </span>
   );
   return (
-    <figure className={cx(styles.pin, frame && styles.frame)}>
+    <figure
+      className={cx(styles.pin, frame && styles.frame, selected === false && styles.unpicked)}
+    >
       {onOpen ? (
-        <button type="button" className={styles.open} onClick={onOpen} aria-label={label}>
+        <button
+          type="button"
+          className={styles.open}
+          onClick={onOpen}
+          aria-label={label}
+          aria-pressed={selected}
+        >
           {photo}
         </button>
       ) : (

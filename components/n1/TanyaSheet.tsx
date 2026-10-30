@@ -11,6 +11,7 @@ import {
   MAX_QUESTION,
   QUESTION_COUNTER_FROM,
   type MyQuestion,
+  type OtherQuestion,
   type QuestionPostResponse,
 } from "@/lib/questions";
 import { elapsedMs, type SessionView } from "@/lib/rundown";
@@ -21,6 +22,8 @@ import s from "./n1.module.css";
 // dari P10; tetap ada setelah sheet ditutup) · BT08b gagal kirim (TopToast + "Kirim lagi").
 // Nggak ada antrean otomatis: draft + clientId disimpan di sessionStorage per token, "Kirim lagi"
 // memakai clientId yang sama selama teksnya sama (server idempoten → nggak dobel).
+// Feedback 30 Okt: di bawahnya "Dari tamu lain" — pertanyaan tamu lain di talkshow ini (nama
+// tampil P10 + status dijawab), realtime lewat LiveRefresh.
 
 const draftKey = (token: string) => `hmd-tanya:${token}`;
 const SEND_TIMEOUT_MS = 8000;
@@ -28,7 +31,12 @@ const SEND_TIMEOUT_MS = 8000;
 type Draft = { text: string; clientId?: string; attempt?: string };
 type Failure = "offline" | "limit";
 
-export type TanyaPreview = { text?: string; sent?: MyQuestion[]; failed?: boolean };
+export type TanyaPreview = {
+  text?: string;
+  sent?: MyQuestion[];
+  others?: OtherQuestion[];
+  failed?: boolean;
+};
 
 // Draft tersimpan dibaca lewat useSyncExternalStore (server: null) → cocok saat hidrasi.
 const noSubscribe = () => () => {};
@@ -58,6 +66,7 @@ export function TanyaSheet({
   token,
   session,
   history = [],
+  others = [],
   serverNow,
   onClose,
   onEnded,
@@ -66,6 +75,7 @@ export function TanyaSheet({
   token: string;
   session: SessionView; // talkshow yang lagi jalan
   history?: MyQuestion[]; // dari server, terbaru dulu (ikut LiveRefresh → status dijawab)
+  others?: OtherQuestion[]; // pertanyaan tamu lain (semua sesi), terbaru dulu
   serverNow: string;
   onClose: () => void;
   onEnded: () => void; // 409 bukan-talkshow: sesi keburu selesai
@@ -85,6 +95,7 @@ export function TanyaSheet({
     ...justSent.filter((q) => !history.some((h) => h.id === q.id)),
     ...(preview?.sent ?? history),
   ];
+  const fromOthers = (preview?.others ?? others).filter((q) => q.sessionId === session.id);
   const [failure, setFailure] = useState<Failure | null>(preview?.failed ? "offline" : null);
   const [busy, setBusy] = useState(false);
   const area = useRef<HTMLTextAreaElement>(null);
@@ -227,6 +238,30 @@ export function TanyaSheet({
             </ul>
           </section>
         )}
+
+        <section className={s.history} aria-labelledby="tanya-others">
+          <p id="tanya-others" className="t-label c-label-2">
+            Dari tamu lain · {fromOthers.length}
+          </p>
+          {fromOthers.length ? (
+            <ul className={s.historyList}>
+              {fromOthers.map((q) => (
+                <li key={q.id} className={s.sent}>
+                  <span className={s.sentHead}>
+                    <span className={s.asker}>
+                      <span className="t-label-emph">{q.name}</span>
+                      <span className="t-caption c-label-3 tabular">{q.time}</span>
+                    </span>
+                    {q.answered && <Badge tone="success">Udah dijawab</Badge>}
+                  </span>
+                  <p className="t-body">{q.text}</p>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="t-label c-label-3">Belum ada pertanyaan dari tamu lain.</p>
+          )}
+        </section>
       </Sheet>
 
       {failure && (

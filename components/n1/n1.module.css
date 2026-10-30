@@ -234,3 +234,11 @@ section.list {
 .sent p {
   margin: 0;
 }
+
+/* "Dari tamu lain": nama + jam di kiri kepala kartu. */
+.asker {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}

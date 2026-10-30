@@ -118,3 +118,26 @@ export function myQuestions(questions: Question[], guestId: string): MyQuestion[
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     .map((q) => ({ id: q.id, text: q.text, time: timeWib(q.createdAt), answered: !!q.answeredAt }));
 }
+
+// Pertanyaan tamu lain (sheet Tanya, feedback 30 Okt): semua tamu bisa lihat pertanyaan yang masuk.
+// Ke HP tamu cuma teks, nama tampil (sama dengan P10), jam, status dijawab, sesi — tanpa guestId.
+export type OtherQuestion = MyQuestion & { name: string; sessionId: string | null };
+
+export function otherQuestions(
+  questions: Question[],
+  guests: Pick<Guest, "id" | "name">[],
+  guestId: string,
+): OtherQuestion[] {
+  const names = displayNames(guests);
+  return questions
+    .filter((q) => q.guestId !== guestId)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .map((q) => ({
+      id: q.id,
+      text: q.text,
+      time: timeWib(q.createdAt),
+      answered: !!q.answeredAt,
+      name: names.get(q.guestId) ?? "Tamu",
+      sessionId: q.sessionId,
+    }));
+}

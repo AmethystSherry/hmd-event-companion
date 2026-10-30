@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { KOLASE_H, KOLASE_W, kolaseLayout, masonry } from "./kolase";
+import { KOLASE_H, KOLASE_W, kolaseWall, masonry } from "./kolase";
 
 describe("masonry 2 kolom", () => {
   it("item masuk kolom terpendek, urutan tetap", () => {
@@ -18,32 +18,36 @@ describe("masonry 2 kolom", () => {
   });
 });
 
-describe("tata letak gambar 9:16", () => {
-  const inside = (l: ReturnType<typeof kolaseLayout>) =>
-    l.cells.every(
-      (c) => c.x >= 0 && c.x + c.w <= KOLASE_W && c.y >= 0 && c.y + c.h + l.captionH <= KOLASE_H,
-    );
+describe("kolase dinding 9:16", () => {
+  const overlap = (a: { x: number; y: number; w: number; h: number }, b: typeof a) =>
+    a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 
-  it("12 foto 5:6 muat semua di 1080×1920, 3 kolom, nggak tumpang tindih", () => {
-    const l = kolaseLayout(new Array(12).fill(1.2));
-    expect(l.columns).toBe(3);
-    expect(l.cells).toHaveLength(12);
-    expect(inside(l)).toBe(true);
-    for (const a of l.cells)
-      for (const b of l.cells) {
-        if (a === b) continue;
-        const overlap =
-          a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h + 44 && b.y < a.y + a.h + 44;
-        expect(overlap).toBe(false);
+  it.each([1, 3, 12, 37, 80])(
+    "%i foto: semua masuk bidang, nggak tumpang tindih, tiap foto sekali",
+    (n) => {
+      const cells = kolaseWall(n, 7);
+      expect(cells).toHaveLength(n);
+      expect(new Set(cells.map((c) => c.index)).size).toBe(n);
+      for (const c of cells) {
+        expect(c.w).toBeGreaterThan(20);
+        expect(c.h).toBeGreaterThan(20);
+        expect(c.x - c.paper).toBeGreaterThanOrEqual(0);
+        expect(c.y - c.paper).toBeGreaterThanOrEqual(0);
+        expect(c.x + c.w + c.paper).toBeLessThanOrEqual(KOLASE_W);
+        expect(c.y + c.h + c.paper).toBeLessThanOrEqual(KOLASE_H);
       }
+      for (const a of cells) for (const b of cells) if (a !== b) expect(overlap(a, b)).toBe(false);
+    },
+  );
+
+  it("seed sama → susunan sama; seed lain → beda (tombol Acak)", () => {
+    expect(kolaseWall(20, 1)).toEqual(kolaseWall(20, 1));
+    expect(kolaseWall(20, 2)).not.toEqual(kolaseWall(20, 1));
   });
 
-  it("sedikit foto → 2 kolom, lebar penuh, di tengah", () => {
-    const l = kolaseLayout([1.2, 1.2, 1.2]);
-    expect(l.columns).toBe(2);
-    expect(inside(l)).toBe(true);
-    const left = Math.min(...l.cells.map((c) => c.x));
-    const right = Math.max(...l.cells.map((c) => c.x + c.w));
-    expect(Math.abs(left - (KOLASE_W - right))).toBeLessThanOrEqual(1);
+  it("bidang hampir penuh terisi", () => {
+    const cells = kolaseWall(30, 3);
+    const area = cells.reduce((n, c) => n + (c.w + c.paper * 2) * (c.h + c.paper * 2), 0);
+    expect(area / (KOLASE_W * KOLASE_H)).toBeGreaterThan(0.7);
   });
 });

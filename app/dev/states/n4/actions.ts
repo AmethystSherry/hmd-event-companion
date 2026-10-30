@@ -5,7 +5,6 @@ import { join } from "node:path";
 import { refresh } from "next/cache";
 import { getStore, mutateStore } from "@/lib/data";
 import { HMD_ID } from "@/lib/data/seed";
-import { MAX_PHOTOS_PER_GUEST } from "@/lib/data/store";
 import { newPhotoId } from "@/lib/photo";
 import { serverNow } from "@/lib/server/clock";
 import { putPhotoFile } from "@/lib/server/photos";
@@ -66,8 +65,6 @@ export async function seedPhotos(): Promise<void> {
   }
   await mutateStore((store) => {
     for (const p of made) {
-      const own = store.listPhotos(HMD_ID).filter((x) => x.guestId === p.guestId).length;
-      if (own >= MAX_PHOTOS_PER_GUEST) continue;
       store.addPhoto({ ...p, width: 500, height: 600, bytes: 20_000 });
     }
   });

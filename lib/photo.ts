@@ -3,7 +3,6 @@ import type { Photo } from "./data/types";
 // N4 · logika foto kolase tanpa secret/DOM — dipakai di HP (kompres, kemiringan) dan server
 // (validasi upload). Bagian canvas ada di components/n4/capture.ts.
 
-export const MAX_PHOTOS_PER_GUEST = 20; // per tamu, foto yang dihapus nggak dihitung
 export const PHOTO_RATIO = 5 / 6; // viewfinder 300×360 (lebar/tinggi)
 export const PHOTO_LONG_SIDE = 1280;
 export const THUMB_LONG_SIDE = 320;
@@ -115,5 +114,5 @@ export type PhotoUploadResponse =
   | {
       ok: false;
       error: string;
-      code?: "foto-penuh" | "acara-ditutup" | "belum-masuk" | "foto-dihapus";
+      code?: "acara-ditutup" | "belum-masuk" | "foto-dihapus";
     };

@@ -319,7 +319,7 @@ Keputusan default 24 Okt (jawaban "Keputusan & asumsi" + "Temuan" di N4-delivera
 3. Disimpan = foto mentah crop tengah **5:6**; bingkai polaroid digambar UI (`Polaroid`).
 4. Kompres di HP (`components/n4/capture.ts`): sisi panjang 1280, JPEG kualitas 0,85 → 0,5, lalu
    diperkecil ×0,85 sampai ≤ 400 KB; thumbnail 320 ≤ 40 KB. Server menolak > 480/80 KB & non-JPEG.
-5. **Maks 20 foto per tamu** (`MAX_PHOTOS_PER_GUEST`, foto yang dihapus nggak dihitung).
+5. ~~Maks 20 foto per tamu~~ **tanpa batas** (feedback 30 Okt; `MAX_PHOTOS_PER_GUEST` & `foto-penuh` dihapus).
 6. Strip BT07 = 4 foto **tamu lain** terbaru (teaser, boleh); "+N" = foto tamu lain − 4, tap → toast
    BT07c "Kolase lengkap kebuka pas acara selesai (± {endsAt})" (ikut alur sheet di atas tombol).
    0 foto tamu lain → **BT07e** "Kamu yang pertama!" + strip = fotomu sendiri (maks 4), tanpa "+N".
@@ -351,8 +351,7 @@ Keputusan default 24 Okt (jawaban "Keputusan & asumsi" + "Temuan" di N4-delivera
   `caption` & slot `action`. Miring tetap `photoTilt` (±4°); galeri berganti +2°/−2°/+1,5°/−1,5°.
 - **BT07d Galeri**: `Segmented` "Foto saya · {n}" / 🔒 "Foto tamu" (opsi `locked` + `onLocked` → toast
   BT07c). Grid 2 kolom fotoku terbaru dulu (foto antre ikut, badge ⌛, tanpa hapus); caption "{nama} ·
-  {jam}" + Trash 16 (area tap 44). Tile "Foto lagi" (dashed accent) disembunyikan di 20 foto → "Maks 20
-  foto". Kosong → tile + "Belum ada foto. Jepret yang pertama!" (TODO copy). Tap polaroid = belum ada (TODO).
+  {jam}" + Trash 16 (area tap 44). Tile "Foto lagi" (dashed accent) selalu ada (tanpa batas foto, 30 Okt). Kosong → tile + "Belum ada foto. Jepret yang pertama!" (TODO copy). Tap polaroid = belum ada (TODO).
 - **BT07dh hapus (v3 26 Okt)**: foto sendiri bisa dihapus **kapan aja** (server tetap: sampai H+30). 🗑 →
   **tanpa Dialog**: foto disembunyikan di HP (nggak dihitung di "Foto saya · n" & batas 20) + `Toast undo`
   5 dtk (Trash + "Foto dihapus dari kolase" + "Batalkan", dock lebar penuh − 20, radius 12). Batalkan →
@@ -422,8 +421,13 @@ Keputusan 24 Okt (rekomendasi atas "Keputusan & asumsi" + "Temuan" di F5-deliver
     back HP/Esc/X menutup, fokus terkunci), simpan foto (blob disiapkan saat slide aktif), hapus
     foto sendiri → Dialog → `DELETE` → toast. T15d: CTA jadi secondary "Kembali" + copy disesuaikan.
 16. **Gambar 9:16** (`components/f5/kolaseCanvas`): canvas 1080×1920, warna token light (elemen
-    bantu `data-theme="light"`), font body, maks 12 foto filter aktif (foto full lewat proxy),
-    2 kolom (≤ 4) / 3 kolom, JPEG 0,9 `kolase-hmd.jpg`. Dibuat **sebelum** tap (sheet T15c dibuka /
+    bantu `data-theme="light"`), font body, JPEG 0,9 `kolase-hmd.jpg`. (30 Okt) **Kolase dinding acak**
+    (`kolaseWall`, lib/kolase): bidang dibelah acak sampai = jumlah foto filter aktif (maks `KOLASE_MAX` 80,
+    lebih → diambil acak), sebagian foto di kertas putih + miring kecil, label "potara · HMD" di pita bawah;
+    sel ≤ 300 px pakai thumbnail. Seed → tombol "Acak" di T15c. **T15p Unduh foto**: tombol sm di header T15
+    → mode pilih (semua terpilih, `PhotoPin selected`, "Pilih semua/Kosongkan"), "Unduh {n} foto" = tiap foto
+    file sendiri `{nn}-{nama}-{sesi}.jpg` (bukan ZIP): Android/desktop download berurutan, iPhone tap kedua
+    "Simpan {n} foto ke HP" = satu share sheet, webview IG/FB → toast buka di Safari/Chrome. Dibuat **sebelum** tap (sheet T15c dibuka /
     1,5 dtk setelah T15 tenang) supaya `navigator.share` tetap dalam gesture. Pratinjau T15c =
     gambar hasil itu sendiri. Simpan: iOS → share sheet, Android/desktop → download, webview IG/FB
     → gambar layar penuh (data: URL) + toast "Tekan lama gambarnya buat simpan". Batal share = diam.
@@ -625,6 +629,8 @@ Keputusan 25 Okt (prompt N1 + default "Keputusan & asumsi"/"Temuan" N1-deliverab
 8b. (28 Okt) Sheet Tanya tamu: riwayat "Pertanyaan kamu · n" di bawah Kirim (`myQuestions`, semua pertanyaan
    tamu itu, terbaru dulu, Badge "Udah dijawab"/"Belum dijawab" dari P10, realtime lewat LiveRefresh);
    yang baru terkirim ditampilkan dari respons POST sampai data server masuk. Ganti kartu Terkirim BT09.
+8c. (30 Okt) Sheet Tanya juga menampilkan **"Dari tamu lain · n"**: pertanyaan tamu lain di talkshow yang jalan
+   (`otherQuestions`: teks, nama tampil P10, jam, dijawab — tanpa guestId), terbaru dulu, realtime.
 9. Belum: sembunyikan pertanyaan iseng (T8); BP02p nggak ada di /dev/states (cek lewat BP02 interaktif).
 
 ## Aturan N3 di kode

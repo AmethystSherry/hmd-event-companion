@@ -375,12 +375,10 @@ describe("foto kolase (N4)", () => {
     expect(store.addPhoto(photo(a.id, 3)).photo.sessionId).toBe("s01");
   });
 
-  it("maksimal 20 foto per tamu; foto yang dihapus nggak dihitung", () => {
+  it("tanpa batas foto per tamu (feedback 30 Okt)", () => {
     const { store, a } = withGuests();
-    for (let i = 0; i < 20; i++) store.addPhoto(photo(a.id, i));
-    expect(() => store.addPhoto(photo(a.id, 99))).toThrow(StoreError);
-    expect(store.deletePhoto(a.id, id(0), at("14:00"))).toBe(true);
-    expect(store.addPhoto(photo(a.id, 99)).created).toBe(true);
+    for (let i = 0; i < 40; i++) store.addPhoto(photo(a.id, i));
+    expect(store.photoSummary(HMD_ID, a.id).mine).toBe(40);
   });
 
   it("ringkasan BT07: foto tamu lain, 4 terbaru, foto sendiri nggak masuk strip", () => {

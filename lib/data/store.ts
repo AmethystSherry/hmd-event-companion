@@ -4,7 +4,6 @@ import { eventStarted } from "./eventState";
 import { cardOf, sameCard } from "../card";
 import { MAX_IMPROVE, MAX_WISH, summaryDue } from "../feedback";
 import { toMinutes } from "../format";
-import { MAX_PHOTOS_PER_GUEST } from "../photo";
 import { MAX_QUESTION } from "../questions";
 import { backfillSessionInfo, sessionShort } from "./sessionInfo";
 import type {
@@ -41,7 +40,6 @@ export class StoreError extends Error {
       | "csv-sudah-diunggah"
       | "ig-dipakai"
       | "foto-tidak-ada"
-      | "foto-penuh"
       | "foto-dihapus"
       | "acara-ditutup"
       | "sesi-belum-selesai"
@@ -97,8 +95,6 @@ export type PhotoInput = {
   height: number;
   bytes: number;
 };
-
-export { MAX_PHOTOS_PER_GUEST } from "../photo";
 
 // Satu operasi check-in dari HP panitia: opId acak dibuat di HP (dipakai ulang saat kirim ulang).
 export type CheckInOp = { opId: string; method: CheckInMethod; by: string; at: string };
@@ -825,9 +821,6 @@ export function createStore(
       }
       if (event(g.eventId).mode === "closed") {
         throw new StoreError("acara-ditutup", "Acaranya udah ditutup");
-      }
-      if (photosOf(g.eventId).filter((p) => p.guestId === g.id).length >= MAX_PHOTOS_PER_GUEST) {
-        throw new StoreError("foto-penuh", `Maksimal ${MAX_PHOTOS_PER_GUEST} foto per tamu`);
       }
       const photo: Photo = {
         id: input.id,

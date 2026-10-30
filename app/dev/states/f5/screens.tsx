@@ -265,6 +265,13 @@ export const SCREENS: ScreenDef[] = [
     render: () => kolase(PHOTOS, { sheet: true }),
   },
   {
+    code: "T15p",
+    name: "Pilih & unduh foto",
+    kind: "Kasus lain",
+    lane: "Tamu",
+    render: () => kolase(PHOTOS, { picking: true }),
+  },
+  {
     code: "T15d",
     name: "Kolase kosong",
     kind: "Kasus lain",

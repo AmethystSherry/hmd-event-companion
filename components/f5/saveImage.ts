@@ -36,6 +36,39 @@ export async function shareFile(file: File, title: string): Promise<SaveOutcome>
 export async function saveFile(file: File, title: string): Promise<SaveOutcome> {
   if (isInAppBrowser(navigator.userAgent)) return "fallback";
   if (isIOS()) return shareFile(file, title);
+  download(file);
+  return "downloaded";
+}
+
+// T15 "Unduh foto" (feedback 30 Okt): banyak foto sekaligus, tiap foto file sendiri (tanpa ZIP).
+// iPhone → satu share sheet berisi semua foto ("Simpan N Gambar" masuk ke Foto); lainnya → download
+// berurutan (Chrome Android sekali nanya "izinkan unduh banyak file").
+export function canShareFiles(files: File[]): boolean {
+  try {
+    return typeof navigator.share === "function" && !!navigator.canShare?.({ files });
+  } catch {
+    return false;
+  }
+}
+
+export async function shareFiles(files: File[], title: string): Promise<SaveOutcome> {
+  if (isInAppBrowser(navigator.userAgent) || !canShareFiles(files)) return "fallback";
+  try {
+    await navigator.share({ files, title });
+    return "shared";
+  } catch (err) {
+    return (err as Error).name === "AbortError" ? "cancelled" : "fallback";
+  }
+}
+
+export async function downloadFiles(files: File[]): Promise<void> {
+  for (const [i, file] of files.entries()) {
+    if (i) await new Promise((r) => setTimeout(r, 350)); // browser menolak klik download beruntun
+    download(file);
+  }
+}
+
+function download(file: File) {
   const url = URL.createObjectURL(file);
   const a = document.createElement("a");
   a.href = url;
@@ -44,5 +77,4 @@ export async function saveFile(file: File, title: string): Promise<SaveOutcome> 
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 30_000);
-  return "downloaded";
 }

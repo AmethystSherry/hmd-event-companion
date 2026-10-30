@@ -3,6 +3,7 @@ import type { Question } from "./data/types";
 import {
   displayNames,
   myQuestions,
+  otherQuestions,
   parseQuestionBody,
   questionsView,
   talkshowFor,
@@ -121,6 +122,33 @@ describe("myQuestions", () => {
     expect(myQuestions(list, "g1")).toEqual([
       { id: "c", text: "Tanya c", time: "14.10", answered: true },
       { id: "a", text: "Tanya a", time: "14.05", answered: false },
+    ]);
+  });
+
+  it("otherQuestions: punya tamu lain saja, nama tampil, tanpa guestId", () => {
+    const list = [q("a", "g1", "14:05"), q("b", "g2", "14:06"), q("c", "g3", "14:10", t("14:20"))];
+    const guests = [
+      { id: "g1", name: "Rara Putri" },
+      { id: "g2", name: "Sekar Ayu" },
+      { id: "g3", name: "Sekar Wulan" },
+    ];
+    expect(otherQuestions(list, guests, "g1")).toEqual([
+      {
+        id: "c",
+        text: "Tanya c",
+        time: "14.10",
+        answered: true,
+        name: "Sekar W.",
+        sessionId: "s02",
+      },
+      {
+        id: "b",
+        text: "Tanya b",
+        time: "14.06",
+        answered: false,
+        name: "Sekar A.",
+        sessionId: "s02",
+      },
     ]);
   });
 });

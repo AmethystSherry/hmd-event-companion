@@ -118,3 +118,27 @@
 .frame .open {
   border-radius: 2px;
 }
+
+/* T15 mode pilih (unduh foto): lingkaran cek pojok kanan atas; yang nggak dipilih memudar. */
+.check {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 2px solid var(--card);
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.18);
+  box-shadow: var(--shadow-tile);
+  color: var(--card);
+}
+
+.checked {
+  background: var(--accent);
+}
+
+.unpicked .photo {
+  opacity: 0.55;
+}
