@@ -145,7 +145,7 @@ export const SCREENS: ScreenDef[] = [
   },
   {
     code: "T02",
-    name: "Konfirmasi hadir (WA wajib, pekerjaan & minat opsional)",
+    name: "Konfirmasi hadir (WA, pekerjaan & minat opsional)",
     lane: "Tamu",
     kind: "Utama",
     render: () => <ConfirmForm backHref="/dev/states/f1/T01" doneHref="#" initial={rara} />,
@@ -475,7 +475,7 @@ export const SCREENS: ScreenDef[] = [
   },
   {
     code: "P04b",
-    name: "Pengingat H-1 · Kirim WA per tamu",
+    name: "Pengingat H-1 · Kirim WA / DM IG per tamu",
     lane: "Panitia",
     kind: "Utama",
     render: () =>
@@ -484,6 +484,8 @@ export const SCREENS: ScreenDef[] = [
         demoGuestView((gs) => {
           gs[2].reminderSentAt = DEMO_NOW;
           gs[5].reminderSentAt = DEMO_NOW;
+          const noWa = gs.find((g, i) => i > 5 && g.rsvp === "hadir");
+          if (noWa) noWa.wa = null; // tamu nggak isi WA → tombol DM IG
         }),
       ),
   },

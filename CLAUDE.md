@@ -230,6 +230,8 @@ next.config.ts            header X-Robots-Tag noindex, allowedDevOrigins (HP di 
 - ✈ salin template + buka `ig.me/m/{ig}`; balik ke tab (visibilitychange/focus) → Diundang + toast
   Batalkan 5 dtk. **P04b pengingat H-1 manual satu-satu**: "Kirim WA" per baris → `wa.me` + link
   `?dari=wa`; balik ke tab → `reminderSentAt` → Badge "Terkirim" (tanpa kirim massal / kirim ulang).
+  (30 Okt) **WA opsional di T02** (diisi = format dicek; Hadir dengan kolom kosong = `wa` null). Tamu tanpa WA →
+  tombol "DM IG" di P04b: pesan pengingat disalin + `ig.me/m/{ig}?text=`, baris menampilkan @ig; tandai sama.
 - **Sesi PE04a/PE04b** (`lib/sessionForm`): Nama · Jam + Durasi · Ruang · Tipe · Talkshow: Topik,
   Pembicara, IG pembicara (`speaker {name, ig, label}`, label lama tetap / "Guest star") · Info: hint
   "nggak ada kolom Tanya" · Deskripsi (≤ 140) · PIC. Ganti tipe cuma menyembunyikan; simpan sebagai

@@ -129,13 +129,13 @@ export function ConfirmForm({
           error={shown("ig")}
         />
         <Field
-          label="Nomor WhatsApp"
+          label="Nomor WhatsApp (opsional)"
           value={v.wa}
           type="tel"
           inputMode="tel"
           autoComplete="tel"
           placeholder="08xx xxxx xxxx"
-          hint="Wajib. Buat kirim pengingat H-1 lewat WA."
+          hint="Buat pengingat H-1 lewat WA. Kosong = diingetin lewat DM IG."
           onChange={(e) => set("wa", e.target.value)}
           onBlur={() => touch("wa")}
           error={shown("wa")}

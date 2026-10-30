@@ -19,7 +19,8 @@ export type ConfirmResult =
 
 export type ConfirmErrors = Partial<Record<"name" | "ig" | "wa" | "follow", string>>;
 
-// Validasi T02c — sama dengan server (actions.ts). WA wajib untuk Hadir (pengingat H-1).
+// Validasi T02c — sama dengan server (actions.ts). WA opsional (30 Okt): kosong → pengingat H-1
+// lewat DM IG; diisi → formatnya tetap dicek.
 export function validateConfirm(
   v: Pick<ConfirmInput, "name" | "ig" | "wa" | "follow">,
 ): ConfirmErrors {
@@ -29,8 +30,7 @@ export function validateConfirm(
   if (!v.name.trim()) e.name = "Nama wajib diisi.";
   if (!ig) e.ig = "Instagram wajib diisi, biar teman gampang nyapa kamu.";
   else if (!isValidIg(ig)) e.ig = "Username IG-nya kayaknya kurang pas.";
-  if (!wa) e.wa = "Nomor WhatsApp wajib diisi, buat kirim pengingat H-1.";
-  else if (!isValidWa(wa)) e.wa = "Nomor WA-nya kurang pas, contoh 0812 3456 7890.";
+  if (wa && !isValidWa(wa)) e.wa = "Nomor WA-nya kurang pas, contoh 0812 3456 7890.";
   if (!v.follow) e.follow = "Wajib — follow dulu ya, ini syarat hadir";
   return e;
 }

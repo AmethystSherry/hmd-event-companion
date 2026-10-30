@@ -12,7 +12,7 @@ import {
 import { guestFromToken } from "@/lib/server/access";
 import { FAREWELL_MAX } from "@/lib/confirm";
 
-// T02 → simpan jawaban. Hadir: validasi lengkap T02c (IG, WA wajib, follow). Nggak bisa: cukup nama.
+// T02 → simpan jawaban. Hadir: validasi lengkap T02c (IG, follow; WA opsional). Nggak bisa: cukup nama.
 // Jawaban langsung masuk ke P04 panitia (store memberi tahu SSE).
 export async function submitConfirm(token: string, input: ConfirmInput): Promise<ConfirmResult> {
   const guest = await guestFromToken(token);
@@ -37,7 +37,8 @@ export async function submitConfirm(token: string, input: ConfirmInput): Promise
         rsvp: input.rsvp === "hadir" ? "hadir" : "nggak",
         name,
         ig,
-        wa: wa ?? guest.wa,
+        // Hadir: kolom WA dikosongkan = tamu nggak mau di-WA (pengingat lewat DM IG).
+        wa: input.rsvp === "hadir" ? wa : (wa ?? guest.wa),
         followConfirmed: !!input.follow,
         ...(input.rsvp === "hadir" && {
           job: optional(input.job, JOB_MAX),

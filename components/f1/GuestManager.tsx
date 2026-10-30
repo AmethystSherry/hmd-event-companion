@@ -12,6 +12,7 @@ import {
   PencilSimple,
   Trash,
   UserPlus,
+  InstagramLogo,
   WhatsappLogo,
 } from "@/components/icons";
 import {
@@ -181,11 +182,14 @@ export function GuestManager({
     guestsRef.current = guests;
   });
 
-  const openWa = (g: GuestRowData) => {
-    if (!actions || !g.wa) return;
-    sessionStorage.setItem(PENDING_KEY, JSON.stringify({ kind: "wa", id: g.id }));
+  // P04b: tamu dengan WA → wa.me (pesan terisi); tanpa WA → DM IG (pesan disalin juga, karena
+  // ig.me nggak selalu mengisi teks). Balik ke tab = Terkirim.
+  const remind = (g: GuestRowData) => {
     const msg = fillTemplate(REMINDER_TEMPLATE, { nama: firstName(g.name), link: g.reminderLink });
-    window.open(waLink(g.wa, msg), "_blank", "noopener");
+    if (!g.wa) void copyText(msg);
+    if (!actions) return;
+    sessionStorage.setItem(PENDING_KEY, JSON.stringify({ kind: "wa", id: g.id }));
+    window.open(g.wa ? waLink(g.wa, msg) : igDmUrl(g.ig, msg), "_blank", "noopener");
   };
 
   // P12: buka WA makasih; balik ke tab = Terkirim (sama pola pengingat, tanpa kirim ulang).
@@ -381,9 +385,7 @@ export function GuestManager({
             </span>
             <div className={styles.grow}>
               <p className="t-body-emph">{hadir.length} tamu yang konfirmasi hadir</p>
-              <p className="t-label c-label-2">
-                Semua lewat WhatsApp · nomor diisi tamu pas konfirmasi
-              </p>
+              <p className="t-label c-label-2">Lewat WhatsApp · tamu tanpa nomor WA lewat DM IG</p>
             </div>
             <span className={styles.checkCircle}>
               <Check size={16} />
@@ -401,18 +403,17 @@ export function GuestManager({
                 <Avatar name={g.name} />
                 <div className={styles.guestMain}>
                   <p className="t-body-emph">{g.name}</p>
-                  {g.waDisplay && <p className="t-label c-label-2">{g.waDisplay}</p>}
+                  <p className="t-label c-label-2">{g.waDisplay || `@${g.ig}`}</p>
                 </div>
                 {g.reminderSent ? (
                   <Badge tone="success">Terkirim</Badge>
-                ) : (
-                  <Button
-                    size="sm"
-                    icon={<WhatsappLogo />}
-                    disabled={!g.wa}
-                    onClick={() => openWa(g)}
-                  >
+                ) : g.wa ? (
+                  <Button size="sm" icon={<WhatsappLogo />} onClick={() => remind(g)}>
                     Kirim WA
+                  </Button>
+                ) : (
+                  <Button size="sm" icon={<InstagramLogo />} onClick={() => remind(g)}>
+                    DM IG
                   </Button>
                 )}
               </div>
