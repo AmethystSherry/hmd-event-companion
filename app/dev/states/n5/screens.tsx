@@ -1,16 +1,17 @@
 import type { ComponentProps, ReactNode } from "react";
 import { AcaraScreen } from "@/components/f4/AcaraScreen";
 import { KenalanApp, type KenalanPreview } from "@/components/n5/KenalanApp";
+import { PapanKenalanScreen } from "@/components/n5/PapanKenalan";
 import { TicketQr } from "@/components/TicketQr";
 import { acaraView } from "@/lib/acara";
 import { cardOf } from "@/lib/card";
 import { HMD_ID } from "@/lib/data/seed";
 import type { DataStore } from "@/lib/data/store";
 import { firstName } from "@/lib/format";
-import { kenalanIntro, kenalanView } from "@/lib/kenalan";
+import { kenalanBoard, kenalanIntro, kenalanView } from "@/lib/kenalan";
 import { toGuestPhotos } from "@/lib/photo";
 import { signKenalan } from "@/lib/server/crypto";
-import { demoStore, jeda1 } from "../f4/screens";
+import { demoStore, jeda1, kontrol } from "../f4/screens";
 import { kenalanDummy } from "./data";
 
 // Registri layar N5 (N5-deliverables.md "Daftar layar", Figma section 5305:9340) untuk
@@ -22,7 +23,7 @@ export type ScreenDef = {
   code: string;
   name: string;
   kind: "Utama" | "Kasus" | "Aksi" | "Gagal";
-  lane: "Tamu";
+  lane: "Tamu" | "Panitia";
   render: () => ReactNode;
 };
 
@@ -108,6 +109,18 @@ function kenalanApp(tab: "scan" | "qr", preview: KenalanPreview = {}) {
       initialTab={tab}
       fromTamu
       preview={preview}
+    />
+  );
+}
+
+function papan(opts: Opts, confirm?: boolean) {
+  const { store } = demo(opts);
+  return (
+    <PapanKenalanScreen
+      eventId={HMD_ID}
+      board={kenalanBoard(store, HMD_ID)}
+      phaseLabel="Hari-H · Live"
+      initialConfirm={confirm}
     />
   );
 }
@@ -214,5 +227,43 @@ export const SCREENS: ScreenDef[] = [
     kind: "Kasus",
     lane: "Tamu",
     render: () => acara({ winner: true, me: "dimaspr" }, { sheet: "pemenang" }),
+  },
+  {
+    code: "BP02k",
+    name: "Kontrol acara · banner Peringkat",
+    kind: "Utama",
+    lane: "Panitia",
+    render: () =>
+      kontrol((st) => st.startSession(HMD_ID, "s01", at("13:00:00")), "13:12:34", {
+        kenalan: { pairs: 23 },
+      }),
+  },
+  {
+    code: "P14",
+    name: "Papan kenalan",
+    kind: "Utama",
+    lane: "Panitia",
+    render: () => papan({}),
+  },
+  {
+    code: "P14b",
+    name: "Umumkan pemenang (dialog)",
+    kind: "Aksi",
+    lane: "Panitia",
+    render: () => papan({}, true),
+  },
+  {
+    code: "P14-kosong",
+    name: "Papan kosong (K12)",
+    kind: "Kasus",
+    lane: "Panitia",
+    render: () => papan({ intros: false }),
+  },
+  {
+    code: "P14-diumumin",
+    name: "Setelah diumumin (K12)",
+    kind: "Kasus",
+    lane: "Panitia",
+    render: () => papan({ winner: true }),
   },
 ];

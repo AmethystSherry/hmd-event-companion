@@ -68,6 +68,10 @@ Web app mobile untuk House Moving Day Potara Studio (Minggu 8 Nov 2026, 13.00–
   (`cardOf`, lib/card): `Guest.card` atau turunan isian T02. Sheet T11/T11e di `acara/` (`?sheet=kartu`,
   `/kartu` = redirect), toast gelap T11s, BT05b empty state, `POST /api/t/[token]/kartu`. Lihat "Aturan N3
   di kode". Menunggu review.
+- **N5 · Kenalan & hadiah (5 Nov)**: Figma section `5305:9340`, `N5-deliverables.md` v1. QR kenalan
+  bertanda tangan → selfie berdua (terpisah dari foto kolase) → papan kenalan → panitia umumkan pemenang
+  (BTk5 di semua HP). K1–K18 + T1–T8 default, plus T3 "Scan QR lain", T9, T10. Lihat "Aturan N5 di kode".
+  Menunggu review.
 
 ## Sumber kebenaran
 - **Figma** `xYZlQ3GjRHHtYcod8rTIZJ`, page DOKSLI SAPI → section "Screen Flow · All Case" → frame
@@ -100,12 +104,12 @@ app/
                           acara/ (F4 Sesi/Jeda + sheet) · foto/ (N4 BT06–BT07c) ·
                           selesai/ (F5 BT12) · buku-tamu/ (T14*) · kolase/ (T15*, T14d) ·
                           galeri/ (→ acara?sheet=galeri) · tanya/ (→ acara?sheet=tanya) ·
-                          kartu/ (→ acara?sheet=kartu, N3)
+                          kartu/ (→ acara?sheet=kartu, N3) · kenalan/ (N5 BTk1/BTk2/BTk3)
   panitia/                P01 + PE01/PE02 · actions.ts (semua server action panitia)
     event/[id]/           PE03/PE03b (+ sheet PE03e/PE03h) · rundown/ (PE04k/PE04/PE04a/PE04b/
                           PE04s) · tamu/ (P04k/P04a/P04c/P04i/P04/P04b/d/e/f/g/h/s) · kontrol/ (BP02/BP03/BP01b +
                           F5 BP04/BP04b) · rekap/ (F5 P11/P11b/P11c/P11d) ·
-                          foto/ (F3 v3 P13 Foto masuk) · tanya/ (N1 P10/P10c) ·
+                          foto/ (F3 v3 P13 Foto masuk) · tanya/ (N1 P10/P10c) · kenalan/ (N5 P14/P14b) ·
                           scan/ (P05/P05b/P06/P06b/P06c) · scan/cari/ (P07/P07b/P07c)
   api/live/               SSE: kirim `rev` store tiap ada perubahan (tanpa data tamu)
   api/panitia/            event/[id]/manifest (GET daftar pintu) · checkin (POST antrean op) ·
@@ -115,6 +119,7 @@ app/
   api/t/[token]/buku-tamu POST isian buku tamu (F5 · T14)
   api/t/[token]/tanya     POST pertanyaan talkshow (N1 · BT08)
   api/t/[token]/kartu     POST kartu kenalan (N3 · T11)
+  api/t/[token]/kenalan   POST kenalan + selfie (N5 · BTk3) · cek/ POST cek kode QR · [id] GET selfie (pasangan)
   dev/                    daftar alat dev (dulu beranda `/`): link design system + semua /dev/states
   dev/ui/                 preview design system (light & dark)
   dev/states/f1/          37 layar F1 dengan data contoh + alat uji (link tamu, CSV dummy, reset)
@@ -127,6 +132,8 @@ app/
                           Talkshow, 23 pertanyaan dummy, hapus semua, simulasi gagal kirim)
   dev/states/n3/          8 layar N3 (BT03/BT05/BT05b/BT05c/T11/T11e/T11s/T11f) + alat uji (kartu dummy, kosongkan
                           kartu Rara, cuma 2 yang datang, reset kartu)
+  dev/states/n5/          19 layar N5 (tamu BT03h–BTk5 + panitia BP02k/P14/P14b) + alat uji (23 kenalan dummy,
+                          HP lain scan QR Rara, umumkan pemenang, reset kenalan) + link layar asli
   dev/states/f5/          17 layar F5 (tamu + panitia) + alat uji (foto dummy, selesaikan semua sesi, tutup/buka
                           lagi, 15 feedback dummy, ringkasan sekarang, reset feedback, loncat ke 8 Des,
                           link tamu udah/belum masuk)
@@ -142,6 +149,8 @@ components/n4/            KolaseApp (kamera BT06/BT06b) · useCamera · capture 
                           usePhotoOutbox (kirim + antrean) · NempelSheet (BT07/b/c/e) · GaleriSheet (BT07d)
 components/n1/            TanyaSheet (BT08/BT09/BT08b) · Pertanyaan (P10/P10c)
 components/n3/            KartuSheet (T11/T11e + gagal simpan) · InterestChips (chip minat + tambah di tempat)
+components/n5/            KenalanApp (BTk1/BTk2/BTk3) · Sheets (KenalanSheet BTk4, PemenangSheet BTk5) ·
+                          RankCard (BT05k) · PapanKenalan (P14/P14b)
 components/f3/            FotoMasuk (P13: masonry bingkai, filter sesi, hapus + Dialog, unduh ZIP)
 components/f4/            AcaraScreen (BT20–24/BT03/S01, sheet lewat ?sheet=) · Sheets (BT22/BT21p/BT04/BT05) ·
 components/f5/            Selesai (BT12 v2 + belum masuk, sheet T14) · BukuTamu (BukuTamuSheet T14/b/c) · KolaseKulkas (T15/T15c/
@@ -159,6 +168,7 @@ lib/server/               env, HMAC (QR & cookie sesi), rate-limit PIN, akses cr
                           rateLimit (in-memory per kunci, buku tamu & tanya)
 lib/                      csv (+ CSV buku tamu) · feedback (aturan buku tamu, tanggal hapus) ·
                           card (N3: cardOf, normalizeCard, splitInterests) ·
+                          kenalan (N5: peringkat, kenalanView/Board/Intro, pesan error, URL selfie) ·
                           questions (N1: validasi, talkshowFor, questionsView, nama tampil) ·
                           kolase (masonry, tata letak 9:16, filter, foto → KolasePhoto) ·
                           format · invite (+ rundownTiles) · confirm · ics (+ googleCalendarUrl) ·
@@ -674,6 +684,59 @@ Keputusan 26 Okt (prompt N3 + usulan "Temuan" N3-deliverables T1–T13):
    sheet ikut isi. Cari tetap nama/@ig (T10). GuestCard tinggi tetap 228.
 10. Dev: `/dev/states/n3` (alat uji pindah dari f4; f4 link ke sini). Store dev `__hmdStoreN3`.
 
+## Aturan N5 di kode
+Keputusan 5 Nov (default K1–K18 N5-deliverables + usulan T3/T9/T10, disetujui). Kode pakai kata
+`kenalan`/`introduction` (beda dengan kartu N3).
+1. **QR kenalan** (K1): `k1.{guestId}.{hmac("kenalan:"+id) 12}` (`signKenalan`/`verifyKenalan` di lib/server/crypto,
+   `kenalanCode` di lib/server/kenalan, TICKET_HMAC_SECRET). Bukan token & bukan QR tiket: QR tiket → `qr-tiket`,
+   teks lain → `qr-asing`. QR dirender server (`TicketQr`) di BTk2.
+2. **Data**: `Introduction {id, eventId, a, b (terurut), scannerId, createdAt}` di `StoreData.introductions?`,
+   `Event.kenalanWinner? {guestId, count, announcedAt, by}`. Store: `checkIntroduction` (cek tanpa nulis),
+   `addIntroduction` (idempoten per id; pasangan a-b = b-a → `udah-kenalan` + meta id/jam), `announceKenalanWinner`
+   (#1 papan, sekali jalan → false; kosong → `papan-kosong`), dev `seedIntroductions`/`resetKenalan`. Urutan cek:
+   data-dihapus · acara-ditutup · papan-dikunci · belum-mulai (`eventStarted`) · pemindai belum check-in ·
+   qr-sendiri · pemilik belum check-in · udah-kenalan. `StoreError` punya `meta` opsional. Hapus tamu/event & H+30
+   ikut menghapus kenalan (purge mengembalikan `kenalan/{id}` buat hapus file). Store dev `__hmdStoreN5`.
+3. **Peringkat** (lib/kenalan `kenalanRanking`): +1 buat dua-duanya; jumlah turun, seri → kenalan terakhir lebih awal
+   (duluan sampai) di atas, lalu nama → nomor unik. `kenalanView` (count, rank, of = tamu check-in, top, kenal
+   {id → jam}, latest, winner + isMe, open) · `kenalanBoard` (P14: rows, pairs, joined = ≥ 1 kenalan, tie) ·
+   `kenalanIntro` (BTk4, "kenalan ke-n"). Tanpa WA/token.
+4. **Selfie** di storage foto dengan id ber-folder `kenalan/{id}` (`kenalanFileId`) → `{eventId}/kenalan/{id}.jpg` +
+   `_t`, **bukan** `Photo`: nggak ikut Galeri/PhotoStack/T15/P13/ZIP/photoCount. `GET /api/t/[token]/kenalan/[id]
+   ?v=thumb` cuma buat a/b (lainnya 404); `photoResponse` terima `{eventId, id}`.
+5. **API** (pola N4): `POST …/kenalan/cek {code}` → `{ok, friend}` / `{ok:false, error, message}` (rate 60/mnt).
+   `POST …/kenalan` multipart `{id, code, photo, thumb}` (batas & JPEG N4, rate 20/mnt K18): id udah tercatat =
+   sukses tanpa nulis; cek dulu → file → `mutateStore(addIntroduction)`; kalah balapan → file dihapus. Pesan error dari
+   `kenalanMessage` (lib/kenalan; copy usulan ditandai TODO).
+6. **Tamu · banner**: `HadiahFloat` (components/ui) di `AcaraScreen` kalau udah check-in & (papan kebuka / ada
+   pemenang): Gift "Hadiah", badge = kenalanku, awal kanan y300, batas bawah = atas panel (`avoid`), posisi di
+   localStorage `hmd-hadiah-posisi`; tap → BT05k (`?sheet=tamu`) atau BTk5 kalau udah ada pemenang; disembunyikan saat
+   sheet kebuka. Drag: capture sejak pointerdown, > 6 px = geser, snap kiri/kanan margin 16, reduced motion tanpa
+   animasi, ukuran layar dibaca setelah mount.
+7. **BT05k**: `RankCard` di TamuSheet (disembunyikan saat cari; K14 "–" + "Belum ada kenalan"); `GuestCard` prop
+   `kenalan` → "Kenalan" (→ `/kenalan?dari=tamu`, redup kalau tamu belum datang / papan tutup) / "Kenal" (toast K6
+   gelap) + tombol ikon IG. Tanpa prop = "Buka IG" lama.
+8. **/t/[token]/kenalan** (`KenalanApp`): guard check-in · closed → selesai · papan nggak kebuka → acara. Tab
+   `Segmented look="tabs"` (HMD/Tabs · Kenalan), `?tab=qr` replaceState. Scan = `Viewfinder` F2 (prop hint/label/
+   className/children) → `cek` (QR sama diabaikan 2,5 dtk) → error TopToast. K8: kamera ditolak → "Coba lagi" +
+   "Pakai kamera HP" (`QrScanner.scanImage`). BTk3 = kamera depan N4 (`useCamera`/`captureVideo`, kelas n4), tanpa
+   pratinjau (K4): jepret → kirim ≤ 10 dtk → `acara?sheet=kenalan&id=`; 5xx/offline/timeout → selfie tetap + "Coba
+   lagi" (id sama) + TopToast di bawah toolbar; 4xx → balik ke scan + toast. Back: `dari=tamu` → history.back. BTk2:
+   `LiveRefresh` 2 dtk, `latest` baru (bukan hasil scan sendiri) → replace ke BTk4.
+9. **BTk4/BTk5** (components/n5/Sheets, `?sheet=kenalan&id=` / `?sheet=pemenang`): BTk4 dari server (`kenalanIntro`)
+   atau `latest`; tombol "Balik ke acara" + "Scan QR lain" (T3). T10: `latest` dari HP lain yang belum dilihat → BTk4
+   kebuka sendiri (localStorage `hmd-kenalan-dilihat:{token}`). BTk5 sekali per HP (`hmd-kenalan-pemenang:{token}` =
+   announcedAt), K11 versi pemenang. T9: BT12 juga menampilkan BTk5 sekali (sebelum buku tamu otomatis).
+10. **Panitia**: BP02k = `HadiahFloat` Trophy "Peringkat" (badge pasang, K15) di `KontrolScreen` prop `kenalan` (null
+   kalau belum mulai / ditutup), awal kanan y656, `bottom` 108 (di atas Scan tiket), → P14. **P14**
+   (`/panitia/event/[id]/kenalan`, `PapanKenalan`, LiveRefresh 2 dtk, pola P10): baris "{n}. {nama}" + "Terakhir
+   kenalan {jam}" + angka 28, #1 accent-soft; seri di #1 → caption (TODO copy). "Umumkan pemenang" → Dialog **P14b** →
+   server action `announceKenalanWinner(eventId, by)` (`AnnounceResult {changed, by, announcedAt}`); HP lain duluan →
+   TopToast "HP … udah umumin pemenang duluan." K12: kosong → HeroState + tombol redup; udah diumumin → Banner success
+   + tanpa tombol.
+11. Browser pane Claude yang tersembunyi = rAF diblokir → React baru hydrate setelah ada input; uji efek otomatis
+   (BTk5, banner) setelah tap.
+
 ## Design system (Clean v0.5)
 - Token: `app/tokens.css` — warna semantik light (utama) + dark (`prefers-color-scheme`, atau paksa
   dengan `data-theme="light|dark"` di `html` atau elemen mana pun), radius, spacing, shadow, motion,
@@ -781,4 +844,6 @@ menghapus data per orang di store lokal → balikin lewat `/dev/states/f1` Reset
       POST kartu, realtime — menunggu review
 - [x] F3 + F4 v3 (26 Okt) — Tiket acara geser, badge "Sedang …", BT03s, P13 Foto masuk (hapus panitia,
       unduh ZIP) — menunggu review
+- [x] N5 (5 Nov) — kenalan & hadiah: QR kenalan + selfie, BT03h/BT05k/BTk1–BTk5, BP02k/P14/P14b, realtime
+      pengumuman — menunggu review
 - [ ] N2, BT07d galeri — berikutnya (versi lama: tag `archive-pre-revisi`)

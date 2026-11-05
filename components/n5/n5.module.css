@@ -334,3 +334,56 @@
 .toastBelow.toastBelow {
   top: calc(env(safe-area-inset-top) + 64px);
 }
+
+/* ---- P14 · Papan kenalan (Figma 5305:10440): baris 68, #1 --accent-soft radius 12 ---- */
+.boardList {
+  display: flex;
+  flex-direction: column;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.boardRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 68px;
+  padding: 12px 0;
+  border-top: 1px solid var(--separator);
+}
+
+.boardRow:first-child {
+  border-top: 0;
+}
+
+.boardTop {
+  margin: 0 -12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+}
+
+.boardTop + .boardRow {
+  border-top: 0;
+}
+
+.boardText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.boardCount {
+  font-size: 28px;
+  line-height: 32px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  font-variant-numeric: tabular-nums;
+}
+
+.boardTop .boardCount {
+  color: var(--accent-text);
+}

@@ -14,24 +14,26 @@ export const metadata = { title: "N5 states · dev" };
 const TONE = { Utama: "neutral", Kasus: "crew", Aksi: "live", Gagal: "danger" } as const;
 
 // /dev/states/n5: daftar layar N5 Kenalan & hadiah (pratinjau data contoh) + alat uji papan.
-// Layar panitia BP02k/P14 menyusul (Prompt D).
+// Panitia: BP02k banner Peringkat, P14 Papan kenalan, P14b Umumkan.
 export default function N5States() {
   return (
     <Screen>
       <ScreenHeader eyebrow="Dev · Figma section N5 (5305:9340)" title="N5 · Kenalan & hadiah" />
-      <Card inset>
-        <div className={styles.head}>
-          <CardLabel>Tamu</CardLabel>
-        </div>
-        {SCREENS.map((s) => (
-          <Link key={s.code} href={`/dev/states/n5/${s.code}`} className={styles.row}>
-            <span className={`t-label-emph tabular ${styles.code}`}>{s.code}</span>
-            <span className="t-body">{s.name}</span>
-            <Badge tone={TONE[s.kind]}>{s.kind}</Badge>
-            <CaretRight size={14} className="c-label-3" />
-          </Link>
-        ))}
-      </Card>
+      {(["Tamu", "Panitia"] as const).map((lane) => (
+        <Card inset key={lane}>
+          <div className={styles.head}>
+            <CardLabel>{lane}</CardLabel>
+          </div>
+          {SCREENS.filter((x) => x.lane === lane).map((x) => (
+            <Link key={x.code} href={`/dev/states/n5/${x.code}`} className={styles.row}>
+              <span className={`t-label-emph tabular ${styles.code}`}>{x.code}</span>
+              <span className="t-body">{x.name}</span>
+              <Badge tone={TONE[x.kind]}>{x.kind}</Badge>
+              <CaretRight size={14} className="c-label-3" />
+            </Link>
+          ))}
+        </Card>
+      ))}
       {process.env.NODE_ENV !== "production" ? (
         <Suspense>
           <DevTools />

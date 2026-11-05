@@ -3,7 +3,8 @@ import { Suspense } from "react";
 import { KontrolScreen } from "@/components/f2/Kontrol";
 import { LiveRefresh } from "@/components/LiveRefresh";
 import { Screen, Skeleton } from "@/components/ui";
-import { getStore } from "@/lib/data";
+import { eventStarted, getStore } from "@/lib/data";
+import { kenalanBoard } from "@/lib/kenalan";
 import { eventPhase } from "@/lib/format";
 import { questionsView, talkshowFor } from "@/lib/questions";
 import { rundownView } from "@/lib/rundown";
@@ -77,6 +78,9 @@ async function Kontrol({ params }: Pick<PageProps<"/panitia/event/[id]/kontrol">
           feedback: { respondents: recap.respondents, expected: recap.expected },
         }}
         close={closeEvent}
+        kenalan={
+          eventStarted(event) && !event.closedAt ? { pairs: kenalanBoard(store, id).pairs } : null
+        }
         state={{
           updatedAt: event.stateUpdatedAt ?? null,
           by: event.stateBy ?? null,

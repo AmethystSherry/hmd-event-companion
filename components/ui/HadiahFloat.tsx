@@ -56,6 +56,7 @@ export function HadiahFloat({
   initial = { side: "right", y: 300 },
   top = MARGIN,
   avoid,
+  bottom = MARGIN,
   onPress,
   className,
 }: {
@@ -67,6 +68,7 @@ export function HadiahFloat({
   initial?: Pos; // posisi awal Figma (x306 y300 → kanan, 300)
   top?: number; // batas atas (di bawah toolbar)
   avoid?: RefObject<HTMLElement | null>; // batas bawah = atas elemen ini − 8
+  bottom?: number; // tanpa `avoid`: ruang bawah layar yang nggak boleh ditutup (tombol bawah)
   onPress: () => void;
   className?: string;
 }) {
@@ -127,10 +129,10 @@ export function HadiahFloat({
 
   const clampY = useCallback(
     (y: number) => {
-      const max = Math.max(top, (floor ?? vh - MARGIN) - box.h);
+      const max = Math.max(top, (floor ?? vh - bottom) - box.h);
       return Math.min(Math.max(y, top), max);
     },
-    [box.h, top, floor, vh],
+    [box.h, top, floor, vh, bottom],
   );
 
   if (!vw) return null;

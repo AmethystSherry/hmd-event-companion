@@ -121,6 +121,7 @@ export function kontrol(
     confirm?: "finish" | "start";
     conflict?: string;
     questions?: { total: number; open: number };
+    kenalan?: { pairs: number }; // N5 · BP02k (/dev/states/n5)
   } = {},
 ) {
   const store = demoStore(steps);
@@ -145,6 +146,7 @@ export function kontrol(
             : undefined
       }
       initialConflict={opts.conflict}
+      kenalan={opts.kenalan}
     />
   );
 }

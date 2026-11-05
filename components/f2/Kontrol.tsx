@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import {
   BookOpen,
@@ -11,6 +12,7 @@ import {
   QrCode,
   Stop,
   Timer,
+  Trophy,
   Users,
 } from "@/components/icons";
 import { useServerNow } from "@/components/useServerNow";
@@ -19,6 +21,7 @@ import {
   Button,
   Card,
   Dialog,
+  HadiahFloat,
   IconButton,
   Screen,
   ScreenHeader,
@@ -93,6 +96,7 @@ export function KontrolScreen({
   initialCloseDialog,
   state,
   initialConflict,
+  kenalan,
 }: {
   event: Pick<Event, "id" | "name" | "date">;
   rundown: RundownView;
@@ -112,7 +116,11 @@ export function KontrolScreen({
   initialCloseDialog?: boolean;
   state?: KontrolState; // F3 BP02d
   initialConflict?: string; // pratinjau BP02d (/dev/states/f4)
+  // N5 · BP02k banner Peringkat (Trophy, badge = pasang kenalan, K15) → P14. null = event belum
+  // dimulai / acara ditutup (BP05).
+  kenalan?: { pairs: number } | null;
 }) {
+  const router = useRouter();
   const base = `/panitia/event/${event.id}`;
   const now = useServerNow(serverNow, { frozen });
   const [confirm, setConfirm] = useState<Confirm | null>(initialConfirm ?? null);
@@ -466,6 +474,20 @@ export function KontrolScreen({
         <TopToast key={conflict} icon={<Users size={20} />} title="Diubah oleh panitia lain">
           {conflict}
         </TopToast>
+      )}
+      {/* N5 · BP02k: kanan bawah di atas "Scan tiket" (Figma x308 y656), bisa digeser. */}
+      {kenalan && !closedAt && !confirm && !closeDialog && !detail && (
+        <HadiahFloat
+          icon={<Trophy />}
+          count={kenalan.pairs}
+          label="Peringkat"
+          ariaLabel={`Peringkat, ${kenalan.pairs} pasang kenalan`}
+          storageKey="hmd-peringkat-posisi"
+          initial={{ side: "right", y: 656 }}
+          top={24}
+          bottom={108}
+          onPress={() => router.push(`${base}/kenalan`)}
+        />
       )}
     </Screen>
   );
