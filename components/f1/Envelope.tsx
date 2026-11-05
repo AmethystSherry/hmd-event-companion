@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import { preload } from "react-dom";
 import { HandWaving } from "@/components/icons";
-import { ArtVideo, Button, Pill, playArtSound, Screen } from "@/components/ui";
+import { ArtVideo, Button, CollabMark, Pill, playArtSound, Screen } from "@/components/ui";
 import { ART_VIDEO } from "@/lib/artVideo";
 import { cx } from "@/lib/cx";
 import { firstName } from "@/lib/format";
@@ -116,6 +116,7 @@ export function EnvelopeScreen({
     <Screen bottom={<Button onClick={onOpen}>Buka undangan</Button>} className={styles.bleed}>
       <div className={styles.envStage}>
         <div className={styles.envText}>
+          <CollabMark size={32} className={styles.envCollab} />
           <p className="t-label c-label-2">Undangan pribadi · House Moving Day</p>
           <h1 className="t-card-title">Ada surat buat kamu, {firstName(guestName)}.</h1>
           <p className="t-body c-label-2">

@@ -18,6 +18,7 @@ import {
   Card,
   CardLabel,
   HeroState,
+  CollabMark,
   LogoMark,
   Screen,
   ScreenHeader,
@@ -85,8 +86,9 @@ export function InvitationScreen({
       </div>
       <section className={inv.paper} aria-labelledby="t01-title">
         <div className={inv.stamp} aria-label={`Nomor kunci ${keyNo}`}>
+          {/* Logo Potara × logo kolaborasi HMD */}
           <span className={inv.stampArt}>
-            <LogoMark size={22} title="" />
+            <CollabMark size={18} />
           </span>
           <span className={`t-caption ${inv.accentText}`}>No. {keyNo.replace("#", "")}</span>
         </div>

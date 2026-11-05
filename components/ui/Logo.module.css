@@ -1,0 +1,13 @@
+.collab {
+  display: inline-flex;
+  align-items: center;
+}
+
+.x {
+  line-height: 1;
+  color: var(--accent);
+}
+
+.partner {
+  display: block;
+}

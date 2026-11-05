@@ -18,7 +18,7 @@ export { HeroState } from "./HeroState";
 export { IconButton } from "./IconButton";
 export { IllustratedScreen } from "./IllustratedScreen";
 export { Avatar, ListRow } from "./ListRow";
-export { LogoMark } from "./Logo";
+export { CollabMark, LogoMark } from "./Logo";
 export { Masonry, PhotoPin } from "./Masonry";
 export { MyCard } from "./MyCard";
 export { NumberedRow } from "./NumberedRow";

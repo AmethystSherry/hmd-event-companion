@@ -158,6 +158,14 @@ main.bleed {
   text-align: center;
 }
 
+/* Logo Potara × kolaborasi di atas teks amplop (5 Nov): nggak menggeser teks/segel. */
+.envCollab {
+  position: absolute;
+  bottom: calc(100% + 16px);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
 .envText > p:last-child {
   max-width: 320px;
   margin-top: 2px;
@@ -212,7 +220,7 @@ main.bleed {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding-right: 72px;
+  padding-right: 80px; /* prangko Potara × kolaborasi */
 }
 
 .accentText {
@@ -227,9 +235,9 @@ main.bleed {
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  width: 58px;
+  min-width: 58px;
   height: 70px;
-  padding-top: 6px;
+  padding: 6px 4px 0;
   border: 1px dashed var(--accent);
   border-radius: 2px;
   background: var(--card);
@@ -240,8 +248,8 @@ main.bleed {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 46px;
   height: 40px;
+  padding: 0 4px;
   background: var(--accent-soft);
 }
 
