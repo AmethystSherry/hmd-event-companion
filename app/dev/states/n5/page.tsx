@@ -1,20 +1,37 @@
+import Link from "next/link";
 import { Suspense } from "react";
-import { ArrowCounterClockwise, Trophy, Users } from "@/components/icons";
+import { ArrowCounterClockwise, CaretRight, Trophy, Users } from "@/components/icons";
 import { Badge, Button, Card, CardLabel, Screen, ScreenHeader } from "@/components/ui";
 import { getStore } from "@/lib/data";
 import { HMD_ID } from "@/lib/data/seed";
 import { kenalanBoard } from "@/lib/kenalan";
 import styles from "../f1/states.module.css";
 import { devAnnounce, devResetKenalan, devScanRara, devSeedKenalan } from "./actions";
+import { SCREENS } from "./screens";
 
 export const metadata = { title: "N5 states · dev" };
 
-// /dev/states/n5: alat uji N5 Kenalan & hadiah (Prompt B: data & API). Daftar layar BT03h–BTk5,
-// BP02k, P14 menyusul bersama layarnya (Prompt C/D).
+const TONE = { Utama: "neutral", Kasus: "crew", Aksi: "live", Gagal: "danger" } as const;
+
+// /dev/states/n5: daftar layar N5 Kenalan & hadiah (pratinjau data contoh) + alat uji papan.
+// Layar panitia BP02k/P14 menyusul (Prompt D).
 export default function N5States() {
   return (
     <Screen>
       <ScreenHeader eyebrow="Dev · Figma section N5 (5305:9340)" title="N5 · Kenalan & hadiah" />
+      <Card inset>
+        <div className={styles.head}>
+          <CardLabel>Tamu</CardLabel>
+        </div>
+        {SCREENS.map((s) => (
+          <Link key={s.code} href={`/dev/states/n5/${s.code}`} className={styles.row}>
+            <span className={`t-label-emph tabular ${styles.code}`}>{s.code}</span>
+            <span className="t-body">{s.name}</span>
+            <Badge tone={TONE[s.kind]}>{s.kind}</Badge>
+            <CaretRight size={14} className="c-label-3" />
+          </Link>
+        ))}
+      </Card>
       {process.env.NODE_ENV !== "production" ? (
         <Suspense>
           <DevTools />
@@ -29,7 +46,11 @@ export default function N5States() {
 async function DevTools() {
   const store = await getStore();
   const board = kenalanBoard(store, HMD_ID);
-  const rara = store.listGuests(HMD_ID).find((g) => g.name.startsWith("Rara"));
+  const guests = store.listGuests(HMD_ID);
+  const rara = guests.find((g) => g.name.startsWith("Rara"));
+  const other = guests.find(
+    (g) => g.id !== rara?.id && store.ticketFor(g.id)?.status === "dipakai",
+  );
   return (
     <Card>
       <CardLabel>Papan kenalan (store lokal .data/)</CardLabel>
@@ -74,6 +95,22 @@ async function DevTools() {
             Reset kenalan
           </Button>
         </form>
+      </div>
+      <CardLabel>Link (buka di 2 tab / HP)</CardLabel>
+      <div className={styles.links}>
+        {[rara, other].map(
+          (g) =>
+            g && (
+              <span key={g.id} className={styles.links}>
+                <a href={`/t/${g.token}/acara`} target="_blank" className={styles.link}>
+                  Acara {g.name}
+                </a>
+                <a href={`/t/${g.token}/kenalan?tab=qr`} target="_blank" className={styles.link}>
+                  QR saya {g.name}
+                </a>
+              </span>
+            ),
+        )}
       </div>
     </Card>
   );

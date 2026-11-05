@@ -8,6 +8,7 @@ import { sessionShort } from "@/lib/data/sessionInfo";
 import { fromMinutes, toMinutes } from "@/lib/format";
 import { igProfileUrl, POTARA_IG } from "@/lib/invite";
 import { photoTone } from "@/lib/kolase";
+import { kenalanView } from "@/lib/kenalan";
 import { guestPhotoUrl } from "@/lib/photo";
 import { closedGuest } from "@/lib/server/feedback";
 
@@ -88,6 +89,7 @@ async function Done({
         sessions={sessions.map((x) => ({ id: x.id, title: sessionShort(x) }))}
         kolaseHref={`/t/${token}/kolase`}
         initialSheet={query.sheet === "buku-tamu"}
+        kenalan={kenalanView(store, guest.id)}
       />
       {live}
     </>

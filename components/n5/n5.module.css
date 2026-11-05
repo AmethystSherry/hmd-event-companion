@@ -1,0 +1,336 @@
+/* ---- N5 · BT05k kartu peringkat (Figma 5324:9823): accent, radius 22, padding 16 ---- */
+.rank {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  overflow: hidden;
+  border-radius: 22px;
+  background: var(--accent);
+  color: #ffffff; /* di atas oranye, sama di kedua mode */
+}
+
+.rankMotif {
+  position: absolute;
+  top: 22px;
+  left: 235px;
+  width: 132px;
+  height: 132px;
+  opacity: 0.12;
+  transform: rotate(12deg);
+  pointer-events: none;
+}
+
+.rankTop {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.rankNo {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 26px;
+  background: #ffffff;
+  color: #c94a00;
+  font-size: 28px;
+  line-height: 32px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+.rankText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  font-weight: 500;
+}
+
+.rankTitle {
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.rankSub {
+  font-size: 12px;
+  line-height: 16px;
+  opacity: 0.9;
+}
+
+.rankProgress {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.track {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.fill {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: #ffffff;
+  transition: width 400ms var(--ease-spring);
+}
+
+.rankMeta {
+  display: flex;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+}
+
+.rankMeta > :first-child {
+  flex: 1;
+}
+
+.rankMeta > :last-child {
+  opacity: 0.9;
+  white-space: nowrap;
+}
+
+/* ---- BTk4 / BTk5 · stat 3 kolom di kotak --card-2 ---- */
+.stats {
+  display: grid;
+  grid-auto-columns: 1fr;
+  grid-auto-flow: column;
+  width: 100%;
+  margin: 18px 0;
+  padding: 14px 8px;
+  border-radius: 16px;
+  background: var(--card-2);
+  list-style: none;
+}
+
+.stats li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+
+.statValue {
+  font-size: 24px;
+  line-height: 28px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+.statLabel {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  color: var(--label-2);
+  text-align: center;
+}
+
+/* BTk5: lingkaran 132 accent-soft + piala 48 */
+.trophy {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 132px;
+  height: 132px;
+  margin: 22px 0 18px;
+  border-radius: 66px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* ---- BTk1 / BTk2 · layar Kenalan ---- */
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tabs {
+  margin-top: 12px;
+}
+
+.info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+}
+
+.infoIcon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 22px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.infoText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* BTk2 kartu QR (accent, radius 24, padding 20) */
+.qrCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  padding: 20px;
+  border-radius: 24px;
+  background: var(--accent);
+  color: #ffffff;
+}
+
+.who {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.whoAvatar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 23px;
+  background: #ffffff;
+  color: #c94a00;
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 600;
+}
+
+.whoText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.whoName {
+  overflow: hidden;
+  font-size: 22px;
+  line-height: 28px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.whoMeta {
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+  opacity: 0.8;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Plat QR putih (warna tetap: QR harus hitam di atas putih) */
+.plate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 244px;
+  height: 244px;
+  padding: 22px;
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.plate svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.chips span {
+  padding: 5px 12px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.2);
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+}
+
+/* Scan gagal / kamera ditolak (K8, TODO desain): isi viewfinder */
+.scanDenied {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 0 24px;
+  color: #ffffff;
+  text-align: center;
+}
+
+.scanDeniedActions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-width: 260px;
+}
+
+.busyOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+  color: #ffffff;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Viewfinder F2 dengan rasio BTk1 (358×440, radius 24). Dobel kelas = menang dari .viewfinder F2. */
+.scanBox.scanBox {
+  aspect-ratio: 358 / 440;
+  border-radius: 24px;
+}
+
+/* BTk3 gagal kirim: toast di bawah toolbar kamera (X + pil), bukan menimpanya. */
+.toastBelow.toastBelow {
+  top: calc(env(safe-area-inset-top) + 64px);
+}

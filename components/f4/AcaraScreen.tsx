@@ -1,13 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import {
   ArrowClockwise,
   Camera,
   CaretRight,
   ChatCircle,
   Check,
+  Gift,
   House,
   ListBullets,
   Users,
@@ -19,6 +20,8 @@ import { NempelSheet, nempelStatus, type NempelStatus } from "@/components/n4/Ne
 import { TanyaSheet, type TanyaPreview } from "@/components/n1/TanyaSheet";
 import type { MyQuestion, OtherQuestion } from "@/lib/questions";
 import { KartuSheet, type KartuPreview } from "@/components/n3/KartuSheet";
+import { KenalanSheet, PemenangSheet } from "@/components/n5/Sheets";
+import { kenalanMessage, type KenalanIntro, type KenalanView } from "@/lib/kenalan";
 import { usePhotoOutbox } from "@/components/n4/usePhotoOutbox";
 import {
   ArtVideo,
@@ -26,6 +29,7 @@ import {
   Button,
   EventTickets,
   GuestTabBar,
+  HadiahFloat,
   PhotoStack,
   TopToast,
   type StackPhoto,
@@ -34,7 +38,7 @@ import { ART_VIDEO } from "@/lib/artVideo";
 import { useServerNow } from "@/components/useServerNow";
 import type { AcaraView } from "@/lib/acara";
 import { cx } from "@/lib/cx";
-import { initials, timeWib } from "@/lib/format";
+import { firstName, initials, timeWib } from "@/lib/format";
 import type { GuestCard } from "@/lib/data/types";
 import type { QueuedPhoto } from "@/lib/offline/photoDb";
 import { guestPhotoUrl, type GuestPhotos } from "@/lib/photo";
@@ -60,6 +64,9 @@ import styles from "./f4.module.css";
 // N1: sheet Tanya pembicara (?sheet=tanya) cuma selagi Talkshow jalan; sesi pindah → sheet nutup.
 // N3: sheet Kartu kamu (?sheet=kartu) dibuka dari BT05; back/tutup → balik ke BT05, simpan → BT05 +
 // toast gelap T11s (kartu baru langsung tampil sebelum data server masuk).
+// N5: banner Hadiah (HadiahFloat, BT03h) → BT05k (kartu peringkat + Kenalan) / BTk5 setelah
+// pemenang diumumin. Sheet BTk4 (?sheet=kenalan&id=) dari kamera selfie, atau kebuka sendiri sekali
+// buat pemilik QR yang di-scan (T10); BTk5 (?sheet=pemenang) kebuka sendiri sekali per HP.
 // Offline (S01): toast atas + layar dari data terakhir (snapshot localStorage kalau HTML-nya dari
 // cache SW lebih lama). Layar ini nggak memanggil server sendiri selain LiveRefresh.
 
@@ -67,6 +74,21 @@ const ARTS = ["open-space", "talkshow", "office-tour", "closing", "break", "weak
 const artUrl = (art: string) => `/figma/f3-${art}.webp`;
 const snapKey = (token: string) => `hmd-acara:${token}`;
 const SKEW_KEY = "hmd-acara-skew";
+// N5: kenalan terakhir (id) & pengumuman pemenang (jam) yang udah dilihat di HP ini.
+const seenIntroKey = (token: string) => `hmd-kenalan-dilihat:${token}`;
+const seenWinnerKey = (token: string) => `hmd-kenalan-pemenang:${token}`;
+function remember(key: string, value: string) {
+  try {
+    localStorage.setItem(key, value);
+  } catch {}
+}
+function recall(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
 
 type Preview = {
   sheet?: SheetKind;
@@ -77,6 +99,7 @@ type Preview = {
   galeri?: { pending?: string }; // /dev/states/n4 BT07dh: foto ini disembunyikan + toast Batalkan
   tanya?: TanyaPreview; // /dev/states/n1
   kartu?: KartuPreview & { saved?: boolean; query?: string }; // /dev/states/n3 (T11s, BT05b)
+  kenalToast?: string; // /dev/states/n5 toast K6
 };
 type OpenSheet = { kind: SheetKind; sessionId?: string; photoId?: string };
 
@@ -114,6 +137,8 @@ export function AcaraScreen({
   otherQuestions = [],
   serverNow,
   initialSheet,
+  kenalan = null,
+  kenalanIntro = null,
   preview,
 }: {
   token: string;
@@ -123,6 +148,8 @@ export function AcaraScreen({
   photos: GuestPhotos; // N4: foto sendiri + ringkasan tamu lain (sheet foto & galeri)
   serverNow: string;
   initialSheet?: OpenSheet | null; // dari ?sheet=&sesi= (reload / buka ulang)
+  kenalan?: KenalanView | null; // N5 (null = tamu belum check-in / data lama)
+  kenalanIntro?: KenalanIntro | null; // N5 · BTk4 dari ?sheet=kenalan&id= (dicari di server)
   preview?: Preview; // /dev/states/f4: tanpa LiveRefresh, jam beku, sheet/offline dipaksa
 }) {
   const router = useRouter();
@@ -333,6 +360,69 @@ export function AcaraScreen({
   const detailOf = (id?: string): SessionView | null =>
     view.sessions.find((s) => s.id === id) ?? active ?? next ?? null;
 
+  // ---- N5 · Kenalan & hadiah ----
+  const panelRef = useRef<HTMLElement>(null);
+  const [kenalToast, setKenalToast] = useState<string | null>(preview?.kenalToast ?? null);
+  useEffect(() => {
+    if (!kenalToast || preview) return;
+    const t = setTimeout(() => setKenalToast(null), 3500);
+    return () => clearTimeout(t);
+  }, [kenalToast, preview]);
+  const kenalanOn = !!kenalan && kenalan.inside && (kenalan.open || !!kenalan.winner);
+  const introId = sheet?.kind === "kenalan" ? sheet.photoId : undefined;
+  const openIntro =
+    introId && kenalanIntro?.id === introId
+      ? kenalanIntro
+      : introId && kenalan?.latest?.id === introId
+        ? kenalan.latest
+        : null;
+  const winnerAt = kenalan?.winner?.announcedAt ?? null;
+  // Kenalan baru di mana HP ini pemilik QR-nya (bukan yang scan) → BTk4 kebuka sendiri (T10).
+  const latestOther = kenalan?.latest && !kenalan.latest.scannedByMe ? kenalan.latest.id : null;
+  const openKenalan = useCallback(
+    (id: string) => {
+      setSheet({ kind: "kenalan", photoId: id });
+      if (preview) return;
+      const url = new URL(window.location.href);
+      url.searchParams.set("sheet", "kenalan");
+      url.searchParams.set("id", id);
+      url.searchParams.delete("sesi");
+      history.pushState({ ...history.state, hmdSheet: true }, "", url);
+    },
+    [preview],
+  );
+  // Sheet BTk4/BTk5 yang tampil = udah dilihat di HP ini (nggak kebuka sendiri lagi).
+  useEffect(() => {
+    if (preview) return;
+    if (openIntro) remember(seenIntroKey(token), openIntro.id);
+    if (sheet?.kind === "pemenang" && winnerAt) remember(seenWinnerKey(token), winnerAt);
+  }, [preview, openIntro, sheet?.kind, winnerAt, token]);
+  // BTk5 sekali per HP begitu panitia umumkan (rev → refresh), lalu BTk4 buat pemilik QR (T10).
+  useEffect(() => {
+    if (preview || sheet || (!winnerAt && !latestOther)) return;
+    const t = setTimeout(() => {
+      if (winnerAt && recall(seenWinnerKey(token)) !== winnerAt) {
+        remember(seenWinnerKey(token), winnerAt);
+        open("pemenang");
+      } else if (latestOther && recall(seenIntroKey(token)) !== latestOther) {
+        remember(seenIntroKey(token), latestOther);
+        openKenalan(latestOther);
+      }
+    }, 600);
+    return () => clearTimeout(t);
+  }, [preview, sheet, winnerAt, latestOther, token, open, openKenalan]);
+  // BTk4 "Scan QR lain": sheet ditutup (URL tanpa ?sheet) lalu ke BTk1.
+  const scanAgain = () => {
+    setSheet(null);
+    if (preview) return;
+    const url = new URL(window.location.href);
+    url.searchParams.delete("sheet");
+    url.searchParams.delete("id");
+    history.replaceState(history.state, "", url);
+    router.push(`/t/${token}/kenalan`);
+  };
+  const floatHidden = !!sheet && !(sheet.kind === "kenalan" && !openIntro);
+
   return (
     <main className={styles.screen}>
       <div className={styles.art}>
@@ -343,7 +433,7 @@ export function AcaraScreen({
         <span aria-hidden className={styles.fade} />
       </div>
 
-      <section className={styles.panel}>
+      <section ref={panelRef} className={styles.panel}>
         {/* Galeri = tumpukan fotomu (terbaru di atas + jumlah) di samping tombol kamera; kosong = kartu ikon. */}
         <div className={styles.fabs}>
           <PhotoStack
@@ -419,6 +509,20 @@ export function AcaraScreen({
           </p>
         )}
       </section>
+
+      {/* N5 · BT03h banner Hadiah: geser & nempel kiri/kanan, di atas panel. */}
+      {kenalanOn && kenalan && !floatHidden && (
+        <HadiahFloat
+          icon={<Gift />}
+          count={kenalan.count}
+          label="Hadiah"
+          ariaLabel={`Hadiah, ${kenalan.count} kenalan`}
+          storageKey="hmd-hadiah-posisi"
+          top={24}
+          avoid={panelRef}
+          onPress={() => open(kenalan.winner ? "pemenang" : "tamu")}
+        />
+      )}
 
       {/* Navbar di luar panel (panel punya z-index sendiri) supaya tetap di atas sheet. */}
       <GuestTabBar
@@ -505,6 +609,16 @@ export function AcaraScreen({
           onClose={close}
           onEdit={openKartu}
           initialQuery={preview?.kartu?.query}
+          kenalan={kenalanOn ? kenalan : null}
+          kenalanHref={`/t/${token}/kenalan?dari=tamu`}
+          onKenal={(id, name) =>
+            setKenalToast(
+              kenalanMessage("udah-kenalan", {
+                friendFirstName: firstName(name),
+                at: kenalan?.kenal[id],
+              }),
+            )
+          }
         />
       )}
       {sheet?.kind === "kartu" && (
@@ -576,6 +690,21 @@ export function AcaraScreen({
           preview={preview ? { pending: preview.galeri?.pending } : undefined}
         />
       )}
+
+      {openIntro && kenalan && (
+        <KenalanSheet
+          token={token}
+          intro={openIntro}
+          view={kenalan}
+          onClose={close}
+          onScanAgain={scanAgain}
+          preview={!!preview}
+        />
+      )}
+      {sheet?.kind === "pemenang" && kenalan?.winner && (
+        <PemenangSheet view={kenalan} onClose={close} />
+      )}
+      {kenalToast && <TopToast tone="dark" icon={<Check size={18} />} title={kenalToast} />}
 
       {!preview && <LiveRefresh token={token} pollMs={2000} onHealth={setOnline} />}
     </main>

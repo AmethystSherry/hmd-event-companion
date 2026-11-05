@@ -3,10 +3,11 @@
 import { refresh } from "next/cache";
 import { getStore, mutateStore, type DataStore, type Guest } from "@/lib/data";
 import { HMD_ID } from "@/lib/data/seed";
-import { kenalanFileId, pairOf } from "@/lib/kenalan";
+import { kenalanFileId } from "@/lib/kenalan";
 import { newPhotoId } from "@/lib/photo";
 import { serverNow } from "@/lib/server/clock";
 import { deletePhotoFiles, putPhotoFile } from "@/lib/server/photos";
+import { KENALAN_DUMMY, kenalanDummy } from "./data";
 
 // Dev saja: alat uji N5 Kenalan & hadiah di store lokal. Tidak tersedia di production.
 function devOnly() {
@@ -54,53 +55,23 @@ async function putPlaceholder(id: string, n: number) {
   await putPhotoFile(HMD_ID, kenalanFileId(id), "thumb", new Uint8Array(await make(267, 320)));
 }
 
-const pairsWith = (first: string, others: string[]): [string, string][] =>
-  others.map((x) => [first, x]);
-
-// Data Figma: Dimas 12 · Sekar 7 · Rara 4 (#3) · sisanya ≤ 2 → 23 pasang kenalan.
-const DUMMY: [string, string][] = [
-  ...pairsWith("Dimas", [
-    "Sekar",
-    "Rara",
-    "Laras",
-    "Yoga",
-    "Bima",
-    "Nadia",
-    "Fajar",
-    "Citra",
-    "Galih",
-    "Intan",
-    "Raka",
-    "Sari",
-  ]),
-  ...pairsWith("Sekar", ["Rara", "Laras", "Yoga", "Bima", "Nadia", "Fajar"]),
-  ...pairsWith("Rara", ["Tegar", "Ayu"]),
-  ["Hendra", "Putri"],
-  ["Arif", "Maya"],
-  ["Kevin", "Hendra"],
-];
-
 // "23 kenalan dummy": event dimulai, tamu yang terlibat check-in, kenalan lama dihapus dulu.
 export async function devSeedKenalan(): Promise<void> {
   devOnly();
   const now = await serverNow();
   const at = now.toISOString();
-  const plan = DUMMY.map(() => newPhotoId());
+  const plan = KENALAN_DUMMY.map(() => newPhotoId());
   for (const [n, id] of plan.entries()) await putPlaceholder(id, n);
   const stale = await mutateStore((store) => {
     const old = store.resetKenalan(HMD_ID);
     store.startEvent(HMD_ID, at);
-    const list = DUMMY.flatMap(([x, y], n) => {
-      const gx = byFirst(store, x);
-      const gy = byFirst(store, y);
-      if (!gx || !gy) return [];
-      ensureInside(store, gx, at, n * 2);
-      ensureInside(store, gy, at, n * 2 + 1);
-      const [a, b] = pairOf(gx.id, gy.id);
-      const createdAt = new Date(now.getTime() - (DUMMY.length - n) * 3 * 60_000).toISOString();
-      return [{ id: plan[n], eventId: HMD_ID, a, b, scannerId: gy.id, createdAt }];
+    KENALAN_DUMMY.forEach(([x, y], n) => {
+      for (const [i, first] of [x, y].entries()) {
+        const g = byFirst(store, first);
+        if (g) ensureInside(store, g, at, n * 2 + i);
+      }
     });
-    store.seedIntroductions(list);
+    store.seedIntroductions(kenalanDummy(store, HMD_ID, now.getTime(), plan));
     return old;
   });
   await Promise.all(stale.map((id) => deletePhotoFiles(HMD_ID, id).catch(() => {})));

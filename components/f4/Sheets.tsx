@@ -11,15 +11,29 @@ import { hasHouseInfo, mapsUrl } from "@/lib/houseInfo";
 import { initials } from "@/lib/format";
 import { igProfileUrl } from "@/lib/invite";
 import { actualMin, elapsedMs, roomLabel, type SessionView } from "@/lib/rundown";
+import { RankCard } from "@/components/n5/RankCard";
+import type { GuestCardKenalan } from "@/components/ui/GuestCard";
+import type { KenalanView } from "@/lib/kenalan";
 import styles from "./f4.module.css";
 
 // Sheet layar acara tamu: BT22 Detail sesi · BT21p Profil pembicara · BT04 Rundown · BT05 Tamu di
 // sini (N3). Ilustrasi & panel tetap di belakang backdrop.
 
 // "foto" (hasil jepret BT07/BT07b/BT07e) & "galeri" (BT07d) = sheet N4 di components/n4;
-// "tanya" (BT08/BT09/BT08b) = sheet N1 di components/n1; "kartu" (T11/T11e) = sheet N3 di components/n3.
+// "tanya" (BT08/BT09/BT08b) = sheet N1 di components/n1; "kartu" (T11/T11e) = sheet N3 di components/n3;
+// "kenalan" (BTk4) & "pemenang" (BTk5) = sheet N5 di components/n5.
 export type SheetKind =
-  "detail" | "pembicara" | "rundown" | "tamu" | "kartu" | "foto" | "galeri" | "tanya" | "rumah";
+  | "detail"
+  | "pembicara"
+  | "rundown"
+  | "tamu"
+  | "kartu"
+  | "foto"
+  | "galeri"
+  | "tanya"
+  | "rumah"
+  | "kenalan"
+  | "pemenang";
 
 const STATE_BADGE = {
   berlangsung: { tone: "live", label: "Sedang berjalan" },
@@ -150,16 +164,30 @@ export function TamuSheet({
   onClose,
   onEdit,
   initialQuery = "",
+  kenalan,
+  kenalanHref,
+  onKenal,
 }: {
   view: AcaraView;
   me: AcaraView["me"]; // kartu kamu (bisa versi baru setelah T11 sebelum data server masuk)
   onClose: () => void;
   onEdit: () => void; // "Ubah" → T11 (N3, ?sheet=kartu)
   initialQuery?: string; // /dev/states/n3 BT05b
+  // N5 · BT05k: kartu peringkat + tombol Kenalan/Kenal di kartu tamu (null = fitur belum kebuka).
+  kenalan?: KenalanView | null;
+  kenalanHref?: string; // /t/{token}/kenalan (BTk1)
+  onKenal?: (guestId: string, name: string) => void; // "✓ Kenal" → toast K6
 }) {
   const [q, setQ] = useState(initialQuery);
   const list = filterGuests(view.guests, q);
   const searching = !!q.trim();
+  const showKenalan = !!kenalan && (kenalan.open || !!kenalan.winner);
+  const kenalanOf = (g: AcaraView["guests"][number]): GuestCardKenalan | undefined => {
+    if (!showKenalan || !kenalan) return undefined;
+    if (kenalan.kenal[g.id]) return { state: "kenal", onPress: () => onKenal?.(g.id, g.name) };
+    if (!kenalan.open || !g.here || !kenalanHref) return { state: "bisa", disabled: true };
+    return { state: "bisa", href: kenalanHref };
+  };
   return (
     <Sheet open onClose={onClose} title="Tamu di sini" className={cx(styles.sheet, styles.tamu)}>
       {/* (28 Okt) Kartu kamu → avatar di pojok kanan atas; tap = ubah kartu (T11). */}
@@ -186,6 +214,8 @@ export function TamuSheet({
           </span>
         </button>
       </div>
+      {/* N5 · BT05k: disembunyikan saat cari (sama kayak kartu kamu N3). */}
+      {showKenalan && kenalan && !searching && <RankCard view={kenalan} />}
       <SearchField
         label="Cari tamu"
         value={q}
@@ -211,6 +241,7 @@ export function TamuSheet({
               role={g.role}
               askAbout={g.askAbout}
               here={g.here}
+              kenalan={kenalanOf(g)}
             />
           ))}
         </div>

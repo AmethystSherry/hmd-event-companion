@@ -69,3 +69,25 @@
 .locked .input {
   pointer-events: none;
 }
+
+/* N5 · HMD/Tabs · Kenalan (BTk1/BTk2): track secondary-fill 48, pil aktif --card + shadow kartu,
+   label aktif --label, nonaktif --label-2. */
+.tabs {
+  height: 48px;
+  padding: 4px;
+  gap: 4px;
+  border: 0;
+  background: var(--secondary-fill);
+  filter: none;
+}
+
+.tabs .segment {
+  height: 40px;
+  color: var(--label-2);
+}
+
+.tabs .active {
+  background: var(--card);
+  color: var(--label);
+  box-shadow: var(--shadow-card);
+}

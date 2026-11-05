@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { BookOpen, CaretRight, Check, InstagramLogo } from "@/components/icons";
 import {
   Badge,
@@ -11,7 +11,9 @@ import {
   IllustratedScreen,
   type EventTicketItem,
 } from "@/components/ui";
+import { PemenangSheet } from "@/components/n5/Sheets";
 import { cx } from "@/lib/cx";
+import type { KenalanView } from "@/lib/kenalan";
 import { ART_VIDEO } from "@/lib/artVideo";
 import { BukuTamuSheet, type BukuTamuDraft } from "./BukuTamu";
 import s from "./f5.module.css";
@@ -28,6 +30,8 @@ import s from "./f5.module.css";
 const ART = "/figma/f3-closing.webp";
 const SHEET = "buku-tamu";
 const autoKey = (token: string) => `hmd-buku-tamu-auto:${token}`;
+// N5 · T9: kunci sama dengan layar acara → BTk5 tetap cuma sekali per HP.
+const winnerKey = (token: string) => `hmd-kenalan-pemenang:${token}`;
 
 export function SelesaiScreen({
   token,
@@ -41,8 +45,10 @@ export function SelesaiScreen({
   sessions,
   kolaseHref,
   initialSheet,
+  kenalan = null,
   preview,
 }: {
+  kenalan?: KenalanView | null; // N5 · T9: pengumuman pemenang (BTk5) sekali di sini juga
   token: string | null; // null = pratinjau /dev/states
   photoCount: number;
   questionCount: number;
@@ -80,18 +86,44 @@ export function SelesaiScreen({
     history.pushState({ ...history.state, hmdSheet: true }, "", url);
   }, [filled, kolaseHref, preview, router]);
 
-  // Acara selesai → minta isi buku tamu langsung (sekali per HP; tutup = nggak muncul lagi).
+  // N5 · T9: pemenang diumumin lalu acara langsung ditutup → BTk5 belum pernah kelihatan di HP ini
+  // → tampil di sini dulu (sekali per HP), buku tamu otomatis nyusul setelah sheet ini ditutup.
+  const [pemenang, setPemenang] = useState(false);
+  const winnerFirst = useRef(false);
+  const winnerAt = kenalan?.winner?.announcedAt ?? null;
   useEffect(() => {
-    if (preview || filled || initialSheet || !token) return;
+    if (preview || !token || !winnerAt || initialSheet) return;
     try {
-      if (localStorage.getItem(autoKey(token))) return;
-      localStorage.setItem(autoKey(token), "1");
+      if (localStorage.getItem(winnerKey(token)) === winnerAt) return;
     } catch {
       return;
     }
+    winnerFirst.current = true;
+    const t = setTimeout(() => {
+      try {
+        localStorage.setItem(winnerKey(token), winnerAt);
+      } catch {}
+      setPemenang(true);
+    }, 600);
+    return () => clearTimeout(t);
+  }, [preview, token, winnerAt, initialSheet]);
+
+  // Acara selesai → minta isi buku tamu langsung (sekali per HP; tutup = nggak muncul lagi).
+  const autoBukuTamu = useCallback(() => {
+    if (preview || filled || initialSheet || !token) return false;
+    try {
+      if (localStorage.getItem(autoKey(token))) return false;
+      localStorage.setItem(autoKey(token), "1");
+    } catch {
+      return false;
+    }
+    return true;
+  }, [preview, filled, initialSheet, token]);
+  useEffect(() => {
+    if (winnerFirst.current || !autoBukuTamu()) return;
     const t = setTimeout(open, 600); // panel muncul dulu, baru sheet naik
     return () => clearTimeout(t);
-  }, [preview, filled, initialSheet, token, open]);
+  }, [autoBukuTamu, open]);
 
   const close = useCallback(() => {
     setSheet(false);
@@ -149,6 +181,15 @@ export function SelesaiScreen({
           </Button>
         )}
       </IllustratedScreen>
+      {pemenang && kenalan?.winner && (
+        <PemenangSheet
+          view={kenalan}
+          onClose={() => {
+            setPemenang(false);
+            if (autoBukuTamu()) setTimeout(open, 300);
+          }}
+        />
+      )}
       <BukuTamuSheet
         token={token}
         open={sheet}

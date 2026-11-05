@@ -7,6 +7,7 @@ import { Screen, Skeleton } from "@/components/ui";
 import { acaraView } from "@/lib/acara";
 import { getStore } from "@/lib/data";
 import { firstName } from "@/lib/format";
+import { kenalanIntro, kenalanView } from "@/lib/kenalan";
 import { isPhotoId, toGuestPhotos } from "@/lib/photo";
 import { myQuestions, otherQuestions } from "@/lib/questions";
 import { guestFromToken } from "@/lib/server/access";
@@ -22,6 +23,8 @@ const SHEETS: SheetKind[] = [
   "tanya",
   "kartu",
   "rumah",
+  "kenalan", // N5 · BTk4 (&id=)
+  "pemenang", // N5 · BTk5
 ];
 // ?sheet=&sesi=&id= (reload / back-forward / dari kamera N4) → sheet yang sama kebuka lagi.
 function sheetFrom(sheet: unknown, sesi: unknown, id: unknown) {
@@ -68,6 +71,7 @@ async function EventScreen({
   if (event.mode === "closed") redirect(`/t/${token}/selesai`); // F5 · BT12
 
   const now = await serverNow();
+  const initialSheet = sheetFrom(q.sheet, q.sesi, q.id);
   const view = acaraView({
     event,
     sessions: store.listSessions(event.id),
@@ -95,7 +99,13 @@ async function EventScreen({
           guest.id,
         )}
         serverNow={now.toISOString()}
-        initialSheet={sheetFrom(q.sheet, q.sesi, q.id)}
+        initialSheet={initialSheet}
+        kenalan={kenalanView(store, guest.id)}
+        kenalanIntro={
+          initialSheet?.kind === "kenalan" && initialSheet.photoId
+            ? kenalanIntro(store, guest.id, initialSheet.photoId)
+            : null
+        }
       />
       <RegisterOffline />
     </>

@@ -14,6 +14,7 @@ export {
 } from "./EventTickets";
 export { Field } from "./Field";
 export { GuestCard } from "./GuestCard";
+export { HadiahFloat } from "./HadiahFloat";
 export { HeroState } from "./HeroState";
 export { IconButton } from "./IconButton";
 export { IllustratedScreen } from "./IllustratedScreen";

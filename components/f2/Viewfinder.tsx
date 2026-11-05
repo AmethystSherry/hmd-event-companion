@@ -1,19 +1,30 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
+import { cx } from "@/lib/cx";
 import s from "./f2.module.css";
 
 // P05 viewfinder: kamera belakang + bingkai sudut. Decoder `qr-scanner` (MIT): BarcodeDetector
 // bawaan di Android Chrome, decoder di Web Worker untuk iPhone Safari. Kamera butuh HTTPS
 // (atau localhost) — gagal / izin ditolak → onError → P07b Cari nama.
+// N5 · BTk1 pakai juga: `hint`/`label` sendiri, `className` (rasio & radius), `children` = lapisan di
+// atas kamera (kamera ditolak / lagi ngecek kode).
 export function Viewfinder({
   live,
   onScan,
   onError,
+  hint = "Arahkan ke QR di tiket tamu",
+  label = "Kamera scan tiket",
+  className,
+  children,
 }: {
   live: boolean; // false = pratinjau tanpa kamera (/dev/states/f2)
   onScan: (text: string) => void;
   onError: (reason: string) => void;
+  hint?: string;
+  label?: string;
+  className?: string;
+  children?: ReactNode;
 }) {
   const video = useRef<HTMLVideoElement>(null);
   const scanRef = useRef(onScan);
@@ -53,15 +64,19 @@ export function Viewfinder({
   }, [live]);
 
   return (
-    <div className={s.viewfinder}>
-      {live && <video ref={video} muted playsInline aria-label="Kamera scan tiket" />}
-      <div aria-hidden className={s.frame}>
-        <span />
-        <span />
-        <span />
-        <span />
-      </div>
-      <p className={`t-label ${s.viewfinderHint}`}>Arahkan ke QR di tiket tamu</p>
+    <div className={cx(s.viewfinder, className)}>
+      {live && <video ref={video} muted playsInline aria-label={label} />}
+      {children ?? (
+        <>
+          <div aria-hidden className={s.frame}>
+            <span />
+            <span />
+            <span />
+            <span />
+          </div>
+          <p className={`t-label ${s.viewfinderHint}`}>{hint}</p>
+        </>
+      )}
     </div>
   );
 }

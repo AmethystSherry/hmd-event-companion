@@ -77,3 +77,15 @@
 .cta {
   width: 100%;
 }
+
+/* N5 · BT05k: "Kenalan" / "Kenal" + tombol ikon IG (gap 6). */
+.actions {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+}
+
+.main {
+  flex: 1 1 0;
+  min-width: 0;
+}
