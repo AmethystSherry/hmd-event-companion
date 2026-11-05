@@ -1,5 +1,5 @@
 import { mkdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { supabaseEnv } from "../data/supabase";
 
 // N4 · file foto kolase. Store cuma 1 baris JSON, jadi gambarnya disimpan terpisah:
@@ -7,6 +7,8 @@ import { supabaseEnv } from "../data/supabase";
 //   dari server. HP membaca lewat route proxy yang mengecek token tamu / sesi panitia.
 // - Lokal: .data/photos/{eventId}/{id}.jpg (di-gitignore).
 // Tiap foto 2 file: utuh (≤ 400 KB) dan thumbnail (≤ 40 KB, strip BT07 & kolase).
+// N5: selfie kenalan pakai fungsi yang sama dengan id ber-folder `kenalan/{id}` (kenalanFileId) →
+// `{eventId}/kenalan/{id}.jpg`, terpisah dari foto kolase.
 
 export type PhotoVariant = "full" | "thumb";
 
@@ -50,9 +52,8 @@ export async function putPhotoFile(
     if (!res.ok) throw new Error(`[photos] upload ${res.status}`);
     return;
   }
-  const dir = join(DIR, eventId);
-  await mkdir(dir, { recursive: true });
-  const file = join(dir, fileName(id, variant));
+  const file = join(DIR, eventId, fileName(id, variant));
+  await mkdir(dirname(file), { recursive: true });
   await writeFile(`${file}.tmp`, bytes);
   await rename(`${file}.tmp`, file);
 }

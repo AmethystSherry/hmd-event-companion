@@ -6,9 +6,11 @@ import { MAX_IMPROVE, MAX_WISH, summaryDue } from "../feedback";
 import { toMinutes } from "../format";
 import { MAX_PHOTOS_PER_GUEST } from "../photo";
 import { MAX_QUESTION } from "../questions";
+import { kenalanFileId, kenalanRanking, pairOf } from "../kenalan";
 import { backfillSessionInfo, sessionShort } from "./sessionInfo";
 import type {
   HouseInfo,
+  Introduction,
   CheckInMethod,
   CheckInResult,
   DoorStats,
@@ -53,8 +55,16 @@ export class StoreError extends Error {
       | "bukan-talkshow"
       | "pertanyaan-tidak-ada"
       | "belum-rsvp"
-      | "event-dimulai",
+      | "event-dimulai"
+      // N5 · kenalan
+      | "qr-sendiri"
+      | "udah-kenalan"
+      | "belum-mulai"
+      | "papan-dikunci"
+      | "papan-kosong",
     message: string,
+    // Info tambahan buat pesan di HP (N5: "udah-kenalan" bawa id & jam, "belum-masuk" bawa siapa).
+    public meta?: Record<string, string>,
   ) {
     super(message);
     this.name = "StoreError"; // tetap terbaca walau kelasnya di-minify / beda instance modul
@@ -257,6 +267,39 @@ export function createStore(
     );
   }
 
+  // N5 · aturan kenalan (K5–K9). Urutan cek = pesan yang paling berguna duluan di layar scan.
+  function introGuard(scannerId: string, ownerId: string): Guest {
+    const scanner = guest(scannerId);
+    const e = event(scanner.eventId);
+    if (e.purgedAt) throw new StoreError("data-dihapus", "Data acara ini udah dihapus");
+    if (e.mode === "closed") throw new StoreError("acara-ditutup", "Acaranya udah ditutup");
+    if (e.kenalanWinner) throw new StoreError("papan-dikunci", "Papan kenalan udah ditutup");
+    if (!eventStarted(e)) throw new StoreError("belum-mulai", "Acaranya belum mulai");
+    const inside = (id: string) => data.tickets.find((t) => t.guestId === id)?.status === "dipakai";
+    if (!inside(scanner.id)) {
+      throw new StoreError("belum-masuk", "Check-in dulu di pintu", { who: "scanner" });
+    }
+    if (scannerId === ownerId) throw new StoreError("qr-sendiri", "Itu QR kamu sendiri");
+    const owner = data.guests.find((g) => g.id === ownerId && g.eventId === e.id);
+    if (!owner) throw new StoreError("tamu-tidak-ada", "Tamu nggak ketemu");
+    if (!inside(owner.id)) {
+      throw new StoreError("belum-masuk", `${owner.name} belum check-in di pintu`, {
+        who: "owner",
+        name: owner.name,
+      });
+    }
+    const [a, b] = pairOf(scanner.id, owner.id);
+    const known = data.introductions?.find((i) => i.a === a && i.b === b);
+    if (known) {
+      throw new StoreError("udah-kenalan", `Kamu udah kenalan sama ${owner.name}`, {
+        id: known.id,
+        at: known.createdAt,
+        name: owner.name,
+      });
+    }
+    return owner;
+  }
+
   function feedbackOf(eventId: string): Feedback[] {
     return (data.feedback ?? [])
       .filter((f) => f.eventId === eventId)
@@ -418,6 +461,9 @@ export function createStore(
       if (data.photos) data.photos = data.photos.filter((p) => p.eventId !== id);
       if (data.feedback) data.feedback = data.feedback.filter((f) => f.eventId !== id);
       if (data.questions) data.questions = data.questions.filter((q) => q.eventId !== id);
+      if (data.introductions) {
+        data.introductions = data.introductions.filter((i) => i.eventId !== id);
+      }
       commit();
     },
 
@@ -657,6 +703,9 @@ export function createStore(
       if (data.photos) data.photos = data.photos.filter((p) => p.guestId !== id);
       if (data.feedback) data.feedback = data.feedback.filter((f) => f.guestId !== id);
       if (data.questions) data.questions = data.questions.filter((q) => q.guestId !== id);
+      if (data.introductions) {
+        data.introductions = data.introductions.filter((i) => i.a !== id && i.b !== id);
+      }
       commit();
     },
 
@@ -1087,6 +1136,80 @@ export function createStore(
       commit();
     },
 
+    // ---- N5 · Kenalan & hadiah (BTk1 → BTk3 → BTk4, P14) ----
+    // Cek aturan kenalan tanpa menulis (POST …/kenalan/cek sebelum kamera selfie dibuka). Melempar
+    // StoreError, atau mengembalikan pemilik QR.
+    checkIntroduction(scannerId: string, ownerId: string): Guest {
+      return introGuard(scannerId, ownerId);
+    },
+    // Kenalan dihitung saat selfie terkirim (K3), file selfie udah ditulis duluan. id = UUID dari
+    // HP pemindai: kirim ulang → kenalan yang sama (created false, rev tetap).
+    addIntroduction(
+      scannerId: string,
+      ownerId: string,
+      input: { id: string },
+      at: string,
+    ): { introduction: Introduction; created: boolean } {
+      const same = data.introductions?.find((i) => i.id === input.id);
+      if (same) {
+        const [a, b] = pairOf(scannerId, ownerId);
+        if (same.scannerId !== scannerId || same.a !== a || same.b !== b) {
+          throw new StoreError("isian-tidak-valid", "Kenalannya bentrok");
+        }
+        return { introduction: same, created: false };
+      }
+      const owner = introGuard(scannerId, ownerId);
+      const [a, b] = pairOf(scannerId, owner.id);
+      const introduction: Introduction = {
+        id: input.id,
+        eventId: owner.eventId,
+        a,
+        b,
+        scannerId,
+        createdAt: at,
+      };
+      (data.introductions ??= []).push(introduction);
+      commit();
+      return { introduction, created: true };
+    },
+    getIntroduction(id: string): Introduction | null {
+      return data.introductions?.find((i) => i.id === id) ?? null;
+    },
+    listIntroductions(eventId: string): Introduction[] {
+      return (data.introductions ?? []).filter((i) => i.eventId === eventId);
+    },
+    // P14b · umumkan #1 papan → papan dikunci. Sekali jalan: udah diumumin (dobel tap / dua HP
+    // panitia) → false, rev tetap. Belum ada kenalan → "papan-kosong".
+    announceKenalanWinner(eventId: string, at: string, by: string | null): boolean {
+      const e = event(eventId);
+      if (e.purgedAt) throw new StoreError("data-dihapus", "Data acara ini udah dihapus");
+      if (e.kenalanWinner) return false;
+      const [top] = kenalanRanking(
+        (data.introductions ?? []).filter((i) => i.eventId === eventId),
+        guestsOf(eventId),
+      );
+      if (!top) throw new StoreError("papan-kosong", "Belum ada yang kenalan");
+      e.kenalanWinner = { guestId: top.guestId, count: top.count, announcedAt: at, by };
+      commit();
+      return true;
+    },
+    // Dev (/dev/states/n5): isi kenalan dummy apa adanya / hapus semua (+ pemenang). resetKenalan
+    // mengembalikan id file selfie (kenalanFileId) buat dihapus pemanggil.
+    seedIntroductions(list: Introduction[]): void {
+      (data.introductions ??= []).push(...list);
+      commit();
+    },
+    resetKenalan(eventId: string): string[] {
+      const e = event(eventId);
+      const ids = (data.introductions ?? [])
+        .filter((i) => i.eventId === eventId)
+        .map((i) => kenalanFileId(i.id));
+      data.introductions = (data.introductions ?? []).filter((i) => i.eventId !== eventId);
+      e.kenalanWinner = null;
+      commit();
+      return ids;
+    },
+
     // ---- F5 · Hapus data per orang H+30 (P11d, prd §8) ----
     // Simpan rekap tanpa nama dulu, lalu hapus isian per tamu, nama/IG/WA tamu (diganti
     // "Tamu #nn", link lama mati karena token diganti), dan metadata foto. Kembalikan id foto
@@ -1102,6 +1225,13 @@ export function createStore(
       if (data.photos) data.photos = data.photos.filter((p) => p.eventId !== eventId);
       if (data.feedback) data.feedback = data.feedback.filter((f) => f.eventId !== eventId);
       if (data.questions) data.questions = data.questions.filter((q) => q.eventId !== eventId);
+      // N5: kenalan + selfie ikut dihapus (id file ber-folder `kenalan/…`, dihapus pemanggil).
+      for (const i of data.introductions ?? []) {
+        if (i.eventId === eventId) photoIds.push(kenalanFileId(i.id));
+      }
+      if (data.introductions) {
+        data.introductions = data.introductions.filter((i) => i.eventId !== eventId);
+      }
       for (const g of guestsOf(eventId)) {
         Object.assign(g, {
           name: `Tamu #${String(g.keyNo).padStart(2, "0")}`,

@@ -22,6 +22,7 @@ export default function DevHome() {
         <Link href="/dev/states/n1">N1 · Pertanyaan talkshow</Link>
         <Link href="/dev/states/n3">N3 · Kenalan antartamu</Link>
         <Link href="/dev/states/n4">N4 · Foto kolase</Link>
+        <Link href="/dev/states/n5">N5 · Kenalan & hadiah</Link>
         <Link href="/dev/states/f5">F5 · Tutup acara & feedback</Link>
       </nav>
     </main>

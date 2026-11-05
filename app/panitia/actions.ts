@@ -328,3 +328,30 @@ export async function markAnswered(
     throw err;
   }
 }
+
+// N5 · P14b "Ya, umumkan": #1 papan kenalan jadi pemenang → papan dikunci, semua HP tamu dapat
+// BTk5 (rev → LiveRefresh). Sekali jalan: HP panitia kedua / dobel tap → changed false + label HP
+// yang duluan (toast pola BP02d, K10 F4). Belum ada kenalan → error.
+export type AnnounceResult =
+  | { ok: true; changed: boolean; by: string | null; announcedAt: string }
+  | { ok: false; error: string };
+
+export async function announceKenalanWinner(
+  eventId: string,
+  by: string | null = null,
+): Promise<AnnounceResult> {
+  await requireCrew();
+  const at = (await serverNow()).toISOString();
+  try {
+    const r = await mutateStore((store) => {
+      const changed = store.announceKenalanWinner(eventId, at, cleanBy(by));
+      const w = store.getEvent(eventId)?.kenalanWinner;
+      return { changed, by: w?.by ?? null, announcedAt: w?.announcedAt ?? at };
+    });
+    refresh();
+    return { ok: true, ...r };
+  } catch (err) {
+    if (err instanceof StoreError) return { ok: false, error: err.message };
+    throw err;
+  }
+}

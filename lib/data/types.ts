@@ -34,6 +34,15 @@ export type Event = {
   summary?: FeedbackSummary | null;
   purgedAt?: string | null;
   recapArchive?: FeedbackRecap | null;
+  // N5 · pemenang papan kenalan (P14b). Terisi = papan dikunci, semua HP tamu dapat BTk5.
+  kenalanWinner?: KenalanWinner | null;
+};
+
+export type KenalanWinner = {
+  guestId: string;
+  count: number; // jumlah kenalan saat diumumin
+  announcedAt: string;
+  by: string | null; // label HP panitia ("HP 7K2Q")
 };
 
 export type EventMode = "pre" | "jeda" | "sesi" | "closed";
@@ -136,6 +145,20 @@ export type StoreData = {
   photos?: Photo[]; // N4 (opsional: store lama tetap terbaca)
   feedback?: Feedback[]; // F5
   questions?: Question[]; // N1
+  introductions?: Introduction[]; // N5
+};
+
+// N5 · kenalan (BTk1 → BTk3 → BTk4). Satu pasangan tamu = satu kenalan (+1 buat dua-duanya).
+// a/b = guestId terurut (pasangan a-b sama dengan b-a). id = UUID dari HP pemindai → kirim ulang =
+// kenalan yang sama. Selfie berdua di storage `{eventId}/kenalan/{id}.jpg` (+ `_t`), terpisah dari
+// foto kolase (`photos`), jadi nggak ikut Galeri / kolase / P13 / ZIP / photoCount.
+export type Introduction = {
+  id: string;
+  eventId: string;
+  a: string;
+  b: string;
+  scannerId: string; // HP yang nge-scan & selfie (K2)
+  createdAt: string;
 };
 
 // N1 · pertanyaan talkshow (BT08 → P10). clientId = UUID dari HP → kirim ulang (sinyal putus) =
