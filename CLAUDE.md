@@ -71,7 +71,8 @@ Web app mobile untuk House Moving Day Potara Studio (Minggu 8 Nov 2026, 13.00–
 - **N5 · Kenalan & hadiah (5 Nov)**: Figma section `5305:9340`, `N5-deliverables.md` v1. QR kenalan
   bertanda tangan → selfie berdua (terpisah dari foto kolase) → papan kenalan → panitia umumkan pemenang
   (BTk5 di semua HP). K1–K18 + T1–T8 default, plus T3 "Scan QR lain", T9, T10. Lihat "Aturan N5 di kode".
-  Menunggu review.
+  **v2 (6 Nov)**: RankCard milestone + pil "naik ke #r", stempel KENALAN BTk4, ilustrasi piala BTk5, Podium P14,
+  token medali. Menunggu review.
 
 ## Sumber kebenaran
 - **Figma** `xYZlQ3GjRHHtYcod8rTIZJ`, page DOKSLI SAPI → section "Screen Flow · All Case" → frame
@@ -150,7 +151,7 @@ components/n4/            KolaseApp (kamera BT06/BT06b) · useCamera · capture 
 components/n1/            TanyaSheet (BT08/BT09/BT08b) · Pertanyaan (P10/P10c)
 components/n3/            KartuSheet (T11/T11e + gagal simpan) · InterestChips (chip minat + tambah di tempat)
 components/n5/            KenalanApp (BTk1/BTk2/BTk3) · Sheets (KenalanSheet BTk4, PemenangSheet BTk5) ·
-                          RankCard (BT05k) · PapanKenalan (P14/P14b)
+                          RankCard (BT05k) · PapanKenalan (P14/P14b) · Podium (P14) · KenalanStamp (BTk4)
 components/f3/            FotoMasuk (P13: masonry bingkai, filter sesi, hapus + Dialog, unduh ZIP)
 components/f4/            AcaraScreen (BT20–24/BT03/S01, sheet lewat ?sheet=) · Sheets (BT22/BT21p/BT04/BT05) ·
 components/f5/            Selesai (BT12 v2 + belum masuk, sheet T14) · BukuTamu (BukuTamuSheet T14/b/c) · KolaseKulkas (T15/T15c/
@@ -700,7 +701,9 @@ Keputusan 5 Nov (default K1–K18 N5-deliverables + usulan T3/T9/T10, disetujui)
 3. **Peringkat** (lib/kenalan `kenalanRanking`): +1 buat dua-duanya; jumlah turun, seri → kenalan terakhir lebih awal
    (duluan sampai) di atas, lalu nama → nomor unik. `kenalanView` (count, rank, of = tamu check-in, top, kenal
    {id → jam}, latest, winner + isMe, open) · `kenalanBoard` (P14: rows, pairs, joined = ≥ 1 kenalan, tie) ·
-   `kenalanIntro` (BTk4, "kenalan ke-n"). Tanpa WA/token.
+   `kenalanIntro` (BTk4, "kenalan ke-n"). Tanpa WA/token. (6 Nov) `kenalanView.ladder` = semua {rank, count} tanpa
+   nama; `rankProgress` (murni + tes): fill = kenalanku ÷ teratas, milestone = tamu tepat di atasku · #2 · #1 (cuma
+   di atasku; jumlah sama dibuang, maks 3), `next.need` = kenalan orang di atas − kenalanku + 1 (seri kalah).
 4. **Selfie** di storage foto dengan id ber-folder `kenalan/{id}` (`kenalanFileId`) → `{eventId}/kenalan/{id}.jpg` +
    `_t`, **bukan** `Photo`: nggak ikut Galeri/PhotoStack/T15/P13/ZIP/photoCount. `GET /api/t/[token]/kenalan/[id]
    ?v=thumb` cuma buat a/b (lainnya 404); `photoResponse` terima `{eventId, id}`.
@@ -713,7 +716,12 @@ Keputusan 5 Nov (default K1–K18 N5-deliverables + usulan T3/T9/T10, disetujui)
    localStorage `hmd-hadiah-posisi`; tap → BT05k (`?sheet=tamu`) atau BTk5 kalau udah ada pemenang; disembunyikan saat
    sheet kebuka. Drag: capture sejak pointerdown, > 6 px = geser, snap kiri/kanan margin 16, reduced motion tanpa
    animasi, ukuran layar dibaca setelah mount.
-7. **BT05k**: `RankCard` di TamuSheet (disembunyikan saat cari; K14 "–" + "Belum ada kenalan"); `GuestCard` prop
+7. **BT05k**: `RankCard` di TamuSheet (disembunyikan saat cari; K14 "–" + "Belum ada kenalan"). v2 (Figma 5324:9823):
+   latar `--rank-card-fill` + bayangan/highlight, lingkaran #rank cincin `--medal-gold-soft` 4 + Sparkle Fill 16, baris 2
+   "{n} kenalan · kenalan terbanyak dapat hadiah", track 10 + titik milestone 14 + label "#r · n" (geser proporsional,
+   label < 18% dari label sebelumnya disembunyikan, "Kamu · n" di kiri), pil putih "🔥 {k} kenalan lagi buat naik ke
+   #{r}" / #1 "Kamu di puncak! Pertahanin, ya." / 0 kenalan "1 kenalan buat masuk papan" (TODO copy) / pemenang udah
+   diumumin → pil hilang. `GuestCard` prop
    `kenalan` → "Kenalan" (→ `/kenalan?dari=tamu`, redup kalau tamu belum datang / papan tutup) / "Kenal" (toast K6
    gelap) + tombol ikon IG. Tanpa prop = "Buka IG" lama.
 8. **/t/[token]/kenalan** (`KenalanApp`): guard check-in · closed → selesai · papan nggak kebuka → acara. Tab
@@ -724,13 +732,19 @@ Keputusan 5 Nov (default K1–K18 N5-deliverables + usulan T3/T9/T10, disetujui)
    lagi" (id sama) + TopToast di bawah toolbar; 4xx → balik ke scan + toast. Back: `dari=tamu` → history.back. BTk2:
    `LiveRefresh` 2 dtk, `latest` baru (bukan hasil scan sendiri) → replace ke BTk4.
 9. **BTk4/BTk5** (components/n5/Sheets, `?sheet=kenalan&id=` / `?sheet=pemenang`): BTk4 dari server (`kenalanIntro`)
-   atau `latest`; tombol "Balik ke acara" + "Scan QR lain" (T3). T10: `latest` dari HP lain yang belum dilihat → BTk4
+   atau `latest`; tombol "Balik ke acara" + "Scan QR lain" (T3). v2 (6 Nov): caption "{aku} 🤝 {teman}" (BTk3 tetap
+   "×" — cek desain), stempel `KenalanStamp` (72, `--success-text`, garis putus putih, Check Bold + "KENALAN", −12°)
+   lewat slot baru `Polaroid stamp` (N4 nggak berubah), stat Peringkat · Kenalan kamu · Teratas. BTk5: ilustrasi
+   `/figma/n5-trophy.webp` (5330:9842, 150, lingkaran ikut gambar, 10 KB) + stat 2 kolom Peringkat kamu · Kenalan kamu. T10: `latest` dari HP lain yang belum dilihat → BTk4
    kebuka sendiri (localStorage `hmd-kenalan-dilihat:{token}`). BTk5 sekali per HP (`hmd-kenalan-pemenang:{token}` =
    announcedAt), K11 versi pemenang. T9: BT12 juga menampilkan BTk5 sekali (sebelum buku tamu otomatis).
 10. **Panitia**: BP02k = `HadiahFloat` Trophy "Peringkat" (badge pasang, K15) di `KontrolScreen` prop `kenalan` (null
    kalau belum mulai / ditutup), awal kanan y656, `bottom` 108 (di atas Scan tiket), → P14. **P14**
    (`/panitia/event/[id]/kenalan`, `PapanKenalan`, LiveRefresh 2 dtk, pola P10): baris "{n}. {nama}" + "Terakhir
-   kenalan {jam}" + angka 28, #1 accent-soft; seri di #1 → caption (TODO copy). "Umumkan pemenang" → Dialog **P14b** →
+   kenalan {jam}" + angka 28; seri di #1 → caption (TODO copy). v2 (6 Nov, podium 5332:9807): `Podium` (components/n5)
+   #2 · #1 · #3 (avatar 48/56 cincin medali + badge 22, nama depan, "{n} kenalan", balok 104/78/58 gradien medali),
+   kolom kosong disembunyikan; lalu "Peringkat berikutnya" + baris mulai #4 (disembunyikan kalau nggak ada #4). Token
+   `--medal-{gold,silver,bronze}` + `-soft` + `-ink`, `--medal-highlight`. P14b node 5332:9838. "Umumkan pemenang" → Dialog **P14b** →
    server action `announceKenalanWinner(eventId, by)` (`AnnounceResult {changed, by, announcedAt}`); HP lain duluan →
    TopToast "HP … udah umumin pemenang duluan." K12: kosong → HeroState + tombol redup; udah diumumin → Banner success
    + tanpa tombol.

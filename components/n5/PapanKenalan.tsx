@@ -22,9 +22,10 @@ import { deviceLabel } from "@/lib/device";
 import { timeWib } from "@/lib/format";
 import type { KenalanBoard } from "@/lib/kenalan";
 import s from "./n5.module.css";
+import { Podium } from "./Podium";
 
-// N5 · P14 Papan kenalan (Figma 5305:10440, pola P10 N1): peringkat realtime (LiveRefresh di page),
-// #1 disorot, "Umumkan pemenang" → Dialog P14b → server action → papan dikunci + semua HP tamu
+// N5 · P14 Papan kenalan (Figma 5305:10440, pola P10 N1; update 6 Nov: Podium #2 · #1 · #3 lalu
+// "Peringkat berikutnya" mulai #4): peringkat realtime (LiveRefresh di page), "Umumkan pemenang" → Dialog P14b (5332:9838) → server action → papan dikunci + semua HP tamu
 // dapat BTk5. Dua HP panitia barengan: yang pertama menang, HP lain dapat toast (pola BP02d, K10 F4).
 // K12: kosong → HeroState + tombol redup; udah diumumin → Banner + tanpa tombol (read-only).
 
@@ -137,9 +138,19 @@ export function PapanKenalanScreen({
       ) : (
         <Card className={cx(n1.list, s.board)}>
           <p className="t-label c-label-2">Peringkat · update realtime</p>
+          {board.tie && !winner && (
+            // K10 · TODO copy: #1 & #2 seri → yang duluan sampai menang.
+            <p className="t-caption c-label-2">
+              {top?.firstName} seri sama #2 · menang karena duluan sampai {top?.count}.
+            </p>
+          )}
+          <Podium rows={rows} />
+          {rows.length > 3 && (
+            <p className={cx("t-label c-label-2", s.nextLabel)}>Peringkat berikutnya</p>
+          )}
           <ol className={s.boardList}>
-            {rows.map((r) => (
-              <li key={r.guestId} className={cx(s.boardRow, r.rank === 1 && s.boardTop)}>
+            {rows.slice(3).map((r) => (
+              <li key={r.guestId} className={s.boardRow}>
                 <span className={s.boardText}>
                   <span className="t-body-emph">
                     {r.rank}. {r.name}
@@ -152,12 +163,6 @@ export function PapanKenalanScreen({
               </li>
             ))}
           </ol>
-          {board.tie && !winner && (
-            // K10 · TODO copy: #1 & #2 seri → yang duluan sampai menang.
-            <p className="t-caption c-label-2">
-              {top?.name.split(" ")[0]} seri sama #2 · menang karena duluan sampai {top?.count}.
-            </p>
-          )}
         </Card>
       )}
 

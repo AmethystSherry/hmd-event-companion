@@ -38,13 +38,14 @@ export function kenalanDummy(
   eventId: string,
   endMs: number,
   ids: string[],
+  pairs: [string, string][] = KENALAN_DUMMY,
 ): Introduction[] {
-  return KENALAN_DUMMY.flatMap(([x, y], n) => {
+  return pairs.flatMap(([x, y], n) => {
     const gx = byFirst(store, eventId, x);
     const gy = byFirst(store, eventId, y);
     if (!gx || !gy) return [];
     const [a, b] = pairOf(gx.id, gy.id);
-    const createdAt = new Date(endMs - (KENALAN_DUMMY.length - n) * 3 * 60_000).toISOString();
+    const createdAt = new Date(endMs - (pairs.length - n) * 3 * 60_000).toISOString();
     return [{ id: ids[n], eventId, a, b, scannerId: gy.id, createdAt }];
   });
 }

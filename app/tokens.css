@@ -72,6 +72,22 @@
   --tabbar-label: #f7f7f7;
   --qr-bg: #ffffff;
   --qr-ink: #101010;
+  /* N5 (6 Nov) · medali podium P14 (emas/perak/perunggu: cincin & badge = -soft, balok = gradien
+     -soft → base, angka = -ink) + kartu peringkat BT05k (gradien oranye, cincin emas). */
+  --medal-gold: #f0a01c;
+  --medal-gold-soft: #ffe38e;
+  --medal-gold-ink: #6e3610;
+  --medal-silver: #a8b0be;
+  --medal-silver-soft: #e8ecf2;
+  --medal-silver-ink: #464c5a;
+  --medal-bronze: #c4743c;
+  --medal-bronze-soft: #f6c496;
+  --medal-bronze-ink: #6e3610;
+  --medal-highlight: inset 0 1.5px 1px rgba(255, 255, 255, 0.7);
+  --rank-card-fill: linear-gradient(180deg, #fa7a3a 0%, #ee6222 60%, #de5414 100%);
+  --rank-card-shadow: 0 6px 12px rgba(226, 100, 31, 0.32);
+  --rank-card-highlight: inset 0 1.5px 1px rgba(255, 176, 135, 0.85);
+  --rank-ring-shadow: 0 3px 6px rgba(115, 46, 10, 0.3);
 
   /* Bentuk & ruang (design.md §2A "Bentuk & ukuran") */
   --radius-card: 24px;

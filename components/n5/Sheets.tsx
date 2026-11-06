@@ -1,11 +1,12 @@
 "use client";
 
-import { Scan, Trophy } from "@/components/icons";
+import { Scan } from "@/components/icons";
 import { Button, Polaroid, Sheet } from "@/components/ui";
 import n4 from "@/components/n4/sheets.module.css";
 import { cx } from "@/lib/cx";
 import { kenalanSelfieUrl, type KenalanIntro, type KenalanView } from "@/lib/kenalan";
 import { photoTilt } from "@/lib/photo";
+import { KenalanStamp } from "./KenalanStamp";
 import s from "./n5.module.css";
 
 // N5 · sheet di layar acara tamu (pola NempelSheet N4, `?sheet=kenalan&id=` / `?sheet=pemenang`).
@@ -25,9 +26,10 @@ function Stats({ items }: { items: { value: string; label: string }[] }) {
 
 const rankLabel = (rank: number | null) => (rank ? `#${rank}` : "–");
 
-// BTk4 · Kenalan berhasil (Figma 5305:10071): selfie berdua di polaroid miring + magnet + ✓,
-// "Kamu & {teman} udah kenalan!", stat Kenalan kamu / Peringkat / Teratas, "Balik ke acara" +
-// "Scan QR lain" (T3: ganti "Scan Barcode Lain").
+// BTk4 · Kenalan berhasil (Figma 5305:10071, update 6 Nov): selfie berdua di polaroid miring + magnet
+// + stempel KENALAN (ganti badge ✓ N4), caption "{aku} 🤝 {teman}", "Kamu & {teman} udah kenalan!",
+// stat Peringkat / Kenalan kamu / Teratas, "Balik ke acara" + "Scan QR lain" (T3: Figma masih
+// "Scan Barcode Lain"). BTk3 kamera tetap "{aku} × {teman}" (Figma).
 export function KenalanSheet({
   token,
   intro,
@@ -52,10 +54,10 @@ export function KenalanSheet({
           src={preview ? undefined : kenalanSelfieUrl(token, intro.id)}
           alt={`Selfie kamu & ${intro.friendFirstName}`}
           name={intro.myFirstName}
-          caption={`${intro.myFirstName} × ${intro.friendFirstName}`}
+          caption={`${intro.myFirstName} 🤝 ${intro.friendFirstName}`}
           tilt={photoTilt(intro.id)}
           magnet
-          status="sent"
+          stamp={<KenalanStamp />}
           className={n4.drop}
         />
       </div>
@@ -68,8 +70,8 @@ export function KenalanSheet({
       </div>
       <Stats
         items={[
-          { value: String(view.count), label: "Kenalan kamu" },
           { value: rankLabel(view.rank), label: "Peringkat" },
+          { value: String(view.count), label: "Kenalan kamu" },
           { value: String(view.top?.count ?? 0), label: "Teratas" },
         ]}
       />
@@ -87,16 +89,16 @@ export function KenalanSheet({
   );
 }
 
-// BTk5 · Pengumuman pemenang (Figma 5305:10200), muncul sekali per HP. K11: HP pemenang dapat
-// versi sendiri (TODO desain).
+// BTk5 · Pengumuman pemenang (Figma 5305:10200, update 6 Nov), muncul sekali per HP: ilustrasi piala
+// (5330:9842 → /figma/n5-trophy.webp, lingkaran ikut gambar) + stat 2 kolom Peringkat kamu · Kenalan
+// kamu. K11: HP pemenang = copy sendiri, stat sama.
 export function PemenangSheet({ view, onClose }: { view: KenalanView; onClose: () => void }) {
   const w = view.winner;
   if (!w) return null;
   return (
     <Sheet open strong onClose={onClose} title="Pemenang kenalan" className={n4.sheet}>
-      <span aria-hidden className={s.trophy}>
-        <Trophy size={48} />
-      </span>
+      {/* eslint-disable-next-line @next/next/no-img-element -- ilustrasi statis kecil, ukuran tetap */}
+      <img src="/figma/n5-trophy.webp" alt="" width={150} height={150} className={s.trophy} />
       <div className={n4.text}>
         <p className="t-card-title">
           {w.isMe ? "Kamu paling banyak kenalan!" : `${w.firstName} paling banyak kenalan!`}
@@ -108,18 +110,10 @@ export function PemenangSheet({ view, onClose }: { view: KenalanView; onClose: (
         </p>
       </div>
       <Stats
-        items={
-          w.isMe
-            ? [
-                { value: String(w.count), label: "Kenalan kamu" },
-                { value: "#1", label: "Peringkat kamu" },
-              ]
-            : [
-                { value: String(w.count), label: `Kenalan ${w.firstName}` },
-                { value: String(view.count), label: "Kenalan kamu" },
-                { value: rankLabel(view.rank), label: "Peringkat kamu" },
-              ]
-        }
+        items={[
+          { value: w.isMe ? "#1" : rankLabel(view.rank), label: "Peringkat kamu" },
+          { value: String(w.isMe ? w.count : view.count), label: "Kenalan kamu" },
+        ]}
       />
       <div className={cx(n4.actions)}>
         <Button onClick={onClose}>Balik ke acara</Button>

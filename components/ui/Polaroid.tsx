@@ -10,6 +10,8 @@ import styles from "./Polaroid.module.css";
 // `magnet` = magnet oranye di tengah atas, `status` = badge 30 di pojok kanan atas (✓ terkirim /
 // ⌛ antre). `caption` mengganti teks kiri, `action` = slot kanan (mis. tombol hapus).
 // Tanpa `src` dan children → placeholder gradasi gelap (loading).
+// `stamp` (N5 BTk4, 6 Nov) = elemen tambahan di dalam area foto (mis. stempel KENALAN); kosong = nggak
+// ada apa-apa, jadi tampilan N4 nggak berubah.
 export function Polaroid({
   size = "lg",
   src,
@@ -21,6 +23,7 @@ export function Polaroid({
   tilt = 0,
   magnet,
   status,
+  stamp,
   children,
   className,
 }: {
@@ -34,6 +37,7 @@ export function Polaroid({
   tilt?: number;
   magnet?: boolean;
   status?: "sent" | "queued";
+  stamp?: ReactNode;
   children?: ReactNode;
   className?: string;
 }) {
@@ -58,6 +62,7 @@ export function Polaroid({
             // eslint-disable-next-line @next/next/no-img-element -- blob: & route proxy, bukan aset statis
             <img src={src} alt={alt} draggable={false} />
           ) : null)}
+        {stamp}
       </div>
       <figcaption className={styles.caption}>
         <span className={styles.name}>{caption ?? `${name} · rumah baru`}</span>

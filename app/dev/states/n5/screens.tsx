@@ -12,7 +12,7 @@ import { kenalanBoard, kenalanIntro, kenalanView } from "@/lib/kenalan";
 import { toGuestPhotos } from "@/lib/photo";
 import { signKenalan } from "@/lib/server/crypto";
 import { demoStore, jeda1, kontrol } from "../f4/screens";
-import { kenalanDummy } from "./data";
+import { KENALAN_DUMMY, kenalanDummy } from "./data";
 
 // Registri layar N5 (N5-deliverables.md "Daftar layar", Figma section 5305:9340) untuk
 // /dev/states/n5/[code]. Komponen sama dengan route asli (AcaraScreen + sheet, KenalanApp), data
@@ -38,14 +38,28 @@ type Opts = {
   intros?: boolean; // false = belum ada kenalan (K14)
   winner?: boolean; // pemenang (Dimas) udah diumumin
   me?: string; // ig pemilik HP (default Rara)
+  pairs?: [string, string][]; // ganti data papan (default Figma: Dimas 12 · Sekar 7 · Rara 4)
+  allHere?: boolean; // 20 tamu udah masuk (Kevin & Maya ikut, buat "0 kenalan")
 };
 
-function demo({ intros = true, winner = false, me = "rarawening" }: Opts) {
-  const store = demoStore((st: DataStore) => {
-    jeda1(st);
-    if (intros) st.seedIntroductions(kenalanDummy(st, HMD_ID, Date.parse(at("13:50:00")), ids));
-    if (winner) st.announceKenalanWinner(HMD_ID, at("13:55:00"), "HP 7K2Q");
-  });
+// (6 Nov) P14 cuma 2 tamu ikutan & seri di #1 (Sekar nyusul Dimas di 12, Dimas duluan sampai).
+const DUA_TAMU: [string, string][] = [["Dimas", "Sekar"]];
+const SERI: [string, string][] = [
+  ...KENALAN_DUMMY,
+  ...["Hendra", "Putri", "Arif", "Tegar", "Ayu"].map((x) => ["Sekar", x] as [string, string]),
+];
+
+function demo({ intros = true, winner = false, me = "rarawening", pairs, allHere = false }: Opts) {
+  const store = demoStore(
+    (st: DataStore) => {
+      jeda1(st);
+      if (intros) {
+        st.seedIntroductions(kenalanDummy(st, HMD_ID, Date.parse(at("13:50:00")), ids, pairs));
+      }
+      if (winner) st.announceKenalanWinner(HMD_ID, at("13:55:00"), "HP 7K2Q");
+    },
+    allHere ? { here: () => true } : {},
+  );
   const guest = store.listGuests(HMD_ID).find((g) => g.ig === me)!;
   return { store, guest: { ...guest, keyNo: me === "rarawening" ? 14 : guest.keyNo } };
 }
@@ -148,6 +162,34 @@ export const SCREENS: ScreenDef[] = [
     kind: "Kasus",
     lane: "Tamu",
     render: () => acara({ intros: false }, { sheet: "tamu" }),
+  },
+  {
+    code: "BT05k-1",
+    name: "Aku #1 (Dimas) · di puncak",
+    kind: "Kasus",
+    lane: "Tamu",
+    render: () => acara({ me: "dimaspr" }, { sheet: "tamu" }),
+  },
+  {
+    code: "BT05k-2",
+    name: "Aku #2 (Sekar) · milestone cuma #1",
+    kind: "Kasus",
+    lane: "Tamu",
+    render: () => acara({ me: "sekarayu" }, { sheet: "tamu" }),
+  },
+  {
+    code: "BT05k-0",
+    name: "Aku 0 kenalan, papan udah jalan",
+    kind: "Kasus",
+    lane: "Tamu",
+    render: () => acara({ me: "kevinhrt", allHere: true }, { sheet: "tamu" }),
+  },
+  {
+    code: "BT05k-pemenang",
+    name: "Setelah pemenang diumumin (pil hilang)",
+    kind: "Kasus",
+    lane: "Tamu",
+    render: () => acara({ winner: true }, { sheet: "tamu" }),
   },
   {
     code: "BT05k-kenal",
@@ -258,6 +300,20 @@ export const SCREENS: ScreenDef[] = [
     kind: "Kasus",
     lane: "Panitia",
     render: () => papan({ intros: false }),
+  },
+  {
+    code: "P14-2tamu",
+    name: "Cuma 2 tamu ikutan (seri 1–1)",
+    kind: "Kasus",
+    lane: "Panitia",
+    render: () => papan({ pairs: DUA_TAMU }),
+  },
+  {
+    code: "P14-seri",
+    name: "Seri di #1 (Dimas & Sekar 12)",
+    kind: "Kasus",
+    lane: "Panitia",
+    render: () => papan({ pairs: SERI }),
   },
   {
     code: "P14-diumumin",

@@ -132,6 +132,7 @@ export type KenalanView = {
   kenal: Record<string, string>; // guestId teman → jam kenalan (ISO), buat "✓ Kenal" + toast K6
   latest: KenalanIntro | null; // kenalan terbaru yang melibatkan aku (BTk2 → BTk4)
   winner: (KenalanWinnerView & { isMe: boolean }) | null;
+  ladder: { rank: number; count: number }[]; // (6 Nov) semua peringkat tanpa nama → milestone BT05k
 };
 
 export type KenalanIntro = {
@@ -189,6 +190,42 @@ export function kenalanView(store: DataStore, guestId: string): KenalanView | nu
     kenal,
     latest: last ? toIntro(store, me, last, mine.length) : null,
     winner: w ? { ...w, isMe: w.guestId === me.id } : null,
+    ladder: rows.map((r) => ({ rank: r.rank, count: r.count })),
+  };
+}
+
+// (6 Nov) BT05k progress: fill = kenalanku ÷ teratas; milestone = tamu tepat di atasku, #2, #1 (dobel /
+// posisi sama dibuang, maks 3); `need` = kenalan lagi buat naik satu peringkat. Seri kalah sama yang
+// duluan sampai (no. 3), jadi harus lewat: kenalan orang di atas − kenalanku + 1.
+export type RankMilestone = { rank: number; count: number; pct: number };
+export type RankProgress = {
+  pct: number; // 0–100
+  milestones: RankMilestone[]; // urut kiri → kanan
+  next: { rank: number; need: number } | null; // null = aku #1
+};
+
+export function rankProgress(v: Pick<KenalanView, "count" | "rank" | "ladder">): RankProgress {
+  const topCount = v.ladder[0]?.count ?? 0;
+  const pctOf = (n: number) => (topCount > 0 ? Math.min(100, (n / topCount) * 100) : 0);
+  const above = v.rank ? v.rank - 1 : v.ladder.length; // 0 kenalan: tamu terakhir di papan
+  const wanted = [...new Set([above, 2, 1])].filter((r) => r >= 1 && (!v.rank || r < v.rank));
+  const milestones: RankMilestone[] = [];
+  for (const rank of wanted.sort((a, b) => a - b)) {
+    const row = v.ladder.find((x) => x.rank === rank);
+    if (!row || milestones.some((m) => m.count === row.count)) continue;
+    milestones.push({ rank, count: row.count, pct: pctOf(row.count) });
+  }
+  milestones.sort((a, b) => a.pct - b.pct || b.rank - a.rank);
+  const target = v.ladder.find((x) => x.rank === above);
+  return {
+    pct: pctOf(v.count),
+    milestones: milestones.slice(-3),
+    next:
+      v.rank === 1
+        ? null
+        : target
+          ? { rank: target.rank, need: Math.max(1, target.count - v.count + 1) }
+          : { rank: 1, need: 1 }, // papan masih kosong
   };
 }
 
