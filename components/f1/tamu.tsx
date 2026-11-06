@@ -101,11 +101,7 @@ export function InvitationScreen({
         <hr aria-hidden className={inv.perforation} />
         <dl className={inv.facts}>
           <Fact icon={<CalendarBlank size={14} />} label="Kapan" value={dateShort(event.date)} />
-          <Fact
-            icon={<Clock size={14} />}
-            label="Jam"
-            value={`${event.startsAt}–${event.endsAt}`}
-          />
+          <Fact icon={<Clock size={14} />} label="Jam" value={`${event.startsAt}–selesai`} />
           <Fact icon={<MapPin size={14} />} label="Di mana" value={event.location} />
         </dl>
         {sessions.length > 0 && (

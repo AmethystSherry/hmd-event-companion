@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { parseGuestCsv } from "../csv";
+import { fromMinutes, toMinutes } from "../format";
 import { HMD_ID, seedData } from "./seed";
 import { createStore, StoreError } from "./store";
 
@@ -383,6 +384,17 @@ describe("foto kolase (N4)", () => {
     expect(store.addPhoto(photo(a.id, 99)).created).toBe(true);
   });
 
+  it("jam event dibaca dari rundown: mulai sesi pertama – selesai sesi terakhir", () => {
+    const { store } = fresh();
+    const list = store.listSessions(HMD_ID);
+    const last = list.at(-1)!;
+    const s0 = list[0]!;
+    store.updateSession(s0.id, { ...s0, startsAt: "10.00" });
+    const e = store.getEvent(HMD_ID)!;
+    expect(e.startsAt).toBe("10.00");
+    expect(e.endsAt).toBe(fromMinutes(toMinutes(last.startsAt) + last.durationMin));
+  });
+
   it("ringkasan BT07: foto tamu lain, 4 terbaru, foto sendiri nggak masuk strip", () => {
     const { store, a, b } = withGuests();
     for (let i = 1; i <= 6; i++) store.addPhoto(photo(b.id, i, `13:${10 + i}`));
@@ -399,7 +411,11 @@ describe("foto kolase (N4)", () => {
     const { store, a, b } = withGuests();
     store.addPhoto(photo(a.id, 1));
     expect(store.deletePhoto(b.id, id(1), at("14:00"))).toBe(false);
-    store.getEvent(HMD_ID)!.mode = "closed";
+    for (const s of store.listSessions(HMD_ID)) {
+      store.startSession(HMD_ID, s.id, at("16:00"));
+      store.finishSession(HMD_ID, s.id, at("16:00"));
+    }
+    expect(store.closeEvent(HMD_ID, at("17:00"))).toBe(true);
     expect(() => store.addPhoto(photo(a.id, 2))).toThrow(StoreError);
     expect(store.deletePhoto(a.id, id(1), at("17:10"))).toBe(true);
     expect(store.photoCount(HMD_ID)).toBe(0);

@@ -3,7 +3,7 @@ import type { CsvRow } from "../csv";
 import { eventStarted } from "./eventState";
 import { cardOf, sameCard } from "../card";
 import { MAX_IMPROVE, MAX_WISH, summaryDue } from "../feedback";
-import { toMinutes } from "../format";
+import { fromMinutes, toMinutes } from "../format";
 import { MAX_PHOTOS_PER_GUEST } from "../photo";
 import { MAX_QUESTION } from "../questions";
 import { kenalanFileId, kenalanRanking, pairOf } from "../kenalan";
@@ -246,6 +246,20 @@ export function createStore(
     };
   }
 
+  // Jam event yang dibaca = rundown: mulai sesi pertama – selesai sesi terakhir. `startsAt/endsAt`
+  // yang tersimpan (13.00–17.00 saat event dibuat) cuma dipakai kalau rundown masih kosong.
+  function withSchedule(e: Event): Event {
+    const list = sessionsOf(e.id);
+    const first = list[0];
+    const last = list.at(-1);
+    if (!first || !last) return e;
+    return {
+      ...e,
+      startsAt: first.startsAt,
+      endsAt: fromMinutes(toMinutes(last.startsAt) + last.durationMin),
+    };
+  }
+
   function sessionsOf(eventId: string): Session[] {
     return data.sessions
       .filter((s) => s.eventId === eventId)
@@ -414,10 +428,11 @@ export function createStore(
 
     // ---- Event (PE01–PE03) ----
     listEvents(): Event[] {
-      return [...data.events].sort((a, b) => a.date.localeCompare(b.date));
+      return [...data.events].sort((a, b) => a.date.localeCompare(b.date)).map(withSchedule);
     },
     getEvent(id: string): Event | null {
-      return data.events.find((e) => e.id === id) ?? null;
+      const e = data.events.find((x) => x.id === id);
+      return e ? withSchedule(e) : null;
     },
     createEvent(
       input: { name: string; date: string },
