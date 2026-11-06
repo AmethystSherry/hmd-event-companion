@@ -146,12 +146,13 @@ components/f1/            layar F1 presentasional (dipakai route asli & /dev/sta
 components/f2/            tamu.tsx (T05/T05a/BT02/T03b) · Kontrol (BP02 + dialog) · DoorApp (P05–P07d) ·
                           useDoor (manifest + antrean) · Viewfinder (kamera) · DoorPage (guard route) ·
                           Placeholder (Foto/Tanya)
-components/n4/            KolaseApp (kamera BT06/BT06b) · useCamera · capture (crop+kompres) ·
+components/n4/            KolaseApp (kamera BT06/BT06b + mode Scan QR kenalan) · useCamera (1440×1080) · capture (crop+kompres) ·
                           usePhotoOutbox (kirim + antrean) · NempelSheet (BT07/b/c/e) · GaleriSheet (BT07d)
 components/n1/            TanyaSheet (BT08/BT09/BT08b) · Pertanyaan (P10/P10c)
 components/n3/            KartuSheet (T11/T11e + gagal simpan) · InterestChips (chip minat + tambah di tempat)
 components/n5/            KenalanQrSheet (BTk2/BTk1 sheet + BTk3 selfie) · Sheets (KenalanSheet BTk4, PemenangSheet BTk5) ·
-                          RankCard (BT05k) · PapanKenalan (P14/P14b) · Podium (P14) · KenalanStamp (BTk4)
+                          RankCard (BT05k) · PapanKenalan (P14/P14b) · Leaderboard (P14 + sheet tamu) · KenalanStamp (BTk4) ·
+                          KenalanScanner / KenalanSelfie (BTk1 / BTk3, dipakai sheet Kenalan & kamera)
 components/f3/            FotoMasuk (P13: masonry bingkai, filter sesi, hapus + Dialog, unduh ZIP)
 components/f4/            AcaraScreen (BT20–24/BT03/S01, sheet lewat ?sheet=) · Sheets (BT22/BT21p/BT04/BT05) ·
 components/f5/            Selesai (BT12 v2 + belum masuk, sheet T14) · BukuTamu (BukuTamuSheet T14/b/c) · KolaseKulkas (T15/T15c/
@@ -202,7 +203,10 @@ next.config.ts            header X-Robots-Tag noindex, allowedDevOrigins (HP di 
   (`rundownTiles`: semua sesi urut jam, nomor 2 digit, jam, nama lengkap ellipsis 2 baris, tanpa
   pembicara; `<ol>`, aria "Bagian 2, 14.00, Talkshow"; ganjil = terakhir di kiri). Jejak undangan
   dihapus. Nama panjang 2 baris bikin kartu lebih tinggi dari Figma → di 390×844 halaman scroll
-  ±25px, tombol tetap di bawah. Sesi ke HP tamu lewat `sessionForGuest` (tanpa PIC).
+  ±25px, tombol tetap di bawah. Sesi ke HP tamu lewat `sessionForGuest` (tanpa PIC). (6 Nov) "Di mana" =
+  text link Google Maps (`mapsUrl`) kalau alamat Info rumah (PE03) udah diisi; kosong = teks biasa. "Lokasi" di
+  tiket (T03/T03h/T05/T03b, `TicketData.whereHref`) sama; `GuestDayTicket` cuma dikasih date/startsAt/location +
+  `mapsHref` (Info rumah nggak ikut ke HP sebelum masuk).
 - **PE03 Mulai event** (28 Okt): `Event.startedAt` (`eventStarted` di lib/data/eventState: startedAt atau mode
   ≠ pre). Tombol bawah: belum dimulai = "Mulai event" (redup kalau belum 3/3 siap) → Dialog "Mulai event
   sekarang?" → server action `startEvent` (store `startEvent` sekali jalan) → Kontrol acara; udah dimulai =
@@ -598,6 +602,8 @@ Keputusan 25 Okt (default "Keputusan & asumsi" F3-F4-deliverables, kecuali K3/K8
   (detail sesi, pembicara, foto, galeri, Kartu kamu, BTk4, BTk5) tanpa navbar. Tab yang sheet-nya kebuka = pil
   `--tabbar-active` + nama menu (Kenalan dari BT05 = Tamu); tap tab aktif = tutup, tab lain = ganti sheet
   (replaceState). Sheet biasa selagi navbar tampil (Tanya) dapat ruang 64 di bawah (`[data-nav] [data-sheet]::after`).
+  Sheet penutup navbar ditutup → navbar langsung ada tapi `navUnder` (z 45, di bawah sheet yang lagi turun) selama
+  `SHEET_EXIT_MS`. Sheet Tamu tanpa label "Semua tamu · n" (cuma "Hasil · n" selagi cari).
   Tombol bulat tetap hitam. Lebar layar: `--screen-width = min(100vw, 480px)` (6 Nov) → HP selebar apa pun
   terisi penuh tanpa jarak kiri-kanan; `--content-width` = layar − 2 × margin.
 - (28 Okt) **Ilustrasi bergerak**: `public/figma/*.mp4` (1080×1920, 10 dtk loop, 2,4–4,5 MB) pasangan tiap
@@ -696,18 +702,23 @@ Keputusan 5 Nov (default K1–K18 N5-deliverables + usulan T3/T9/T10, disetujui)
    `kenalanCode` di lib/server/kenalan, TICKET_HMAC_SECRET). Bukan token & bukan QR tiket: QR tiket → `qr-tiket`,
    teks lain → `qr-asing`. QR dirender server (`TicketQr`) di BTk2.
 2. **Data**: `Introduction {id, eventId, a, b (terurut), scannerId, createdAt}` di `StoreData.introductions?`,
-   `Event.kenalanWinner? {guestId, count, announcedAt, by}`. Store: `checkIntroduction` (cek tanpa nulis),
+   `Event.kenalanWinner? {guestId, count, points?, announcedAt, by}`. Store: `checkIntroduction` (cek tanpa nulis),
    `addIntroduction` (idempoten per id; pasangan a-b = b-a → `udah-kenalan` + meta id/jam), `announceKenalanWinner`
    (#1 papan, sekali jalan → false; kosong → `papan-kosong`), dev `seedIntroductions`/`resetKenalan`. Urutan cek:
    data-dihapus · acara-ditutup · papan-dikunci · belum-mulai (`eventStarted`) · pemindai belum check-in ·
    qr-sendiri · pemilik belum check-in · udah-kenalan. `StoreError` punya `meta` opsional. Hapus tamu/event & H+30
    ikut menghapus kenalan (purge mengembalikan `kenalan/{id}` buat hapus file). Store dev `__hmdStoreN5`.
-3. **Peringkat** (lib/kenalan `kenalanRanking`): +1 buat dua-duanya; jumlah turun, seri → kenalan terakhir lebih awal
-   (duluan sampai) di atas, lalu nama → nomor unik. `kenalanView` (count, rank, of = tamu check-in, top,
-   latest, winner + isMe, open) · `kenalanBoard` (P14: rows, pairs, joined = ≥ 1 kenalan, tie) ·
-   `kenalanIntro` (BTk4, "kenalan ke-n"). Tanpa WA/token. (6 Nov) `kenalanView.ladder` = semua {rank, count} tanpa
-   nama; `rankProgress` (murni + tes): fill = kenalanku ÷ teratas, milestone = tamu tepat di atasku · #2 · #1 (cuma
-   di atasku; jumlah sama dibuang, maks 3), `next.need` = kenalan orang di atas − kenalanku + 1 (seri kalah).
+3. **Peringkat** (lib/kenalan `kenalanRanking`): +1 kenalan buat dua-duanya; (6 Nov) **point: yang scan (ngajak)
+   +2 (`SCAN_POINTS`), yang discan +1 (`SCANNED_POINTS`)** dari `Introduction.scannerId`, dihitung ulang dari data
+   (tanpa migrasi). Point turun, seri → kenalan terakhir lebih awal (duluan sampai) di atas, lalu nama → nomor unik.
+   `kenalanView` (count, points, rank, of = tamu check-in, top {firstName, points}, latest, winner + isMe, open, rows)
+   · `kenalanBoard` (P14: rows, pairs, joined = ≥ 1 kenalan, tie = #1 & #2 sama point) · `kenalanIntro` (BTk4,
+   "kenalan ke-n"). Tanpa WA/token. `rows` = papan lengkap buat milestone & sheet Leaderboard tamu; `rankProgress`
+   (murni + tes): fill = point-ku ÷ teratas, milestone = tamu tepat di atasku · #2 · #1 (cuma di atasku; point sama
+   dibuang, maks 3). Pemenang = point terbanyak; data pemenang lama tanpa `points` → pakai `count`. Di layar: RankCard
+   "{p} point · point terbanyak dapat hadiah", banner Hadiah badge = point, chip QR "{p} point", stat BTk4 "Point
+   kamu" & Teratas (point), BTk5 "juara kenalan", Leaderboard/P14 "{p} Point". **Aturan +2/+1 sengaja nggak
+   dijelasin ke tamu** (copy info kartu Kenalan & BTk4 tetap tanpa angka point).
 4. **Selfie** di storage foto dengan id ber-folder `kenalan/{id}` (`kenalanFileId`) → `{eventId}/kenalan/{id}.jpg` +
    `_t`, **bukan** `Photo`: nggak ikut Galeri/PhotoStack/T15/P13/ZIP/photoCount. `GET /api/t/[token]/kenalan/[id]
    ?v=thumb` cuma buat a/b (lainnya 404); `photoResponse` terima `{eventId, id}`.
@@ -717,8 +728,8 @@ Keputusan 5 Nov (default K1–K18 N5-deliverables + usulan T3/T9/T10, disetujui)
    `kenalanMessage` (lib/kenalan; copy usulan ditandai TODO).
 6. **Tamu · banner**: `HadiahFloat` (components/ui) di `AcaraScreen` kalau udah check-in & (papan kebuka / ada
    pemenang): Gift "Hadiah", badge = kenalanku, awal kanan y300, batas bawah = atas panel (`avoid`), posisi di
-   localStorage `hmd-hadiah-posisi`; tap → BT05k (`?sheet=tamu`) atau BTk5 kalau udah ada pemenang; disembunyikan saat
-   sheet kebuka. Drag: capture sejak pointerdown, > 6 px = geser, snap kiri/kanan margin 16, reduced motion tanpa
+   localStorage `hmd-hadiah-posisi`; tap → BT05k (`?sheet=tamu`) atau BTk5 kalau udah ada pemenang; (6 Nov) tetap
+   ada waktu sheet kebuka (z 40, di bawah dim). Drag: capture sejak pointerdown, > 6 px = geser, snap kiri/kanan margin 16, reduced motion tanpa
    animasi, ukuran layar dibaca setelah mount.
 7. **BT05k**: `RankCard` di TamuSheet (disembunyikan saat cari; K14 "–" + "Belum ada kenalan"). v2 (Figma 5324:9823):
    latar `--rank-card-fill` + bayangan/highlight, lingkaran #rank cincin `--medal-gold-soft` 4 + Sparkle Fill 16, baris 2
@@ -733,12 +744,20 @@ Keputusan 5 Nov (default K1–K18 N5-deliverables + usulan T3/T9/T10, disetujui)
 8. **Sheet Kenalan** (6 Nov, dulu halaman `/t/[token]/kenalan`, route dihapus): `?sheet=kenalan-qr` di layar acara,
    `KenalanQrSheet` (components/n5), cuma kalau papan kebuka (`kenalanQr` dari server: QR `TicketQr` + tanggal
    polaroid). Tab `Segmented look="tabs"`: **QR saya dulu (default)**, lalu Scan QR. Dari BT05k = pushState
-   (`fromTamu`, tutup → BT05k); BTk4 "Scan QR lain" → sheet tab Scan QR. Scan = `Viewfinder` F2 → `cek` (QR sama
-   diabaikan 2,5 dtk) → error TopToast. K8: kamera ditolak → "Coba lagi" + "Pakai kamera HP" (`QrScanner.scanImage`).
-   BTk3 = layar penuh di atas sheet (`.selfieLayer` z 60), kamera depan N4, tanpa pratinjau (K4): jepret → kirim
-   ≤ 10 dtk → `onSent` → BTk4 (`?sheet=kenalan&id=`, router.refresh); 5xx/offline/timeout → selfie tetap + "Coba
-   lagi" (id sama) + TopToast; 4xx → balik ke scan + toast. HP pemilik QR: AcaraScreen buka BTk4 sendiri juga selagi
-   sheet Kenalan kebuka (bukan saat selfie, `onSelfieChange`).
+   (`fromTamu`, tutup → BT05k); BTk4 "Scan QR lain" → sheet tab Scan QR. Scan = `KenalanScanner` (components/n5:
+   `Viewfinder` F2 → `cek`, QR sama diabaikan 2,5 dtk → pesan ke pemanggil; K8: kamera ditolak → "Coba lagi" +
+   "Pakai kamera HP" `QrScanner.scanImage`). BTk3 = `KenalanSelfie` (components/n5) layar penuh di atas sheet
+   (`.selfieLayer` z 60), kamera depan N4, tanpa pratinjau (K4): jepret → kirim ≤ 10 dtk → `onSent` → BTk4
+   (`?sheet=kenalan&id=`, router.refresh); 5xx/offline/timeout → selfie tetap + "Coba lagi" (id sama) + TopToast;
+   4xx → balik ke scan + toast. HP pemilik QR: AcaraScreen buka BTk4 sendiri juga selagi sheet Kenalan kebuka
+   (bukan saat selfie, `onSelfieChange`). Muat tanpa scroll di layar pendek (iPhone 11 + toolbar browser): kotak
+   kamera / kartu QR `flex-shrink` + plat QR ikut tinggi kartu (container query); < 640 tinggi → kartu info & chip
+   disembunyikan.
+8b. **Mode Scan QR di kamera kolase** (6 Nov): `/t/[token]/foto` kirim `kenalan` (data "aku") kalau papan kebuka →
+   `KolaseApp` punya `Segmented` "Foto · Scan QR" di atas tombol jepret (tetap ada walau kamera foto ditolak). Scan
+   QR: kamera kolase mati, pil "Scan QR kenalan", kotak `KenalanScanner` seukuran polaroid (328/422), bar jepret
+   disembunyikan (tinggi tetap) → `KenalanSelfie` → `router.replace(/acara?sheet=kenalan&id=)` (BTk4). Dev n4
+   BT06-scan / BT06-scan-kamera / BT06-selfie.
 9. **BTk4/BTk5** (components/n5/Sheets, `?sheet=kenalan&id=` / `?sheet=pemenang`): BTk4 dari server (`kenalanIntro`)
    atau `latest`; tombol "Balik ke acara" + "Scan QR lain" (T3). v2 (6 Nov): caption "{aku} 🤝 {teman}" (BTk3 tetap
    "×" — cek desain), stempel `KenalanStamp` (72, `--success-text`, garis putus putih, Check Bold + "KENALAN", −12°)
@@ -748,15 +767,25 @@ Keputusan 5 Nov (default K1–K18 N5-deliverables + usulan T3/T9/T10, disetujui)
    announcedAt), K11 versi pemenang. T9: BT12 juga menampilkan BTk5 sekali (sebelum buku tamu otomatis).
 10. **Panitia**: BP02k = `HadiahFloat` Trophy "Peringkat" (badge pasang, K15) di `KontrolScreen` prop `kenalan` (null
    kalau belum mulai / ditutup), awal kanan y656, `bottom` 108 (di atas Scan tiket), → P14. **P14**
-   (`/panitia/event/[id]/kenalan`, `PapanKenalan`, LiveRefresh 2 dtk, pola P10): baris "{n}. {nama}" + "Terakhir
-   kenalan {jam}" + angka 28; seri di #1 → caption (TODO copy). v2 (6 Nov, podium 5332:9807): `Podium` (components/n5)
-   #2 · #1 · #3 (avatar 48/56 cincin medali + badge 22, nama depan, "{n} kenalan", balok 104/78/58 gradien medali),
-   kolom kosong disembunyikan; lalu "Peringkat berikutnya" + baris mulai #4 (disembunyikan kalau nggak ada #4). Token
-   `--medal-{gold,silver,bronze}` + `-soft` + `-ink`, `--medal-highlight`. P14b node 5332:9838. "Umumkan pemenang" → Dialog **P14b** →
+   (`/panitia/event/[id]/kenalan`, `PapanKenalan`, LiveRefresh 2 dtk, pola P10). Seri di #1 → caption (TODO copy).
+   (6 Nov, Figma P14 baru) `Leaderboard` (components/n5, juga sheet tamu): podium #2 · #1 · #3 di latar halaman
+   (avatar 48/56 cincin medali tanpa badge, nama depan 13, "{n} Point", balok 104/78/58 gradien medali, kolom kosong
+   disembunyikan) + daftar mulai #4 (`framed` = kartu putih di panitia): nomor · avatar 32 · nama + "Terakhir kenalan
+   {jam}" · "{n} Point". Token `--medal-{gold,silver,bronze}` + `-soft` + `-ink`, `--medal-highlight`. P14b node 5332:9838. "Umumkan pemenang" → Dialog **P14b** →
    server action `announceKenalanWinner(eventId, by)` (`AnnounceResult {changed, by, announcedAt}`); HP lain duluan →
    TopToast "HP … udah umumin pemenang duluan." K12: kosong → HeroState + tombol redup; udah diumumin → Banner success
    + tanpa tombol.
-11. Browser pane Claude yang tersembunyi = rAF diblokir → React baru hydrate setelah ada input; uji efek otomatis
+11. **Leaderboard tamu** (6 Nov, Figma "BT05k · Tamu di sini · leaderboard"): tombol ikon `Ranking` di kartu peringkat
+   BT05k (sebelah Kenalan; tetap ada setelah papan tutup) → `?sheet=peringkat` (`LeaderboardSheet`, aboveNav, dari
+   BT05k = pushState, tutup → BT05k, navbar Tamu aktif): judul "Leaderboard" + tombol primary sm "Kenalan"
+   (HandWaving) di kanan atas selama papan buka → sheet Kenalan di tempat (`leaderboardToKenalan`, replaceState,
+   tutup = balik ke asal Leaderboard), ajakan "Point terbanyak dapat
+   hadiah. Kejar podiumnya!" (pemenang udah ada → "{nama} juara kenalan. Makasih udah ikutan!"), lalu
+   `Leaderboard` tanpa kartu; kosong → HeroState. Dev n5 BT05k-leaderboard(-kosong). **Gulir**: judul & podium
+   tetap, cuma daftar #4 dst yang digulir (`.leaderboard`/`.boardList` menyusut di wadah flex; sheet:
+   `.leaderSheet`, P14: Screen `.boardScreen` setinggi viewport, min 680). Sheet geser-tutup nunggu area gulir di
+   dalam panel balik ke atas dulu (`Sheet` cek `scrollTop` leluhur target sentuh).
+12. Browser pane Claude yang tersembunyi = rAF diblokir → React baru hydrate setelah ada input; uji efek otomatis
    (BTk5, banner) setelah tap.
 
 ## Design system (Clean v0.5)
@@ -800,8 +829,9 @@ Keputusan 5 Nov (default K1–K18 N5-deliverables + usulan T3/T9/T10, disetujui)
   lepas > 96 px / cepat → tutup, selain itu balik); panel `overflow-x: hidden` — cuma carousel di dalamnya
   (mis. kartu tamu BT05) yang geser horizontal. (6 Nov) Tutup selalu beranimasi (kebalikan buka: panel turun
   280 ms + dim pudar) dari jalur mana pun — pemanggil boleh tetap `{cond && <Sheet open …>}` atau `open={false}`:
-  saat lepas dari DOM, salinan statis inert dianimasikan keluar di parent yang sama (ganti sheet = tanpa dim dobel;
-  reduced motion = langsung hilang).
+  saat lepas dari DOM, salinan statis inert dianimasikan keluar di parent yang sama. Ganti sheet = gantian: yang
+  lama turun dulu, panel baru naik setelah 280 ms (`.enterAfter`), dim tetap tanpa kedip/dobel. Buka & tutup
+  turun/naik sampai benar-benar keluar layar (`--sheet-exit-gap`). Reduced motion = langsung hilang.
 - `IconButton` = khusus tombol back/close 44 di toolbar (gaya secondary, varian `glass` di kamera).
 - `Screen`: `withBack` (konten mulai 8px), `bottom` + `bottomHeight` (1 tombol 54, 2 tombol 118,
   +caption 28) → fade scroll-edge otomatis di atas aksi bawah.

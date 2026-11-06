@@ -8,7 +8,6 @@ import {
   Badge,
   Banner,
   Button,
-  Card,
   Dialog,
   HeroState,
   IconButton,
@@ -17,15 +16,14 @@ import {
   TopToast,
 } from "@/components/ui";
 import n1 from "@/components/n1/n1.module.css";
-import { cx } from "@/lib/cx";
 import { deviceLabel } from "@/lib/device";
 import { timeWib } from "@/lib/format";
 import type { KenalanBoard } from "@/lib/kenalan";
+import { Leaderboard } from "./Leaderboard";
 import s from "./n5.module.css";
-import { Podium } from "./Podium";
 
-// N5 · P14 Papan kenalan (Figma 5305:10440, pola P10 N1; update 6 Nov: Podium #2 · #1 · #3 lalu
-// "Peringkat berikutnya" mulai #4): peringkat realtime (LiveRefresh di page), "Umumkan pemenang" → Dialog P14b (5332:9838) → server action → papan dikunci + semua HP tamu
+// N5 · P14 Papan kenalan (Figma 5305:10440, pola P10 N1; update 6 Nov: `Leaderboard` = podium #2 · #1 ·
+// #3 di latar halaman + daftar mulai #4 di kartu putih, satuan "Point"): peringkat realtime (LiveRefresh di page), "Umumkan pemenang" → Dialog P14b (5332:9838) → server action → papan dikunci + semua HP tamu
 // dapat BTk5. Dua HP panitia barengan: yang pertama menang, HP lain dapat toast (pola BP02d, K10 F4).
 // K12: kosong → HeroState + tombol redup; udah diumumin → Banner + tanpa tombol (read-only).
 
@@ -80,6 +78,7 @@ export function PapanKenalanScreen({
   return (
     <Screen
       withBack
+      className={s.boardScreen}
       bottom={
         winner ? undefined : (
           <Button
@@ -123,7 +122,7 @@ export function PapanKenalanScreen({
           icon={<Trophy />}
           title={`Pemenang udah diumumin · ${timeWib(winner.announcedAt)}`}
         >
-          {winner.name} · {winner.count} kenalan. Papan kenalan dikunci.
+          {winner.name} · {winner.points} point. Papan kenalan dikunci.
         </Banner>
       )}
 
@@ -136,34 +135,15 @@ export function PapanKenalanScreen({
           </HeroState>
         </div>
       ) : (
-        <Card className={cx(n1.list, s.board)}>
-          <p className="t-label c-label-2">Peringkat · update realtime</p>
+        <>
           {board.tie && !winner && (
             // K10 · TODO copy: #1 & #2 seri → yang duluan sampai menang.
             <p className="t-caption c-label-2">
-              {top?.firstName} seri sama #2 · menang karena duluan sampai {top?.count}.
+              {top?.firstName} seri sama #2 · menang karena duluan sampai {top?.points} point.
             </p>
           )}
-          <Podium rows={rows} />
-          {rows.length > 3 && (
-            <p className={cx("t-label c-label-2", s.nextLabel)}>Peringkat berikutnya</p>
-          )}
-          <ol className={s.boardList}>
-            {rows.slice(3).map((r) => (
-              <li key={r.guestId} className={s.boardRow}>
-                <span className={s.boardText}>
-                  <span className="t-body-emph">
-                    {r.rank}. {r.name}
-                  </span>
-                  <span className="t-caption c-label-2">Terakhir kenalan {r.lastLabel}</span>
-                </span>
-                <span className={s.boardCount} aria-label={`${r.count} kenalan`}>
-                  {r.count}
-                </span>
-              </li>
-            ))}
-          </ol>
-        </Card>
+          <Leaderboard rows={rows} framed />
+        </>
       )}
 
       <Dialog

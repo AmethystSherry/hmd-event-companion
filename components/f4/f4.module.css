@@ -72,6 +72,12 @@
   transform: translateX(-50%);
 }
 
+/* Sesaat setelah sheet penutup navbar (galeri, detail, …) ditutup: navbar di bawah sheet yang lagi
+   turun (z 50), jadi ketutup sheet sampai animasinya selesai. */
+.screen .navUnder {
+  z-index: 45;
+}
+
 .screen[data-nav] :global([data-sheet]:not([data-above-nav]))::after {
   content: "";
   flex: 0 0 64px;
@@ -284,6 +290,19 @@
 /* BT05 · tinggi ikut isi (28 Okt). Bentuk & posisi (mengambang di atas navbar) dari Sheet aboveNav. */
 .tamu {
   gap: 14px;
+}
+
+/* BT05k kartu peringkat: [Kenalan (isi lebar)] [ikon Leaderboard 54] (Figma 6 Nov). */
+.rankActions {
+  position: relative;
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.rankActions > :first-child:not(:last-child) {
+  flex: 1;
+  min-width: 0;
 }
 
 /* Judul + avatar "Kartu kamu" di pojok kanan (tap = ubah kartu T11). */

@@ -3,8 +3,10 @@ import { Suspense } from "react";
 import { KolaseApp } from "@/components/n4/KolaseApp";
 import { RegisterOffline } from "@/components/RegisterOffline";
 import { Skeleton } from "@/components/ui";
+import { cardOf } from "@/lib/card";
 import { getStore } from "@/lib/data";
 import { firstName } from "@/lib/format";
+import { kenalanView } from "@/lib/kenalan";
 import { polaroidDate } from "@/lib/photo";
 import { guestFromToken } from "@/lib/server/access";
 
@@ -12,7 +14,7 @@ export const metadata = { title: "Kolase foto · House Moving Day" };
 
 // N4 · Kamera kolase (BT06/BT06b). Hasil jepret = sheet di layar acara (?sheet=foto&id=…).
 // Hanya tamu yang udah check-in; acara ditutup → BT12 (kolase lengkap T15). Kamera & kompres jalan
-// di HP (KolaseApp).
+// di HP (KolaseApp). (6 Nov) Papan kenalan kebuka → mode Scan QR kenalan ikut tersedia.
 export default function PhotoPage({ params }: PageProps<"/t/[token]/foto">) {
   return (
     <Suspense
@@ -38,6 +40,7 @@ async function Photo({ params }: Pick<PageProps<"/t/[token]/foto">, "params">) {
   if (event.mode === "closed") redirect(`/t/${token}/selesai`); // F5 · BT12
 
   const lastOwn = store.listPhotos(event.id).find((p) => p.guestId === guest.id);
+  const kenalanOpen = !!kenalanView(store, guest.id)?.open;
   return (
     <>
       <KolaseApp
@@ -46,6 +49,19 @@ async function Photo({ params }: Pick<PageProps<"/t/[token]/foto">, "params">) {
         date={polaroidDate(event.date)}
         backHref={`/t/${token}/acara`}
         lastOwnId={lastOwn?.id ?? null}
+        kenalan={
+          kenalanOpen
+            ? {
+                me: {
+                  name: guest.name,
+                  firstName: firstName(guest.name),
+                  ig: guest.ig,
+                  role: cardOf(guest).role,
+                  keyNo: guest.keyNo,
+                },
+              }
+            : null
+        }
       />
       <RegisterOffline />
     </>

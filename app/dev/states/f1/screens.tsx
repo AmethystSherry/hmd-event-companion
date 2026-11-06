@@ -54,11 +54,16 @@ const rara = {
   follow: true,
 };
 const qr = () => <TicketQr payload="demo-ticket.0000000000000000" label="QR tiket contoh" />;
+// (6 Nov) Alamat Info rumah contoh → "Di mana" T01 & "Lokasi" tiket jadi link Google Maps.
+const withAddress = {
+  ...demoEvent,
+  houseInfo: { wifiName: null, wifiPassword: null, address: "Jl. Kemang Raya No. 8, Jakarta" },
+};
 const ticket = (variant: "t03" | "t03h", calendarOpen = false) => (
   <TicketScreen
     variant={variant}
     guestName="Rara Wening"
-    event={demoEvent}
+    event={withAddress}
     keyNo="#014"
     code="HMD-014-7F3K"
     qr={qr()}
@@ -111,7 +116,7 @@ const filledHome = (initialSheet?: "edit" | "delete" | "start", startedAt?: stri
 const invitation = () => (
   <InvitationScreen
     keyNo="#014"
-    event={demoEvent}
+    event={withAddress}
     sessions={demoSessions.map(sessionForGuest)}
     confirmHref="/dev/states/f1/T02"
   />

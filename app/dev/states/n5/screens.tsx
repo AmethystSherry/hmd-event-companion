@@ -179,6 +179,20 @@ export const SCREENS: ScreenDef[] = [
     render: () => acara({ winner: true }, { sheet: "tamu" }),
   },
   {
+    code: "BT05k-leaderboard",
+    name: "Leaderboard (sheet, 6 Nov)",
+    kind: "Utama",
+    lane: "Tamu",
+    render: () => acara({}, { sheet: "peringkat" }),
+  },
+  {
+    code: "BT05k-leaderboard-kosong",
+    name: "Leaderboard · belum ada kenalan",
+    kind: "Kasus",
+    lane: "Tamu",
+    render: () => acara({ intros: false }, { sheet: "peringkat" }),
+  },
+  {
     code: "BTk2",
     name: "Kenalan · tab QR saya (tab pertama)",
     kind: "Utama",

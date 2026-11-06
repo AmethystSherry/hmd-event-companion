@@ -15,6 +15,7 @@ import {
 import { Screen, Skeleton } from "@/components/ui";
 import { getStore } from "@/lib/data";
 import { daysUntil, eventStart, keyLabel, timeWib } from "@/lib/format";
+import { mapsUrl } from "@/lib/houseInfo";
 import { googleCalendarUrl } from "@/lib/ics";
 import { sessionForGuest } from "@/lib/sessionForm";
 import { guestFromToken } from "@/lib/server/access";
@@ -82,7 +83,9 @@ async function Router({
             status={ticket.status}
             justCheckedIn={!!inAt && now.getTime() - new Date(inAt).getTime() < JUST_IN_MS}
             guestName={guest.name}
-            event={event}
+            // Komponen klien: cuma field yang dipakai (Info rumah/Wi-Fi nggak ikut ke HP sebelum masuk).
+            event={{ date: event.date, startsAt: event.startsAt, location: event.location }}
+            mapsHref={event.houseInfo?.address ? mapsUrl(event.houseInfo.address) : undefined}
             keyNo={keyLabel(guest.keyNo)}
             code={ticket.shortCode}
             qr={qr}

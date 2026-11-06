@@ -14,6 +14,7 @@ export type TicketData = {
   keyNo: string; // "#014"
   when: string; // "Min, 8 Nov · 13.00"
   where: string; // "Kantor baru Potara"
+  whereHref?: string; // (6 Nov) alamat Info rumah → Google Maps; kosong = teks biasa
   code: string; // "HMD-014-7F3K"
   followNote?: string;
 };
@@ -89,7 +90,20 @@ export function Ticket({
           </div>
           <div className={styles.end}>
             <dt className="t-label c-label-2">Lokasi</dt>
-            <dd className="t-body-emph">{data.where}</dd>
+            <dd className="t-body-emph">
+              {data.whereHref ? (
+                <a
+                  href={data.whereHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.whereLink}
+                >
+                  {data.where}
+                </a>
+              ) : (
+                data.where
+              )}
+            </dd>
           </div>
         </div>
         <div className={styles.follow}>

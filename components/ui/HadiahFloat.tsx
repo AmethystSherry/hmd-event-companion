@@ -20,7 +20,7 @@ import styles from "./HadiahFloat.module.css";
 // dilepas → nempel ke sisi kiri/kanan terdekat (margin 16), y dibatasi `top` .. atas elemen
 // `avoid` (panel / tombol bawah). Posisi disimpan per HP (localStorage `storageKey`). Tap tanpa
 // geser = `onPress` (keyboard: Enter/Space bawaan button). Reduced motion = snap tanpa animasi.
-// z-index 40: di bawah Sheet (50) & navbar tamu (55); pemanggil menyembunyikannya saat sheet kebuka.
+// z-index 40: di bawah Sheet (50) & navbar tamu (55) → waktu sheet kebuka tetap ada, ketutup dim.
 
 const MARGIN = 16;
 const DRAG_PX = 6;

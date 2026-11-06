@@ -288,6 +288,13 @@ main.bleed {
   font-weight: 500;
 }
 
+/* "Di mana" = link Google Maps alamat Info rumah (pola link IG di caption). */
+.factLink {
+  color: var(--accent-text);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 /* ---- Bagian acara (grid 2 kolom kartu sesi) ---- */
 .parts {
   display: flex;

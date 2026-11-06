@@ -6,6 +6,7 @@ import { TicketQr } from "@/components/TicketQr";
 import type { Event, Session } from "@/lib/data/types";
 import { doorCounts, type DoorGuest } from "@/lib/door";
 import { demoEvent, demoSessions, NAMES } from "@/lib/fixtures";
+import { mapsUrl } from "@/lib/houseInfo";
 import { rundownView } from "@/lib/rundown";
 
 // Registri layar F2 (F2-deliverables.md "Daftar layar", Figma band 4667:4654) untuk
@@ -97,6 +98,7 @@ const ticket = (phase: DayPhase) => (
     phase={phase}
     guestName="Rara Wening"
     event={demoEvent}
+    mapsHref={mapsUrl("Jl. Kemang Raya No. 8, Jakarta")}
     keyNo="#014"
     code="HMD-014-7F3K"
     qr={qr()}

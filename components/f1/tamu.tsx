@@ -27,6 +27,7 @@ import {
 import { ART_VIDEO } from "@/lib/artVideo";
 import type { Event } from "@/lib/data/types";
 import { addDays, dateMedium, dateShort, eventStart, firstName } from "@/lib/format";
+import { mapsUrl } from "@/lib/houseInfo";
 import { igDmUrl, igProfileUrl, POTARA_IG, rundownTiles } from "@/lib/invite";
 import type { GuestSession } from "@/lib/sessionForm";
 import f1 from "./f1.module.css";
@@ -102,7 +103,13 @@ export function InvitationScreen({
         <dl className={inv.facts}>
           <Fact icon={<CalendarBlank size={14} />} label="Kapan" value={dateShort(event.date)} />
           <Fact icon={<Clock size={14} />} label="Jam" value={`${event.startsAt}–selesai`} />
-          <Fact icon={<MapPin size={14} />} label="Di mana" value={event.location} />
+          {/* (6 Nov) Alamat Info rumah (PE03) udah diisi → "Di mana" jadi link Google Maps. */}
+          <Fact
+            icon={<MapPin size={14} />}
+            label="Di mana"
+            value={event.location}
+            href={event.houseInfo?.address ? mapsUrl(event.houseInfo.address) : undefined}
+          />
         </dl>
         {sessions.length > 0 && (
           <div className={inv.parts}>
@@ -152,14 +159,32 @@ export function InvitationScreen({
   );
 }
 
-function Fact({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
+function Fact({
+  icon,
+  label,
+  value,
+  href,
+}: {
+  icon: ReactNode;
+  label: string;
+  value: string;
+  href?: string; // ada → nilai jadi text link (tab baru)
+}) {
   return (
     <div className={inv.fact}>
       <dt className={`t-caption ${inv.factLabel}`}>
         {icon}
         {label}
       </dt>
-      <dd className={inv.factValue}>{value}</dd>
+      <dd className={inv.factValue}>
+        {href ? (
+          <a href={href} target="_blank" rel="noopener noreferrer" className={inv.factLink}>
+            {value}
+          </a>
+        ) : (
+          value
+        )}
+      </dd>
     </div>
   );
 }
@@ -295,6 +320,7 @@ export function TicketScreen({
           keyNo,
           when: `${dateShort(event.date)} · ${event.startsAt}`,
           where: event.location,
+          whereHref: event.houseInfo?.address ? mapsUrl(event.houseInfo.address) : undefined,
           code,
           followNote: `Sudah follow @${POTARA_IG}`,
         }}

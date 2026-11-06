@@ -18,11 +18,12 @@ import styles from "./Sheet.module.css";
 // (6 Nov) Tutup = animasi kebalikan buka (panel turun + dim pudar), dari jalur mana pun (tombol,
 // scrim, geser, back HP, ganti sheet, `open` false / pemanggil berhenti merender): saat sheet hilang
 // dari DOM, salinan statisnya (`.leaving`, inert) ditaruh di tempat yang sama lalu dianimasikan keluar
-// dan dibuang. Reduced motion → langsung hilang.
+// dan dibuang. Ganti sheet (navbar, Tamu → Kartu kamu, …) = gantian: yang lama turun dulu, yang baru
+// naik setelahnya, dim tetap (nggak kedip / dobel). Reduced motion → langsung hilang.
 
 const CLOSE_PX = 96;
 const CLOSE_SPEED = 0.6; // px/ms
-const EXIT_MS = 280; // samakan dengan .leaving di Sheet.module.css
+export const SHEET_EXIT_MS = 280; // samakan dengan .leaving di Sheet.module.css
 export function Sheet({
   open,
   onClose,
@@ -80,14 +81,18 @@ export function Sheet({
       queueMicrotask(() => {
         if (el.isConnected || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
         const ghost = el.cloneNode(true) as HTMLDivElement;
+        ghost.classList.remove(styles.enterAfter);
         ghost.classList.add(styles.leaving);
         ghost.setAttribute("aria-hidden", "true");
         ghost.inert = true;
         ghost.querySelectorAll("[id]").forEach((n) => n.removeAttribute("id"));
         ghost.querySelectorAll("input[name]").forEach((n) => n.removeAttribute("name"));
-        // Ganti ke sheet lain (mis. Tamu → Kartu kamu): dim sheet baru udah ada, jangan dobel.
-        if (document.querySelector(`:not(.${styles.leaving}) > [data-sheet]`)) {
+        // Ganti ke sheet lain: dim punya sheet baru (tanpa animasi), panel barunya naik setelah yang
+        // lama selesai turun.
+        const next = document.querySelector(`:not(.${styles.leaving}) > [data-sheet]`);
+        if (next?.parentElement) {
           ghost.classList.add(styles.handoff);
+          next.parentElement.classList.add(styles.enterAfter);
         }
         parent.appendChild(ghost);
         const ghostPanel = ghost.querySelector<HTMLElement>("[data-sheet]");
@@ -95,7 +100,7 @@ export function Sheet({
           ghostPanel.style.height = `${height}px`;
           ghostPanel.scrollTop = scrollTop;
         }
-        setTimeout(() => ghost.remove(), EXIT_MS + 40);
+        setTimeout(() => ghost.remove(), SHEET_EXIT_MS + 40);
       });
     };
   }, [open]);
@@ -122,7 +127,12 @@ export function Sheet({
     const onStart = (e: TouchEvent) => {
       if (!el || e.touches.length !== 1) return;
       const t = e.touches[0];
-      start = { x: t.clientX, y: t.clientY, t: e.timeStamp, top: el.scrollTop <= 0 };
+      // Area gulir di dalam panel (mis. daftar Leaderboard) yang belum di paling atas → geser = gulir dulu.
+      let top = el.scrollTop <= 0;
+      for (let n = e.target as Element | null; top && n && n !== el; n = n.parentElement) {
+        if (n.scrollTop > 0) top = false;
+      }
+      start = { x: t.clientX, y: t.clientY, t: e.timeStamp, top };
       mode = null;
       dy = 0;
     };

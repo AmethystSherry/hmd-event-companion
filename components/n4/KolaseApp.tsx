@@ -21,7 +21,23 @@ import {
   Lightning,
   X,
 } from "@/components/icons";
-import { Button, Card, IconButton, NumberedRow, Pill, Polaroid, Toast } from "@/components/ui";
+import {
+  Button,
+  Card,
+  IconButton,
+  NumberedRow,
+  Pill,
+  Polaroid,
+  Segmented,
+  Toast,
+} from "@/components/ui";
+import { KenalanScanner } from "@/components/n5/KenalanScanner";
+import {
+  KenalanSelfie,
+  type KenalanFriend,
+  type KenalanMe,
+  type KenalanSelfiePreview,
+} from "@/components/n5/KenalanSelfie";
 import { cx } from "@/lib/cx";
 import { queuePhoto } from "@/lib/offline/photoDb";
 import { guestPhotoUrl, isInAppBrowser, newPhotoId } from "@/lib/photo";
@@ -35,6 +51,11 @@ import { sendPhoto } from "./usePhotoOutbox";
 // kulkas" / "Ulangi" / "Simpan" (ke HP, tanpa ngirim). Tempel → foto masuk antrean IndexedDB dulu →
 // dikirim, ditunggu ≤ 5 dtk (loading) → kamera dimatikan → layar acara + sheet hasil
 // (/acara?sheet=foto&id=…, BT07/BT07b/BT07e). Ditolak server → toast, tetap di pratinjau.
+// (6 Nov) Papan kenalan kebuka (`kenalan`) → pilihan mode Foto · Scan QR di atas tombol jepret.
+// Scan QR = kamera kolase mati, `KenalanScanner` (kamera belakang) → selfie bukti kenalan
+// (`KenalanSelfie`) → layar acara + BTk4 (?sheet=kenalan&id=).
+
+type Mode = "foto" | "scan";
 
 const UPLOAD_WAIT_MS = 5000; // lewat → sheet BT07b, antrean lanjut di layar acara
 const TOAST_MS = 4000;
@@ -54,6 +75,7 @@ export function KolaseApp({
   backHref,
   lastOwnId,
   preview,
+  kenalan,
 }: {
   token: string;
   name: string; // nama depan di caption polaroid
@@ -61,10 +83,21 @@ export function KolaseApp({
   backHref: string; // layar acara
   lastOwnId: string | null; // thumbnail kiri = foto terakhirmu
   // /dev/states/n4: tanpa kamera/jaringan/IndexedDB.
-  preview?: { camera?: CameraStatus; review?: string }; // review = URL gambar contoh pratinjau
+  preview?: {
+    camera?: CameraStatus;
+    review?: string; // URL gambar contoh pratinjau
+    mode?: Mode;
+    scanError?: boolean;
+    selfie?: KenalanSelfiePreview & { friend: KenalanFriend };
+  };
+  kenalan?: { me: KenalanMe } | null; // null = papan kenalan nggak kebuka → tanpa mode Scan QR
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  const [mode, setMode] = useState<Mode>(kenalan ? (preview?.mode ?? "foto") : "foto");
+  const [selfie, setSelfie] = useState<{ friend: KenalanFriend; code: string } | null>(
+    preview?.selfie ? { friend: preview.selfie.friend, code: "" } : null,
+  );
   const [leaving, setLeaving] = useState(false);
   const [flash, setFlash] = useState(0);
   const [toast, setToast] = useState<{ key: number; text: string } | null>(null);
@@ -84,7 +117,7 @@ export function KolaseApp({
     () => isInAppBrowser(navigator.userAgent),
     () => false,
   );
-  const cam = useCamera(video, !preview && !inApp && !leaving);
+  const cam = useCamera(video, !preview && !inApp && !leaving && mode === "foto");
   const status: CameraStatus = preview
     ? (preview.camera ?? "live")
     : inApp
@@ -94,6 +127,10 @@ export function KolaseApp({
   const fallback = status === "unsupported" || status === "error";
 
   const show = useCallback((text: string) => setToast({ key: Date.now(), text }), []);
+  const onFriend = useCallback(
+    (friend: KenalanFriend, code: string) => setSelfie({ friend, code }),
+    [],
+  );
   useEffect(() => {
     if (!toast) return;
     const t = setTimeout(() => setToast(null), TOAST_MS);
@@ -175,14 +212,38 @@ export function KolaseApp({
     if (file) void run(() => captureFile(file));
   }
 
+  if (selfie && kenalan) {
+    return (
+      <KenalanSelfie
+        token={token}
+        me={kenalan.me}
+        friend={selfie.friend}
+        code={selfie.code}
+        date={date}
+        onCancel={() => setSelfie(null)}
+        onRejected={(text) => {
+          setSelfie(null);
+          show(text);
+        }}
+        onSent={(id) =>
+          router.replace(
+            preview ? "/dev/states/n5/BTk4" : `/t/${token}/acara?sheet=kenalan&id=${id}`,
+          )
+        }
+        preview={preview?.selfie}
+      />
+    );
+  }
+
+  const scanning = mode === "scan";
   return (
     <div className={s.camera} data-theme="dark">
       <header className={s.toolbar}>
         <IconButton variant="glass" href={backHref} label="Tutup kamera" icon={<X />} />
         <Pill glass icon={<span className={s.dot} />}>
-          Kolase foto
+          {scanning ? "Scan QR kenalan" : "Kolase foto"}
         </Pill>
-        {status === "live" && cam.torch.supported ? (
+        {!scanning && status === "live" && cam.torch.supported ? (
           <IconButton
             variant="glass"
             label={cam.torch.on ? "Matikan senter" : "Nyalakan senter"}
@@ -196,45 +257,75 @@ export function KolaseApp({
       </header>
 
       <div className={s.stage}>
-        <Polaroid name={name} date={date} className={s.viewfinder}>
-          {denied ? (
-            <div className={s.denied}>
-              <CameraSlash size={40} />
-              <p className="t-body-emph">Kamera belum diizinkan</p>
-            </div>
-          ) : fallback ? (
-            <div className={s.fallback}>
-              <Camera size={32} />
-              <p className="t-label">Tap tombol jepret buat buka kamera HP</p>
-            </div>
-          ) : preview || leaving ? undefined : (
-            <video
-              ref={video}
-              muted
-              playsInline
-              autoPlay
-              aria-label="Kamera kolase"
-              className={cx(cam.facing === "user" && s.mirror)}
-            />
-          )}
-          {review && (
-            // eslint-disable-next-line @next/next/no-img-element -- object URL hasil jepret
-            <img src={review.url} alt="Hasil jepretanmu" className={s.reviewImg} />
-          )}
-          {flash > 0 && <span key={flash} aria-hidden className={s.flash} />}
-        </Polaroid>
-        {!denied && (
-          <p className={cx("t-label", s.hint)}>
-            {review
-              ? "Suka? Masukin ke kolase, atau ulangi dulu."
-              : inApp
-                ? "Buka di Safari/Chrome biar kamera langsung jalan di sini."
-                : "Jepret sekali, langsung masuk kolase bareng."}
-          </p>
+        {scanning ? (
+          <KenalanScanner
+            token={token}
+            active
+            onFriend={onFriend}
+            onMessage={show}
+            className={s.scanStage}
+            preview={preview}
+          />
+        ) : (
+          <Polaroid name={name} date={date} className={s.viewfinder}>
+            {denied ? (
+              <div className={s.denied}>
+                <CameraSlash size={40} />
+                <p className="t-body-emph">Kamera belum diizinkan</p>
+              </div>
+            ) : fallback ? (
+              <div className={s.fallback}>
+                <Camera size={32} />
+                <p className="t-label">Tap tombol jepret buat buka kamera HP</p>
+              </div>
+            ) : preview || leaving ? undefined : (
+              <video
+                ref={video}
+                muted
+                playsInline
+                autoPlay
+                aria-label="Kamera kolase"
+                className={cx(cam.facing === "user" && s.mirror)}
+              />
+            )}
+            {review && (
+              // eslint-disable-next-line @next/next/no-img-element -- object URL hasil jepret
+              <img src={review.url} alt="Hasil jepretanmu" className={s.reviewImg} />
+            )}
+            {flash > 0 && <span key={flash} aria-hidden className={s.flash} />}
+          </Polaroid>
+        )}
+        {scanning ? (
+          <p className={cx("t-label", s.hint)}>Habis discan, kalian langsung selfie berdua.</p>
+        ) : (
+          !denied && (
+            <p className={cx("t-label", s.hint)}>
+              {review
+                ? "Suka? Masukin ke kolase, atau ulangi dulu."
+                : inApp
+                  ? "Buka di Safari/Chrome biar kamera langsung jalan di sini."
+                  : "Jepret sekali, langsung masuk kolase bareng."}
+            </p>
+          )
         )}
       </div>
 
-      {denied ? (
+      {/* Tetap ada walau kamera foto ditolak: mode Scan QR punya jalur cadangan sendiri (K8). */}
+      {kenalan && !review && (
+        <Segmented
+          look="tabs"
+          label="Mode kamera"
+          className={s.modes}
+          value={mode}
+          onChange={setMode}
+          options={[
+            { value: "foto", label: "Foto" },
+            { value: "scan", label: "Scan QR" },
+          ]}
+        />
+      )}
+
+      {denied && !scanning ? (
         <div className={s.deniedPanel} data-theme="light">
           <Card className={s.steps}>
             <p className="t-body-emph">Cara nyalain izin kamera</p>
@@ -275,7 +366,8 @@ export function KolaseApp({
           </div>
         </div>
       ) : (
-        <div className={s.bar}>
+        // Mode Scan QR: bar tetap ada (tinggi sama, layar nggak loncat) tapi isinya disembunyikan.
+        <div className={s.bar} data-idle={scanning || undefined} inert={scanning}>
           {lastOwnId ? (
             <button
               type="button"

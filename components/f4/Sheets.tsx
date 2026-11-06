@@ -7,6 +7,7 @@ import {
   MagnifyingGlass,
   MapPin,
   PencilSimple,
+  Ranking,
   WifiHigh,
 } from "@/components/icons";
 import { Badge, Button, GuestCard, HeroState, ListRow, SearchField, Sheet } from "@/components/ui";
@@ -41,6 +42,7 @@ export type SheetKind =
   | "rumah"
   | "kenalan"
   | "kenalan-qr"
+  | "peringkat"
   | "pemenang";
 
 const STATE_BADGE = {
@@ -174,6 +176,7 @@ export function TamuSheet({
   initialQuery = "",
   kenalan,
   onKenalan,
+  onLeaderboard,
 }: {
   view: AcaraView;
   me: AcaraView["me"]; // kartu kamu (bisa versi baru setelah T11 sebelum data server masuk)
@@ -183,6 +186,7 @@ export function TamuSheet({
   // N5 · BT05k: kartu peringkat + satu tombol Kenalan di header (null = fitur belum kebuka).
   kenalan?: KenalanView | null;
   onKenalan?: () => void; // → sheet Kenalan (BTk2 QR saya / BTk1 Scan QR)
+  onLeaderboard?: () => void; // → sheet Leaderboard (6 Nov)
 }) {
   const [q, setQ] = useState(initialQuery);
   const list = filterGuests(view.guests, q);
@@ -221,16 +225,30 @@ export function TamuSheet({
           </span>
         </button>
       </div>
-      {/* N5 · BT05k: disembunyikan saat cari (sama kayak kartu kamu N3). Tombol Kenalan (→ sheet
-          Kenalan) di dalam kartu peringkat, Secondary Large (Figma 5358:10360). */}
+      {/* N5 · BT05k: disembunyikan saat cari (sama kayak kartu kamu N3). Di kartu peringkat: tombol
+          Kenalan (→ sheet Kenalan, Secondary Large, Figma 5358:10360) + tombol ikon Leaderboard (→ sheet
+          Leaderboard, tetap ada setelah papan tutup). */}
       {showKenalan && kenalan && !searching && (
         <RankCard
           view={kenalan}
           action={
-            kenalanLive ? (
-              <Button variant="secondary" icon={<HandWaving />} onClick={onKenalan}>
-                Kenalan
-              </Button>
+            kenalanLive || onLeaderboard ? (
+              <div className={styles.rankActions}>
+                {kenalanLive && (
+                  <Button variant="secondary" icon={<HandWaving />} onClick={onKenalan}>
+                    Kenalan
+                  </Button>
+                )}
+                {onLeaderboard && (
+                  <Button
+                    variant="secondary"
+                    iconOnly
+                    label="Leaderboard"
+                    icon={<Ranking />}
+                    onClick={onLeaderboard}
+                  />
+                )}
+              </div>
             ) : undefined
           }
         />
@@ -243,11 +261,10 @@ export function TamuSheet({
         className={styles.search}
       />
 
-      {list.length > 0 && (
+      {/* (6 Nov) Label "Semua tamu · n" dihapus; jumlah hasil cuma tampil selagi cari. */}
+      {searching && list.length > 0 && (
         <div className={styles.rowHead}>
-          <span className="t-label-emph">
-            {searching ? `Hasil · ${list.length}` : `Semua tamu · ${view.guests.length}`}
-          </span>
+          <span className="t-label-emph">Hasil · {list.length}</span>
         </div>
       )}
       {list.length > 0 ? (

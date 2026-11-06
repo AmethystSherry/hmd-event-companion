@@ -48,13 +48,14 @@
   }
 }
 
+/* Buka: naik dari bawah layar (panel mengambang ikut jaraknya ke bawah, --sheet-exit-gap). */
 @keyframes sheet-in {
   from {
-    transform: translateY(100%);
+    transform: translateY(calc(100% + var(--sheet-exit-gap, 0px)));
   }
 }
 
-/* Tutup (Sheet.tsx EXIT_MS 280): salinan statis sheet turun keluar layar + dim pudar, kebalikan buka.
+/* Tutup (Sheet.tsx SHEET_EXIT_MS 280): salinan statis sheet turun keluar layar + dim pudar, kebalikan buka.
    Mulai dari posisi sekarang (termasuk sisa geser ke bawah). --sheet-exit-gap = jarak panel dari
    bawah layar (floating / aboveNav) biar benar-benar hilang. */
 .leaving {
@@ -67,6 +68,17 @@
 
 .handoff .scrim {
   display: none;
+}
+
+/* Sheet baru waktu ganti sheet: dim langsung (lanjutan dim yang lama), panel naik setelah yang lama
+   selesai turun. */
+.enterAfter .scrim {
+  animation: none;
+}
+
+.enterAfter .panel {
+  animation-delay: 280ms;
+  animation-fill-mode: backwards;
 }
 
 .leaving .panel {

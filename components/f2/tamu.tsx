@@ -32,6 +32,7 @@ export type Stamp = { time: string; guestNo: number | null; total: number };
 type TicketProps = {
   guestName: string;
   event: Pick<Event, "date" | "startsAt" | "location">;
+  mapsHref?: string; // (6 Nov) alamat Info rumah → "Lokasi" jadi link Google Maps
   keyNo: string;
   code: string;
   qr?: ReactNode;
@@ -47,6 +48,7 @@ export function DayTicketScreen({
   phase,
   guestName,
   event,
+  mapsHref,
   keyNo,
   code,
   qr,
@@ -69,6 +71,7 @@ export function DayTicketScreen({
     keyNo,
     when: `${dateShort(event.date)} · ${event.startsAt}`,
     where: event.location,
+    whereHref: mapsHref,
     code,
     followNote: `Sudah follow @${POTARA_IG}`,
   };

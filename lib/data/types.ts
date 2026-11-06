@@ -41,6 +41,7 @@ export type Event = {
 export type KenalanWinner = {
   guestId: string;
   count: number; // jumlah kenalan saat diumumin
+  points?: number; // point saat diumumin (6 Nov: scan +2, discan +1); kosong = data sebelum point
   announcedAt: string;
   by: string | null; // label HP panitia ("HP 7K2Q")
 };

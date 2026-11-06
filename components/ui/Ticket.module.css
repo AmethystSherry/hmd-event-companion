@@ -110,6 +110,13 @@
   text-align: right;
 }
 
+/* "Lokasi" = link Google Maps alamat Info rumah (pola link "Di mana" T01). */
+.whereLink {
+  color: var(--accent-text);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .follow svg {
   flex-shrink: 0;
   color: var(--success-text);

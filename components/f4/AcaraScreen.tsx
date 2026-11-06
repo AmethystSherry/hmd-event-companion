@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -33,7 +34,7 @@ import {
   type KenalanPreview,
   type KenalanTab,
 } from "@/components/n5/KenalanQrSheet";
-import { KenalanSheet, PemenangSheet } from "@/components/n5/Sheets";
+import { KenalanSheet, LeaderboardSheet, PemenangSheet } from "@/components/n5/Sheets";
 import type { KenalanIntro, KenalanView } from "@/lib/kenalan";
 import { usePhotoOutbox } from "@/components/n4/usePhotoOutbox";
 import {
@@ -47,6 +48,7 @@ import {
   TopToast,
   type StackPhoto,
 } from "@/components/ui";
+import { SHEET_EXIT_MS } from "@/components/ui/Sheet";
 import { ART_VIDEO } from "@/lib/artVideo";
 import { useServerNow } from "@/components/useServerNow";
 import type { AcaraView } from "@/lib/acara";
@@ -107,9 +109,16 @@ function recall(key: string): string | null {
 const NAV_SHEETS: Partial<Record<SheetKind, true>> = {
   tamu: true,
   "kenalan-qr": true,
+  peringkat: true,
   rundown: true,
   rumah: true,
   tanya: true,
+};
+// Sheet anak dari BT05 (dibuka dari Tamu di sini) → tab navbar yang aktif tetap Tamu.
+const TAMU_SUB: Partial<Record<SheetKind, true>> = {
+  kartu: true,
+  "kenalan-qr": true,
+  peringkat: true,
 };
 
 type Preview = {
@@ -305,7 +314,7 @@ export function AcaraScreen({
   // Navbar (tetap kelihatan di atas sheet): tab yang kebuka → tutup; sheet lain kebuka → ganti
   // sheet di entri riwayat yang sama (back HP tetap langsung balik ke layar acara).
   const toggle = (kind: SheetKind) => {
-    const current = sheet?.kind === "kartu" || sheet?.kind === "kenalan-qr" ? "tamu" : sheet?.kind;
+    const current = sheet && TAMU_SUB[sheet.kind] ? "tamu" : sheet?.kind;
     if (current === kind) return close();
     if (!sheet || preview) return open(kind);
     setSheet({ kind });
@@ -428,13 +437,25 @@ export function AcaraScreen({
     if (openIntro) remember(seenIntroKey(token), openIntro.id);
     if (sheet?.kind === "pemenang" && winnerAt) remember(seenWinnerKey(token), winnerAt);
   }, [preview, openIntro, sheet?.kind, winnerAt, token]);
-  // Sheet Kenalan: dari BT05k = pushState (back HP / tutup balik ke BT05k, pola Kartu kamu).
-  const openKenalanQr = useCallback(() => {
-    setSheet({ kind: "kenalan-qr", fromTamu: true });
+  // Sheet Kenalan / Leaderboard dari BT05k = pushState (back HP / tutup balik ke BT05k, pola Kartu
+  // kamu).
+  const openFromTamu = useCallback(
+    (kind: "kenalan-qr" | "peringkat") => {
+      setSheet({ kind, fromTamu: true });
+      if (preview) return;
+      const url = new URL(window.location.href);
+      url.searchParams.set("sheet", kind);
+      history.pushState({ ...history.state, hmdSheet: true, hmdFromTamu: true }, "", url);
+    },
+    [preview],
+  );
+  // Leaderboard → sheet Kenalan: ganti di tempat (replaceState), tutup Kenalan = balik ke asal Leaderboard.
+  const leaderboardToKenalan = useCallback(() => {
+    setSheet((s) => ({ kind: "kenalan-qr", fromTamu: s?.fromTamu }));
     if (preview) return;
     const url = new URL(window.location.href);
     url.searchParams.set("sheet", "kenalan-qr");
-    history.pushState({ ...history.state, hmdSheet: true, hmdFromTamu: true }, "", url);
+    history.replaceState(history.state, "", url);
   }, [preview]);
   // BTk3 selfie lagi jalan → BTk4/BTk5 jangan kebuka sendiri (nimpa kamera).
   const [selfieOn, setSelfieOn] = useState(false);
@@ -473,11 +494,21 @@ export function AcaraScreen({
     url.searchParams.delete("id");
     history.replaceState(history.state, "", url);
   };
-  const floatHidden = !!sheet && !(sheet.kind === "kenalan" && !openIntro);
-
   // Navbar cuma tampil di layar acara & sheet yang dibuka dari navbar (Tamu/Kenalan, Rundown, Info
   // rumah, Tanya). Sheet lain (detail sesi, pembicara, foto, galeri, kartu kamu, BTk4, BTk5) nutupin.
   const navShown = !sheet || !!NAV_SHEETS[sheet.kind];
+  // Sheet penutup navbar ditutup → navbar langsung ada tapi di BAWAH sheet yang lagi turun (animasi
+  // tutup Sheet), jadi kebuka pelan-pelan, bukan nongol di atasnya.
+  const [navUnder, setNavUnder] = useState(false);
+  const navWasShown = useRef(navShown);
+  useLayoutEffect(() => {
+    const reappeared = navShown && !navWasShown.current;
+    navWasShown.current = navShown;
+    if (!reappeared) return;
+    setNavUnder(true);
+    const t = setTimeout(() => setNavUnder(false), SHEET_EXIT_MS);
+    return () => clearTimeout(t);
+  }, [navShown]);
   return (
     <main className={styles.screen} data-nav={navShown || undefined}>
       <div className={styles.art}>
@@ -566,13 +597,14 @@ export function AcaraScreen({
         )}
       </section>
 
-      {/* N5 · BT03h banner Hadiah: geser & nempel kiri/kanan, di atas panel. */}
-      {kenalanOn && kenalan && !floatHidden && (
+      {/* N5 · BT03h banner Hadiah: geser & nempel kiri/kanan, di atas panel. Tetap ada waktu sheet
+          kebuka (z 40, di bawah dim sheet). */}
+      {kenalanOn && kenalan && (
         <HadiahFloat
           icon={<Gift />}
-          count={kenalan.count}
+          count={kenalan.points}
           label="Hadiah"
-          ariaLabel={`Hadiah, ${kenalan.count} kenalan`}
+          ariaLabel={`Hadiah, ${kenalan.points} point`}
           storageKey="hmd-hadiah-posisi"
           top={24}
           avoid={panelRef}
@@ -583,10 +615,8 @@ export function AcaraScreen({
       {/* Navbar di luar panel (panel punya z-index sendiri) supaya tetap di atas sheet. */}
       {navShown && (
         <GuestTabBar
-          className={styles.nav}
-          active={
-            sheet?.kind === "kartu" || sheet?.kind === "kenalan-qr" ? "tamu" : (sheet?.kind ?? null)
-          }
+          className={cx(styles.nav, navUnder && styles.navUnder)}
+          active={sheet && TAMU_SUB[sheet.kind] ? "tamu" : (sheet?.kind ?? null)}
           ask={{
             label: "Tanya pembicara",
             icon: <ChatCircle size={24} />,
@@ -670,7 +700,8 @@ export function AcaraScreen({
           onEdit={openKartu}
           initialQuery={preview?.kartu?.query}
           kenalan={kenalanOn ? kenalan : null}
-          onKenalan={kenalanQr ? openKenalanQr : undefined}
+          onKenalan={kenalanQr ? () => openFromTamu("kenalan-qr") : undefined}
+          onLeaderboard={() => openFromTamu("peringkat")}
         />
       )}
       {sheet?.kind === "kartu" && (
@@ -769,6 +800,13 @@ export function AcaraScreen({
       )}
       {sheet?.kind === "pemenang" && kenalan?.winner && (
         <PemenangSheet view={kenalan} onClose={close} />
+      )}
+      {sheet?.kind === "peringkat" && kenalan && (
+        <LeaderboardSheet
+          view={kenalan}
+          onClose={sheet.fromTamu ? backToTamu : close}
+          onKenalan={kenalanQr ? leaderboardToKenalan : undefined}
+        />
       )}
 
       {!preview && <LiveRefresh token={token} pollMs={2000} onHealth={setOnline} />}

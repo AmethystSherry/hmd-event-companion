@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import { KolaseApp } from "@/components/n4/KolaseApp";
 import type { CameraStatus } from "@/components/n4/useCamera";
 import { demoEvent } from "@/lib/fixtures";
@@ -36,14 +36,29 @@ const FULL = photos([MINE, id(98), id(97)], 34);
 const FIRST = photos([MINE], 0);
 const EMPTY = photos([], 34);
 
-const camera = (status?: CameraStatus, review?: string) => (
+// (6 Nov) Papan kenalan kebuka → kamera punya mode Foto · Scan QR (Rara #014).
+const RARA = {
+  name: "Rara Wening",
+  firstName: "Rara",
+  ig: "rarawening",
+  role: "Product designer",
+  keyNo: 14,
+};
+const DIMAS = { id: "demo-dimas", name: "Dimas Pratama", firstName: "Dimas" };
+
+const camera = (
+  status?: CameraStatus,
+  review?: string,
+  extra: Omit<NonNullable<ComponentProps<typeof KolaseApp>["preview"]>, "camera" | "review"> = {},
+) => (
   <KolaseApp
     token="demo-token-n4-preview"
     name="Rara"
     date={polaroidDate(demoEvent.date)}
     backHref="/dev/states/n4"
     lastOwnId={status ? null : MINE}
-    preview={{ camera: status, review }}
+    preview={{ camera: status, review, ...extra }}
+    kenalan={{ me: RARA }}
   />
 );
 
@@ -123,5 +138,23 @@ export const SCREENS: ScreenDef[] = [
     name: "Kamera bawaan HP (webview IG / tanpa getUserMedia)",
     kind: "Kasus lain",
     render: () => camera("unsupported"),
+  },
+  {
+    code: "BT06-scan",
+    name: "Kamera · mode Scan QR kenalan (6 Nov)",
+    kind: "Utama",
+    render: () => camera(undefined, undefined, { mode: "scan" }),
+  },
+  {
+    code: "BT06-scan-kamera",
+    name: "Mode Scan QR · kamera ditolak (K8)",
+    kind: "Gagal",
+    render: () => camera(undefined, undefined, { mode: "scan", scanError: true }),
+  },
+  {
+    code: "BT06-selfie",
+    name: "Mode Scan QR → selfie bukti kenalan",
+    kind: "Utama",
+    render: () => camera(undefined, undefined, { mode: "scan", selfie: { friend: DIMAS } }),
   },
 ];

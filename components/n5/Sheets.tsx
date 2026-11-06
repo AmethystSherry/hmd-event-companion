@@ -1,12 +1,13 @@
 "use client";
 
-import { Scan } from "@/components/icons";
-import { Button, Polaroid, Sheet } from "@/components/ui";
+import { HandWaving, Scan } from "@/components/icons";
+import { Button, HeroState, Polaroid, Sheet } from "@/components/ui";
 import n4 from "@/components/n4/sheets.module.css";
 import { cx } from "@/lib/cx";
 import { kenalanSelfieUrl, type KenalanIntro, type KenalanView } from "@/lib/kenalan";
 import { photoTilt } from "@/lib/photo";
 import { KenalanStamp } from "./KenalanStamp";
+import { Leaderboard } from "./Leaderboard";
 import s from "./n5.module.css";
 
 // N5 · sheet di layar acara tamu (pola NempelSheet N4, `?sheet=kenalan&id=` / `?sheet=pemenang`).
@@ -28,7 +29,7 @@ const rankLabel = (rank: number | null) => (rank ? `#${rank}` : "–");
 
 // BTk4 · Kenalan berhasil (Figma 5305:10071, update 6 Nov): selfie berdua di polaroid miring + magnet
 // + stempel KENALAN (ganti badge ✓ N4), caption "{aku} 🤝 {teman}", "Kamu & {teman} udah kenalan!",
-// stat Peringkat / Kenalan kamu / Teratas, "Balik ke acara" + "Scan QR lain" (T3: Figma masih
+// stat Peringkat / Point kamu / Teratas (point, 6 Nov), "Balik ke acara" + "Scan QR lain" (T3: Figma masih
 // "Scan Barcode Lain"). BTk3 kamera tetap "{aku} × {teman}" (Figma).
 export function KenalanSheet({
   token,
@@ -71,8 +72,8 @@ export function KenalanSheet({
       <Stats
         items={[
           { value: rankLabel(view.rank), label: "Peringkat" },
-          { value: String(view.count), label: "Kenalan kamu" },
-          { value: String(view.top?.count ?? 0), label: "Teratas" },
+          { value: String(view.points), label: "Point kamu" },
+          { value: String(view.top?.points ?? 0), label: "Teratas" },
         ]}
       />
       <div className={n4.actions}>
@@ -90,8 +91,8 @@ export function KenalanSheet({
 }
 
 // BTk5 · Pengumuman pemenang (Figma 5305:10200, update 6 Nov), muncul sekali per HP: ilustrasi piala
-// (5330:9842 → /figma/n5-trophy.webp, lingkaran ikut gambar) + stat 2 kolom Peringkat kamu · Kenalan
-// kamu. K11: HP pemenang = copy sendiri, stat sama.
+// (5330:9842 → /figma/n5-trophy.webp, lingkaran ikut gambar) + stat 2 kolom Peringkat kamu · Point
+// kamu. K11: HP pemenang = copy sendiri, stat sama. (6 Nov) Juara = point terbanyak.
 export function PemenangSheet({ view, onClose }: { view: KenalanView; onClose: () => void }) {
   const w = view.winner;
   if (!w) return null;
@@ -101,7 +102,7 @@ export function PemenangSheet({ view, onClose }: { view: KenalanView; onClose: (
       <img src="/figma/n5-trophy.webp" alt="" width={150} height={150} className={s.trophy} />
       <div className={n4.text}>
         <p className="t-card-title">
-          {w.isMe ? "Kamu paling banyak kenalan!" : `${w.firstName} paling banyak kenalan!`}
+          {w.isMe ? "Kamu juara kenalan!" : `${w.firstName} juara kenalan!`}
         </p>
         <p className="t-body c-label-2">
           {w.isMe
@@ -112,12 +113,55 @@ export function PemenangSheet({ view, onClose }: { view: KenalanView; onClose: (
       <Stats
         items={[
           { value: w.isMe ? "#1" : rankLabel(view.rank), label: "Peringkat kamu" },
-          { value: String(w.isMe ? w.count : view.count), label: "Kenalan kamu" },
+          { value: String(w.isMe ? w.points : view.points), label: "Point kamu" },
         ]}
       />
       <div className={cx(n4.actions)}>
         <Button onClick={onClose}>Balik ke acara</Button>
       </div>
+    </Sheet>
+  );
+}
+
+// (6 Nov) Leaderboard tamu (Figma "BT05k · Tamu di sini · leaderboard"), dibuka dari tombol ikon di
+// kartu peringkat BT05k: sheet mengambang di atas navbar, judul + tombol primary "Kenalan" di kanan atas
+// (papan masih buka; → sheet Kenalan), ajakan 1 baris, `Leaderboard` (podium + daftar mulai #4) sama dengan
+// P14 panitia tapi tanpa kartu. Papan kosong → HeroState.
+export function LeaderboardSheet({
+  view,
+  onClose,
+  onKenalan,
+}: {
+  view: KenalanView;
+  onClose: () => void;
+  onKenalan?: () => void;
+}) {
+  return (
+    <Sheet open aboveNav onClose={onClose} title="Leaderboard" className={s.leaderSheet}>
+      <div className={s.leaderHead}>
+        <div className={s.leaderTitle}>
+          <p aria-hidden className="t-card-title">
+            Leaderboard
+          </p>
+          {view.open && onKenalan && (
+            <Button size="sm" icon={<HandWaving />} onClick={onKenalan}>
+              Kenalan
+            </Button>
+          )}
+        </div>
+        <p className="t-label c-label-2">
+          {view.winner
+            ? `${view.winner.firstName} juara kenalan. Makasih udah ikutan!`
+            : "Point terbanyak dapat hadiah. Kejar podiumnya!"}
+        </p>
+      </div>
+      {view.rows.length > 0 ? (
+        <Leaderboard rows={view.rows} />
+      ) : (
+        <HeroState size="sm" icon={<HandWaving />} title="Belum ada yang kenalan">
+          Jadi yang pertama naik podium, yuk!
+        </HeroState>
+      )}
     </Sheet>
   );
 }

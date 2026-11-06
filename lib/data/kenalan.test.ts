@@ -85,7 +85,7 @@ describe("kode QR kenalan (K1)", () => {
 });
 
 describe("addIntroduction (BTk3 → BTk4)", () => {
-  it("pasangan tercatat terurut, +1 buat dua-duanya, rev naik", () => {
+  it("pasangan tercatat terurut, +1 kenalan buat dua-duanya (point: scan 2, discan 1), rev naik", () => {
     const { store, a, b } = setup();
     const rev = store.rev;
     const { introduction, created } = store.addIntroduction(
@@ -98,8 +98,8 @@ describe("addIntroduction (BTk3 → BTk4)", () => {
     expect(store.rev).toBe(rev + 1);
     expect([introduction.a, introduction.b]).toEqual([a.id, b.id].sort());
     expect(introduction.scannerId).toBe(b.id);
-    expect(kenalanView(store, a.id)).toMatchObject({ count: 1, rank: 1 });
-    expect(kenalanView(store, b.id)).toMatchObject({ count: 1 });
+    expect(kenalanView(store, a.id)).toMatchObject({ count: 1, points: 1, rank: 2 });
+    expect(kenalanView(store, b.id)).toMatchObject({ count: 1, points: 2, rank: 1 });
   });
 
   it("idempoten per id: kirim ulang = kenalan yang sama, rev tetap", () => {
@@ -176,7 +176,7 @@ describe("addIntroduction (BTk3 → BTk4)", () => {
 });
 
 describe("peringkat & seri (K10)", () => {
-  it("jumlah turun; seri → yang duluan sampai angka itu di atas", () => {
+  it("yang scan +2, yang discan +1; point turun; seri → yang duluan sampai angka itu di atas", () => {
     const intros = [
       { id: "1", eventId: "e", a: "A", b: "B", scannerId: "A", createdAt: t("14:00") },
       { id: "2", eventId: "e", a: "C", b: "D", scannerId: "C", createdAt: t("14:01") },
@@ -184,31 +184,35 @@ describe("peringkat & seri (K10)", () => {
       { id: "4", eventId: "e", a: "B", b: "D", scannerId: "B", createdAt: t("14:03") },
     ];
     const guests = ["A", "B", "C", "D"].map((id) => ({ id, name: `Tamu ${id}` }));
-    // Semua 2 kenalan; terakhir: A 14.02, C 14.02, B 14.03, D 14.03 → seri jam → nama.
-    expect(kenalanRanking(intros, guests).map((r) => [r.rank, r.guestId, r.count])).toEqual([
-      [1, "A", 2],
-      [2, "C", 2],
-      [3, "B", 2],
-      [4, "D", 2],
+    // A 2+2 = 4 · C 2+1 = 3 (terakhir 14.02) · B 1+2 = 3 (14.03) · D 1+1 = 2; semua 2 kenalan.
+    expect(
+      kenalanRanking(intros, guests).map((r) => [r.rank, r.guestId, r.points, r.count]),
+    ).toEqual([
+      [1, "A", 4, 2],
+      [2, "C", 3, 2],
+      [3, "B", 3, 2],
+      [4, "D", 2, 2],
     ]);
     const more = [
       ...intros,
       { id: "5", eventId: "e", a: "B", b: "C", scannerId: "B", createdAt: t("14:10") },
     ];
-    expect(kenalanRanking(more, guests).map((r) => r.guestId)).toEqual(["B", "C", "A", "D"]); // B & C sampai 3 bareng (14.10) → nama
+    // B 5 · A 4 (sampai 14.02) · C 4 (sampai 14.10) · D 2.
+    expect(kenalanRanking(more, guests).map((r) => r.guestId)).toEqual(["B", "A", "C", "D"]);
   });
 
-  it("view: of = tamu check-in, top, latest, kenalanIntro", () => {
+  it("view: point, of = tamu check-in, top, latest, kenalanIntro", () => {
     const { store, a, b, c } = setup();
-    store.addIntroduction(a.id, b.id, { id: uuid(1) }, t("14:00"));
-    store.addIntroduction(c.id, a.id, { id: uuid(2) }, t("14:10"));
+    store.addIntroduction(a.id, b.id, { id: uuid(1) }, t("14:00")); // a scan b: a +2, b +1
+    store.addIntroduction(c.id, a.id, { id: uuid(2) }, t("14:10")); // c scan a: c +2, a +1
     const v = kenalanView(store, a.id)!;
-    expect(v).toMatchObject({ open: true, inside: true, count: 2, rank: 1, of: 4 });
-    expect(v.top).toMatchObject({ count: 2 });
+    expect(v).toMatchObject({ open: true, inside: true, count: 2, points: 3, rank: 1, of: 4 });
+    expect(v.top).toMatchObject({ points: 3 });
     expect(v.latest).toMatchObject({ id: uuid(2), no: 2, friendId: c.id, scannedByMe: false });
     expect(kenalanIntro(store, b.id, uuid(1))).toMatchObject({ no: 1, friendId: a.id });
     expect(kenalanIntro(store, b.id, uuid(2))).toBeNull(); // bukan pasangannya
-    expect(kenalanView(store, c.id)!.rank).toBe(3); // b (1, 14.00) duluan dari c (1, 14.10)
+    expect(kenalanView(store, c.id)).toMatchObject({ points: 2, rank: 2 }); // c 2 > b 1
+    expect(kenalanView(store, b.id)).toMatchObject({ points: 1, rank: 3 });
     const board = kenalanBoard(store, HMD_ID);
     expect(board).toMatchObject({ pairs: 2, joined: 3, open: true, winner: null, tie: false });
   });
@@ -229,13 +233,14 @@ describe("umumkan pemenang (P14b)", () => {
     expect(store.getEvent(HMD_ID)!.kenalanWinner).toMatchObject({
       guestId: a.id,
       count: 2,
+      points: 4,
       by: "HP 1",
       announcedAt: t("16:30"),
     });
     expect(code(() => store.checkIntroduction(b.id, c.id))).toBe("papan-dikunci");
     const v = kenalanView(store, a.id)!;
     expect(v.open).toBe(false);
-    expect(v.winner).toMatchObject({ guestId: a.id, isMe: true, count: 2 });
+    expect(v.winner).toMatchObject({ guestId: a.id, isMe: true, count: 2, points: 4 });
     expect(kenalanView(store, b.id)!.winner?.isMe).toBe(false);
   });
 });
@@ -274,11 +279,11 @@ describe("selfie terpisah dari foto kolase & hapus", () => {
 
 describe("rankProgress (BT05k milestone, 6 Nov)", () => {
   // Figma: Dimas 12 · Sekar 7 · #3 5 · Bima 4 · Rara 3 (#5).
-  const ladder = [12, 7, 5, 4, 3, 2].map((count, i) => ({ rank: i + 1, count }));
+  const rows = [12, 7, 5, 4, 3, 2].map((points, i) => ({ rank: i + 1, points }));
 
   it("milestone = tepat di atasku, #2, #1", () => {
-    const p = rankProgress({ count: 3, rank: 5, ladder });
-    expect(p.milestones.map((m) => [m.rank, m.count])).toEqual([
+    const p = rankProgress({ points: 3, rank: 5, rows });
+    expect(p.milestones.map((m) => [m.rank, m.points])).toEqual([
       [4, 4],
       [2, 7],
       [1, 12],
@@ -287,21 +292,21 @@ describe("rankProgress (BT05k milestone, 6 Nov)", () => {
   });
 
   it("#2 → milestone cuma #1; #1 → tanpa milestone", () => {
-    expect(rankProgress({ count: 7, rank: 2, ladder }).milestones.map((m) => m.rank)).toEqual([1]);
-    expect(rankProgress({ count: 12, rank: 1, ladder })).toEqual({ pct: 100, milestones: [] });
+    expect(rankProgress({ points: 7, rank: 2, rows }).milestones.map((m) => m.rank)).toEqual([1]);
+    expect(rankProgress({ points: 12, rank: 1, rows })).toEqual({ pct: 100, milestones: [] });
   });
 
   it("posisi sama (jumlah sama) dibuang, yang peringkatnya lebih tinggi menang", () => {
-    const tie = [5, 5, 4, 2].map((count, i) => ({ rank: i + 1, count }));
-    expect(rankProgress({ count: 2, rank: 4, ladder: tie }).milestones.map((m) => m.rank)).toEqual([
+    const tie = [5, 5, 4, 2].map((points, i) => ({ rank: i + 1, points }));
+    expect(rankProgress({ points: 2, rank: 4, rows: tie }).milestones.map((m) => m.rank)).toEqual([
       3, 1,
     ]);
   });
 
   it("0 kenalan: milestone dari tamu terakhir; papan kosong → kosong", () => {
-    expect(rankProgress({ count: 0, rank: null, ladder }).milestones.map((m) => m.rank)).toEqual([
+    expect(rankProgress({ points: 0, rank: null, rows }).milestones.map((m) => m.rank)).toEqual([
       6, 2, 1,
     ]);
-    expect(rankProgress({ count: 0, rank: null, ladder: [] })).toEqual({ pct: 0, milestones: [] });
+    expect(rankProgress({ points: 0, rank: null, rows: [] })).toEqual({ pct: 0, milestones: [] });
   });
 });

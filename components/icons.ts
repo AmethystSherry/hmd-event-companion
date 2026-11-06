@@ -43,6 +43,7 @@ export {
   Plus,
   Play,
   QrCode,
+  Ranking,
   Scan,
   Scroll,
   ShareNetwork,

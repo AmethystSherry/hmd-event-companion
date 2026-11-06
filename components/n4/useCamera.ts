@@ -39,10 +39,13 @@ export function useCamera(video: RefObject<HTMLVideoElement | null>, enabled: bo
   useEffect(() => {
     if (!enabled || !supported) return;
     let cancelled = false;
+    // (6 Nov) 1440×1080 cukup: hasil jepret cuma 5:6 sisi panjang 1280 (capture.ts), potongan 5:6 dari
+    // 1080×1440 (HP tegak) udah 1080×1296. Dulu 1920×1440 → kamera nyala lebih lama & frame lebih berat
+    // (kamera QR kenalan pakai resolusi bawaan, makanya kerasa lebih cepat).
     navigator.mediaDevices
       .getUserMedia({
         audio: false,
-        video: { facingMode: facing, width: { ideal: 1920 }, height: { ideal: 1440 } },
+        video: { facingMode: facing, width: { ideal: 1440 }, height: { ideal: 1080 } },
       })
       .then(async (s) => {
         if (cancelled) return s.getTracks().forEach((t) => t.stop());

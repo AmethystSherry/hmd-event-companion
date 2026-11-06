@@ -27,6 +27,7 @@ const SHEETS: SheetKind[] = [
   "rumah",
   "kenalan", // N5 · BTk4 (&id=)
   "kenalan-qr", // N5 · sheet Kenalan (QR saya / Scan QR)
+  "peringkat", // N5 · sheet Leaderboard (6 Nov)
   "pemenang", // N5 · BTk5
 ];
 // ?sheet=&sesi=&id= (reload / back-forward / dari kamera N4) → sheet yang sama kebuka lagi.

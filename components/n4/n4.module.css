@@ -44,6 +44,22 @@
   flex-shrink: 0;
 }
 
+/* (6 Nov) Mode Scan QR: kotak kamera seukuran polaroid (328 × ±422) biar ganti mode nggak loncat. */
+.scanStage.scanStage {
+  flex-shrink: 0;
+  width: min(328px, 100%);
+  aspect-ratio: 328 / 422;
+  border-radius: 24px;
+}
+
+/* Pilihan mode Foto · Scan QR (Segmented tabs, tema gelap kamera) di atas tombol jepret. Jarak ke tombol
+   jepret 12: margin 10 + 2 (tombol 80 di tengah bar 84). */
+.modes {
+  align-self: center;
+  width: min(240px, calc(100% - 2 * var(--margin)));
+  margin-bottom: 10px;
+}
+
 .mirror {
   transform: scaleX(-1);
 }
@@ -108,6 +124,10 @@
   height: 84px;
   margin-bottom: max(calc(env(safe-area-inset-bottom) + 8px), 24px);
   padding: 0 40px;
+}
+
+.bar[data-idle] > * {
+  visibility: hidden;
 }
 
 .barSpacer {

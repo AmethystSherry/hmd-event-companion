@@ -4,8 +4,12 @@ import type { Event, Guest, Introduction } from "./data/types";
 import { firstName, timeWib } from "./format";
 
 // N5 · Kenalan & hadiah: hitungan, peringkat, dan data layar (murni, bisa diserialisasi).
-// Tiap pasangan = +1 kenalan buat dua-duanya. Peringkat: jumlah turun; seri → yang lebih dulu
-// sampai angka itu (kenalan terakhirnya lebih awal) di atas (K10); masih seri → nama.
+// Tiap pasangan = +1 kenalan buat dua-duanya. (6 Nov) Peringkat pakai point: yang scan (ngajak
+// kenalan) +2, yang discan +1. Point turun; seri → yang lebih dulu sampai angka itu (kenalan
+// terakhirnya lebih awal) di atas (K10); masih seri → nama.
+
+export const SCAN_POINTS = 2;
+export const SCANNED_POINTS = 1;
 
 // File selfie di storage foto: `{eventId}/kenalan/{id}.jpg` (lib/server/photos menerima id ber-folder).
 export const kenalanFileId = (id: string) => `kenalan/${id}`;
@@ -27,7 +31,8 @@ export type KenalanRow = {
   guestId: string;
   name: string;
   firstName: string;
-  count: number;
+  count: number; // jumlah kenalan
+  points: number; // scan +2, discan +1
   lastAt: string; // kenalan terakhir (ISO)
   lastLabel: string; // "14.32"
 };
@@ -37,11 +42,12 @@ export function kenalanRanking(
   intros: Introduction[],
   guests: Pick<Guest, "id" | "name">[],
 ): KenalanRow[] {
-  const stat = new Map<string, { count: number; lastAt: string }>();
+  const stat = new Map<string, { count: number; points: number; lastAt: string }>();
   for (const i of intros) {
     for (const id of [i.a, i.b]) {
-      const s = stat.get(id) ?? { count: 0, lastAt: "" };
+      const s = stat.get(id) ?? { count: 0, points: 0, lastAt: "" };
       s.count += 1;
+      s.points += id === i.scannerId ? SCAN_POINTS : SCANNED_POINTS;
       if (i.createdAt > s.lastAt) s.lastAt = i.createdAt;
       stat.set(id, s);
     }
@@ -52,7 +58,9 @@ export function kenalanRanking(
     .map(([guestId, s]) => ({ guestId, name: names.get(guestId)!, ...s }))
     .sort(
       (x, y) =>
-        y.count - x.count || x.lastAt.localeCompare(y.lastAt) || x.name.localeCompare(y.name, "id"),
+        y.points - x.points ||
+        x.lastAt.localeCompare(y.lastAt) ||
+        x.name.localeCompare(y.name, "id"),
     )
     .map((r, i) => ({
       rank: i + 1,
@@ -60,6 +68,7 @@ export function kenalanRanking(
       name: r.name,
       firstName: firstName(r.name),
       count: r.count,
+      points: r.points,
       lastAt: r.lastAt,
       lastLabel: timeWib(r.lastAt),
     }));
@@ -78,6 +87,7 @@ export type KenalanWinnerView = {
   name: string;
   firstName: string;
   count: number;
+  points: number;
   announcedAt: string;
   by: string | null;
 };
@@ -92,6 +102,7 @@ function winnerView(store: DataStore, e: Event): KenalanWinnerView | null {
     name,
     firstName: firstName(name),
     count: w.count,
+    points: w.points ?? w.count, // pemenang sebelum point (6 Nov) = jumlah kenalan
     announcedAt: w.announcedAt,
     by: w.by,
   };
@@ -104,7 +115,7 @@ export type KenalanBoard = {
   joined: number; // "18 tamu ikutan" = tamu dengan ≥ 1 kenalan (T7)
   open: boolean;
   winner: KenalanWinnerView | null;
-  tie: boolean; // #1 & #2 sama jumlahnya (K10: yang duluan sampai menang)
+  tie: boolean; // #1 & #2 sama point-nya (K10: yang duluan sampai menang)
 };
 
 export function kenalanBoard(store: DataStore, eventId: string): KenalanBoard {
@@ -117,21 +128,24 @@ export function kenalanBoard(store: DataStore, eventId: string): KenalanBoard {
     joined: rows.length,
     open: e ? kenalanOpen(e) : false,
     winner: e ? winnerView(store, e) : null,
-    tie: rows.length > 1 && rows[0].count === rows[1].count,
+    tie: rows.length > 1 && rows[0].points === rows[1].points,
   };
 }
 
-// Data N5 untuk HP satu tamu (banner Hadiah, BT05k, BTk1/BTk2, BTk4, BTk5). Tanpa WA/token.
+// Data N5 untuk HP satu tamu (banner Hadiah, BT05k, BTk1/BTk2, BTk4, BTk5, Leaderboard). Tanpa WA/token.
 export type KenalanView = {
   open: boolean; // tombol Kenalan & scan aktif
   inside: boolean; // tamu ini udah check-in (belum = fitur disembunyikan, K7)
-  count: number;
+  count: number; // jumlah kenalan
+  points: number; // scan +2, discan +1 (peringkat pakai ini)
   rank: number | null; // null = belum punya kenalan
   of: number; // "dari 18" = tamu udah check-in (T7)
-  top: { firstName: string; count: number } | null;
+  top: { firstName: string; points: number } | null;
   latest: KenalanIntro | null; // kenalan terbaru yang melibatkan aku (BTk2 → BTk4)
   winner: (KenalanWinnerView & { isMe: boolean }) | null;
-  ladder: { rank: number; count: number }[]; // (6 Nov) semua peringkat tanpa nama → milestone BT05k
+  // (6 Nov) Papan lengkap (nama depan & lengkap, jumlah, jam terakhir) → milestone BT05k + sheet
+  // Leaderboard tamu (nama tamu emang udah tampil di Tamu di sini).
+  rows: KenalanRow[];
 };
 
 export type KenalanIntro = {
@@ -181,36 +195,41 @@ export function kenalanView(store: DataStore, guestId: string): KenalanView | nu
     open: inside && kenalanOpen(e),
     inside,
     count: mine.length,
+    points: row?.points ?? 0,
     rank: row?.rank ?? null,
     of: checkedInIds(store, e.id).size,
-    top: rows[0] ? { firstName: rows[0].firstName, count: rows[0].count } : null,
+    top: rows[0] ? { firstName: rows[0].firstName, points: rows[0].points } : null,
     latest: last ? toIntro(store, me, last, mine.length) : null,
     winner: w ? { ...w, isMe: w.guestId === me.id } : null,
-    ladder: rows.map((r) => ({ rank: r.rank, count: r.count })),
+    rows,
   };
 }
 
-// (6 Nov) BT05k progress: fill = kenalanku ÷ teratas; milestone = tamu tepat di atasku, #2, #1 (dobel /
+// (6 Nov) BT05k progress: fill = point-ku ÷ teratas; milestone = tamu tepat di atasku, #2, #1 (dobel /
 // posisi sama dibuang, maks 3).
-export type RankMilestone = { rank: number; count: number; pct: number };
+export type RankMilestone = { rank: number; points: number; pct: number };
 export type RankProgress = {
   pct: number; // 0–100
   milestones: RankMilestone[]; // urut kiri → kanan
 };
 
-export function rankProgress(v: Pick<KenalanView, "count" | "rank" | "ladder">): RankProgress {
-  const topCount = v.ladder[0]?.count ?? 0;
-  const pctOf = (n: number) => (topCount > 0 ? Math.min(100, (n / topCount) * 100) : 0);
-  const above = v.rank ? v.rank - 1 : v.ladder.length; // 0 kenalan: tamu terakhir di papan
+export function rankProgress(v: {
+  points: number;
+  rank: number | null;
+  rows: Pick<KenalanRow, "rank" | "points">[];
+}): RankProgress {
+  const topPoints = v.rows[0]?.points ?? 0;
+  const pctOf = (n: number) => (topPoints > 0 ? Math.min(100, (n / topPoints) * 100) : 0);
+  const above = v.rank ? v.rank - 1 : v.rows.length; // 0 kenalan: tamu terakhir di papan
   const wanted = [...new Set([above, 2, 1])].filter((r) => r >= 1 && (!v.rank || r < v.rank));
   const milestones: RankMilestone[] = [];
   for (const rank of wanted.sort((a, b) => a - b)) {
-    const row = v.ladder.find((x) => x.rank === rank);
-    if (!row || milestones.some((m) => m.count === row.count)) continue;
-    milestones.push({ rank, count: row.count, pct: pctOf(row.count) });
+    const row = v.rows.find((x) => x.rank === rank);
+    if (!row || milestones.some((m) => m.points === row.points)) continue;
+    milestones.push({ rank, points: row.points, pct: pctOf(row.points) });
   }
   milestones.sort((a, b) => a.pct - b.pct || b.rank - a.rank);
-  return { pct: pctOf(v.count), milestones: milestones.slice(-3) };
+  return { pct: pctOf(v.points), milestones: milestones.slice(-3) };
 }
 
 // BTk4 · satu kenalan milik tamu ini (null = bukan pasangannya / nggak ada).

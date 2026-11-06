@@ -1204,7 +1204,13 @@ export function createStore(
         guestsOf(eventId),
       );
       if (!top) throw new StoreError("papan-kosong", "Belum ada yang kenalan");
-      e.kenalanWinner = { guestId: top.guestId, count: top.count, announcedAt: at, by };
+      e.kenalanWinner = {
+        guestId: top.guestId,
+        count: top.count,
+        points: top.points,
+        announcedAt: at,
+        by,
+      };
       commit();
       return true;
     },
