@@ -146,7 +146,7 @@ export function NempelSheet({
         )}
         <div className={s.actions}>
           {sent ? (
-            <Button href={`/t/${token}/foto`} icon={<Camera />}>
+            <Button href={preview ? "/dev/states/n4/BT06" : `/t/${token}/foto`} icon={<Camera />}>
               Foto lagi
             </Button>
           ) : (

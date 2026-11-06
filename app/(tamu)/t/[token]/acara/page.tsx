@@ -3,14 +3,16 @@ import { Suspense } from "react";
 import { AcaraScreen } from "@/components/f4/AcaraScreen";
 import type { SheetKind } from "@/components/f4/Sheets";
 import { RegisterOffline } from "@/components/RegisterOffline";
+import { TicketQr } from "@/components/TicketQr";
 import { Screen, Skeleton } from "@/components/ui";
 import { acaraView } from "@/lib/acara";
 import { getStore } from "@/lib/data";
 import { firstName } from "@/lib/format";
 import { kenalanIntro, kenalanView } from "@/lib/kenalan";
-import { isPhotoId, toGuestPhotos } from "@/lib/photo";
+import { isPhotoId, polaroidDate, toGuestPhotos } from "@/lib/photo";
 import { myQuestions, otherQuestions } from "@/lib/questions";
 import { guestFromToken } from "@/lib/server/access";
+import { kenalanCode } from "@/lib/server/kenalan";
 import { serverNow } from "@/lib/server/clock";
 
 const SHEETS: SheetKind[] = [
@@ -24,6 +26,7 @@ const SHEETS: SheetKind[] = [
   "kartu",
   "rumah",
   "kenalan", // N5 · BTk4 (&id=)
+  "kenalan-qr", // N5 · sheet Kenalan (QR saya / Scan QR)
   "pemenang", // N5 · BTk5
 ];
 // ?sheet=&sesi=&id= (reload / back-forward / dari kamera N4) → sheet yang sama kebuka lagi.
@@ -72,6 +75,7 @@ async function EventScreen({
 
   const now = await serverNow();
   const initialSheet = sheetFrom(q.sheet, q.sesi, q.id);
+  const kenalan = kenalanView(store, guest.id);
   const view = acaraView({
     event,
     sessions: store.listSessions(event.id),
@@ -100,7 +104,15 @@ async function EventScreen({
         )}
         serverNow={now.toISOString()}
         initialSheet={initialSheet}
-        kenalan={kenalanView(store, guest.id)}
+        kenalan={kenalan}
+        kenalanQr={
+          kenalan?.open
+            ? {
+                qr: <TicketQr payload={kenalanCode(guest.id)} label="QR kenalan kamu" />,
+                date: polaroidDate(event.date),
+              }
+            : null
+        }
         kenalanIntro={
           initialSheet?.kind === "kenalan" && initialSheet.photoId
             ? kenalanIntro(store, guest.id, initialSheet.photoId)

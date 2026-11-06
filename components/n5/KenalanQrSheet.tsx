@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import {
   useCallback,
   useEffect,
@@ -15,14 +14,12 @@ import {
   Camera,
   CameraRotate,
   CameraSlash,
-  CaretLeft,
   HandWaving,
   Info,
   QrCode,
   WifiSlash,
   X,
 } from "@/components/icons";
-import { LiveRefresh } from "@/components/LiveRefresh";
 import { Viewfinder } from "@/components/f2/Viewfinder";
 import { captureFile, captureVideo, type Captured } from "@/components/n4/capture";
 import n4 from "@/components/n4/n4.module.css";
@@ -32,7 +29,7 @@ import {
   IconButton,
   Pill,
   Polaroid,
-  Screen,
+  Sheet,
   Segmented,
   Toast,
   TopToast,
@@ -43,16 +40,24 @@ import type { KenalanCekResponse, KenalanPostResponse, KenalanView } from "@/lib
 import { isInAppBrowser, newPhotoId } from "@/lib/photo";
 import s from "./n5.module.css";
 
-// N5 · /t/[token]/kenalan: BTk1 Scan QR (kamera belakang, qr-scanner) ⇄ BTk2 QR saya (QR kenalan
-// dari server) lewat tab (`?tab=qr`, replaceState), lalu BTk3 Selfie bukti kenalan (langkah di
-// layar ini, kamera depan N4). Alur (K2/K3): scan → POST …/kenalan/cek (error tampil di sini) →
-// selfie → jepret → kompres N4 → POST …/kenalan (kode + foto, tanpa antrean) → layar acara + BTk4
-// (?sheet=kenalan&id=). HP pemilik QR (tab QR saya) pindah sendiri ke BTk4 begitu kenalan baru
-// masuk (LiveRefresh 2 dtk → latest berubah). Kamera ditolak / webview → jalur cadangan K8.
+// N5 · sheet Kenalan di layar acara (`?sheet=kenalan-qr`, dibuka dari tombol Kenalan BT05k / "Scan
+// QR lain" BTk4). (6 Nov) Dulu halaman /t/[token]/kenalan; sekarang bottom sheet mengambang di atas
+// navbar, tab QR saya dulu (default) baru Scan QR. BTk2 QR saya (QR kenalan dari server) ⇄ BTk1
+// Scan QR (kamera belakang, qr-scanner), lalu BTk3 Selfie bukti kenalan (layar penuh di atas sheet,
+// kamera depan N4). Alur (K2/K3): scan → POST …/kenalan/cek (error tampil di sini) → selfie →
+// jepret → kompres N4 → POST …/kenalan (kode + foto, tanpa antrean) → `onSent(id)` (AcaraScreen
+// buka BTk4). HP pemilik QR pindah sendiri ke BTk4 lewat AcaraScreen (LiveRefresh → latest baru).
+// Kamera ditolak / webview → jalur cadangan K8.
 
-type Tab = "scan" | "qr";
+export type KenalanTab = "qr" | "scan";
 type Friend = { id: string; name: string; firstName: string };
-type Me = { name: string; firstName: string; ig: string; role: string | null; keyNo: number };
+export type KenalanMe = {
+  name: string;
+  firstName: string;
+  ig: string;
+  role: string | null;
+  keyNo: number;
+};
 type Step = { kind: "scan" } | { kind: "selfie"; friend: Friend; code: string };
 
 export type KenalanPreview = {
@@ -71,27 +76,30 @@ const OFFLINE = "Sinyal lagi lemah. Coba scan lagi, ya."; // TODO copy
 
 const noSubscribe = () => () => {};
 
-export function KenalanApp({
+export function KenalanQrSheet({
   token,
   me,
   view,
   qr,
   date,
-  initialTab,
-  fromTamu,
+  initialTab = "qr",
+  onClose,
+  onSent,
+  onSelfieChange,
   preview,
 }: {
   token: string;
-  me: Me;
+  me: KenalanMe;
   view: KenalanView;
   qr: ReactNode; // QR kenalan (SVG dari server, TicketQr)
   date: string; // "8.11.26"
-  initialTab: Tab;
-  fromTamu: boolean; // dibuka dari BT05k → back = balik ke sheet Tamu di sini
+  initialTab?: KenalanTab;
+  onClose: () => void;
+  onSent: (introId: string) => void; // selfie terkirim → BTk4
+  onSelfieChange?: (on: boolean) => void; // BTk3 jalan → AcaraScreen tahan BTk4/BTk5 otomatis
   preview?: KenalanPreview; // /dev/states/n5: tanpa kamera & jaringan
 }) {
-  const router = useRouter();
-  const [tab, setTab] = useState<Tab>(initialTab);
+  const [tab, setTab] = useState<KenalanTab>(initialTab);
   const [step, setStep] = useState<Step>(
     preview?.step && preview.friend
       ? { kind: "selfie", friend: preview.friend, code: "" }
@@ -105,7 +113,6 @@ export function KenalanApp({
   const [checking, setChecking] = useState(false);
   const lastScan = useRef<{ text: string; at: number } | null>(null);
   const qrFile = useRef<HTMLInputElement>(null);
-  const acaraHref = `/t/${token}/acara`;
 
   const show = useCallback((text: string) => setToast({ key: Date.now(), text }), []);
   useEffect(() => {
@@ -114,30 +121,11 @@ export function KenalanApp({
     return () => clearTimeout(t);
   }, [toast, preview]);
 
-  // BTk2 · HP pemilik QR: kenalan baru (yang di-scan HP lain) → BTk4 di layar acara.
-  const firstLatest = useRef(view.latest?.id ?? null);
-  const latest = view.latest;
+  const selfie = step.kind === "selfie";
   useEffect(() => {
-    if (preview || step.kind !== "scan" || !latest || latest.scannedByMe) return;
-    if (latest.id === firstLatest.current) return;
-    router.replace(`${acaraHref}?sheet=kenalan&id=${latest.id}`);
-  }, [preview, step.kind, latest, acaraHref, router]);
-
-  function back() {
-    if (step.kind === "selfie") return setStep({ kind: "scan" });
-    if (preview) return;
-    if (fromTamu && window.history.length > 1) return router.back();
-    router.replace(acaraHref);
-  }
-
-  function pickTab(next: Tab) {
-    setTab(next);
-    if (preview) return;
-    const url = new URL(window.location.href);
-    if (next === "qr") url.searchParams.set("tab", "qr");
-    else url.searchParams.delete("tab");
-    history.replaceState(history.state, "", url);
-  }
+    onSelfieChange?.(selfie);
+    return () => onSelfieChange?.(false);
+  }, [selfie, onSelfieChange]);
 
   const onScan = useCallback(
     async (text: string) => {
@@ -171,6 +159,7 @@ export function KenalanApp({
     e.target.value = "";
     if (!file) return;
     try {
+      // Dinamis: qr-scanner cuma jalan di browser & cuma dibutuhkan di jalur cadangan K8.
       const { default: QrScanner } = await import("qr-scanner");
       const r = await QrScanner.scanImage(file, { returnDetailedScanResult: true });
       lastScan.current = null;
@@ -182,153 +171,146 @@ export function KenalanApp({
 
   if (step.kind === "selfie") {
     return (
-      <SelfieStep
-        token={token}
-        me={me}
-        friend={step.friend}
-        code={step.code}
-        date={date}
-        onCancel={() => setStep({ kind: "scan" })}
-        onRejected={(text) => {
-          setStep({ kind: "scan" });
-          show(text);
-        }}
-        preview={preview}
-      />
+      <div className={s.selfieLayer}>
+        <SelfieStep
+          token={token}
+          me={me}
+          friend={step.friend}
+          code={step.code}
+          date={date}
+          onCancel={() => setStep({ kind: "scan" })}
+          onRejected={(text) => {
+            setStep({ kind: "scan" });
+            show(text);
+          }}
+          onSent={onSent}
+          preview={preview}
+        />
+      </div>
     );
   }
 
   const live = !preview && tab === "scan" && !scanError;
   return (
-    <Screen withBack>
-      <div className={s.toolbar}>
-        <IconButton
-          label={fromTamu ? "Kembali ke Tamu di sini" : "Kembali ke acara"}
-          icon={<CaretLeft />}
-          onClick={back}
-        />
-      </div>
-      <header className={s.head}>
-        <p className="t-label c-label-2">
-          {
-            view.rank
-              ? `${view.count} kenalan · peringkat #${view.rank}`
-              : "Belum ada kenalan" /* TODO copy */
-          }
+    <>
+      <Sheet open aboveNav onClose={onClose} title="Kenalan" className={s.qrSheet}>
+        <p aria-hidden className={cx("t-card-title", s.title)}>
+          Kenalan
         </p>
-        <h1 className="t-title">Kenalan</h1>
-      </header>
-      <Segmented
-        look="tabs"
-        label="Kenalan"
-        className={s.tabs}
-        value={tab}
-        onChange={pickTab}
-        options={[
-          { value: "scan", label: "Scan QR" },
-          { value: "qr", label: "QR saya" },
-        ]}
-      />
+        <Segmented
+          look="tabs"
+          label="Kenalan"
+          value={tab}
+          onChange={setTab}
+          options={[
+            { value: "qr", label: "QR saya" },
+            { value: "scan", label: "Scan QR" },
+          ]}
+        />
 
-      {tab === "scan" ? (
-        <>
-          <Viewfinder
-            key={scanAttempt}
-            live={live}
-            onScan={(text) => void onScan(text)}
-            onError={() => setScanError(true)}
-            hint="Arahkan ke QR kenalan temanmu"
-            label="Kamera scan QR kenalan"
-            className={s.scanBox}
-          >
-            {scanError ? (
-              // K8 · TODO desain: kamera scan ditolak / nggak ada (webview IG, http).
-              <div className={s.scanDenied}>
-                <CameraSlash size={36} />
-                <p className="t-body-emph">Kamera belum bisa dipakai</p>
-                <p className="t-label" style={{ opacity: 0.8 }}>
-                  Izinkan kamera di browser, atau foto QR temanmu pakai kamera HP.
-                </p>
-                <div className={s.scanDeniedActions} data-theme="light">
-                  <Button
-                    icon={<ArrowClockwise />}
-                    onClick={() => {
-                      setScanError(false);
-                      setScanAttempt((n) => n + 1);
-                    }}
-                  >
-                    Coba lagi
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    icon={<Camera />}
-                    onClick={() => qrFile.current?.click()}
-                  >
-                    Pakai kamera HP
-                  </Button>
-                </div>
+        {/* Dua tab ditumpuk di satu sel grid (yang nggak aktif disembunyikan, `inert`): tinggi sheet =
+            panel tertinggi, jadi nggak loncat waktu ganti tab. */}
+        <div className={s.tabBody}>
+          <div className={s.tabPanel} data-active={tab === "qr" || undefined} inert={tab !== "qr"}>
+            <section className={s.qrCard} aria-label="QR kenalan kamu">
+              <div className={s.who}>
+                <span aria-hidden className={s.whoAvatar}>
+                  {initials(me.name)}
+                </span>
+                <span className={s.whoText}>
+                  <span className={s.whoName}>{me.name}</span>
+                  <span className={s.whoMeta}>
+                    @{me.ig}
+                    {me.role ? ` · ${me.role}` : ""}
+                  </span>
+                </span>
               </div>
-            ) : undefined}
-          </Viewfinder>
-          <div className={s.info}>
-            <span aria-hidden className={s.infoIcon}>
-              <HandWaving size={22} />
-            </span>
-            <span className={s.infoText}>
-              <span className="t-label-emph">Scan QR teman yang mau dikenalin</span>
-              <span className="t-caption c-label-2">
-                Minta temanmu buka tab QR saya. Habis discan, kalian langsung selfie berdua.
+              <div className={s.plate}>{qr}</div>
+              <div className={s.chips}>
+                <span>{view.count} kenalan</span>
+                {view.rank && <span>Peringkat #{view.rank}</span>}
+                <span>{keyLabel(me.keyNo)}</span>
+              </div>
+            </section>
+            <div className={s.info}>
+              <span aria-hidden className={s.infoIcon}>
+                <QrCode size={22} />
               </span>
-            </span>
-          </div>
-          <input
-            ref={qrFile}
-            type="file"
-            accept="image/*"
-            capture="environment"
-            hidden
-            onChange={onQrFile}
-          />
-        </>
-      ) : (
-        <>
-          <section className={s.qrCard} aria-label="QR kenalan kamu">
-            <div className={s.who}>
-              <span aria-hidden className={s.whoAvatar}>
-                {initials(me.name)}
-              </span>
-              <span className={s.whoText}>
-                <span className={s.whoName}>{me.name}</span>
-                <span className={s.whoMeta}>
-                  @{me.ig}
-                  {me.role ? ` · ${me.role}` : ""}
+              <span className={s.infoText}>
+                <span className="t-label-emph">Tunjukin QR ini ke temanmu</span>
+                <span className="t-caption c-label-2">
+                  Biar dia yang scan. Habis discan, kalian langsung selfie berdua.
                 </span>
               </span>
             </div>
-            <div className={s.plate}>{qr}</div>
-            <div className={s.chips}>
-              <span>{view.count} kenalan</span>
-              {view.rank && <span>Peringkat #{view.rank}</span>}
-              <span>{keyLabel(me.keyNo)}</span>
-            </div>
-          </section>
-          <div className={s.info}>
-            <span aria-hidden className={s.infoIcon}>
-              <QrCode size={22} />
-            </span>
-            <span className={s.infoText}>
-              <span className="t-label-emph">Tunjukin QR ini ke temanmu</span>
-              <span className="t-caption c-label-2">
-                Biar dia yang scan. Habis discan, kalian langsung selfie berdua.
-              </span>
-            </span>
           </div>
-        </>
-      )}
-
+          <div
+            className={s.tabPanel}
+            data-active={tab === "scan" || undefined}
+            inert={tab !== "scan"}
+          >
+            <Viewfinder
+              key={scanAttempt}
+              live={live}
+              onScan={(text) => void onScan(text)}
+              onError={() => setScanError(true)}
+              hint="Arahkan ke QR kenalan temanmu"
+              label="Kamera scan QR kenalan"
+              className={s.scanBox}
+            >
+              {scanError ? (
+                // K8 · TODO desain: kamera scan ditolak / nggak ada (webview IG, http).
+                <div className={s.scanDenied}>
+                  <CameraSlash size={36} />
+                  <p className="t-body-emph">Kamera belum bisa dipakai</p>
+                  <p className="t-label" style={{ opacity: 0.8 }}>
+                    Izinkan kamera di browser, atau foto QR temanmu pakai kamera HP.
+                  </p>
+                  <div className={s.scanDeniedActions} data-theme="light">
+                    <Button
+                      icon={<ArrowClockwise />}
+                      onClick={() => {
+                        setScanError(false);
+                        setScanAttempt((n) => n + 1);
+                      }}
+                    >
+                      Coba lagi
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      icon={<Camera />}
+                      onClick={() => qrFile.current?.click()}
+                    >
+                      Pakai kamera HP
+                    </Button>
+                  </div>
+                </div>
+              ) : undefined}
+            </Viewfinder>
+            <div className={s.info}>
+              <span aria-hidden className={s.infoIcon}>
+                <HandWaving size={22} />
+              </span>
+              <span className={s.infoText}>
+                <span className="t-label-emph">Scan QR teman yang mau dikenalin</span>
+                <span className="t-caption c-label-2">
+                  Minta temanmu buka tab QR saya. Habis discan, kalian langsung selfie berdua.
+                </span>
+              </span>
+            </div>
+            <input
+              ref={qrFile}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              hidden
+              onChange={onQrFile}
+            />
+          </div>
+        </div>
+      </Sheet>
       {toast && <TopToast key={toast.key} icon={<Info size={20} />} title={toast.text} />}
-      {!preview && <LiveRefresh token={token} pollMs={2000} />}
-    </Screen>
+    </>
   );
 }
 
@@ -341,18 +323,19 @@ function SelfieStep({
   date,
   onCancel,
   onRejected,
+  onSent,
   preview,
 }: {
   token: string;
-  me: Me;
+  me: KenalanMe;
   friend: Friend;
   code: string;
   date: string;
   onCancel: () => void;
   onRejected: (text: string) => void;
+  onSent: (introId: string) => void;
   preview?: KenalanPreview;
 }) {
-  const router = useRouter();
   const video = useRef<HTMLVideoElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const [shot, setShot] = useState<{ cap: Captured; url: string; id: string } | null>(null);
@@ -402,7 +385,7 @@ function SelfieStep({
       const body = (await res.json().catch(() => null)) as KenalanPostResponse | null;
       if (body?.ok) {
         setLeaving(true);
-        router.replace(`/t/${token}/acara?sheet=kenalan&id=${id}`);
+        onSent(id);
         return;
       }
       if (res.status >= 500 || !body) throw new Error(`status ${res.status}`);

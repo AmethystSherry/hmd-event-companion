@@ -107,7 +107,11 @@ async function DevTools() {
                 <a href={`/t/${g.token}/acara`} target="_blank" className={styles.link}>
                   Acara {g.name}
                 </a>
-                <a href={`/t/${g.token}/kenalan?tab=qr`} target="_blank" className={styles.link}>
+                <a
+                  href={`/t/${g.token}/acara?sheet=kenalan-qr`}
+                  target="_blank"
+                  className={styles.link}
+                >
                   QR saya {g.name}
                 </a>
               </span>

@@ -100,9 +100,11 @@
   --gap-card: 12px;
   --gap-section: 24px;
   --margin: 16px;
-  --content-width: 358px;
-  --screen-width: 390px;
-  /* Deret geser (carousel/chip) melebar sampai tepi layar, juga di HP > --screen-width. */
+  /* (6 Nov) Layar ngisi lebar HP (Figma 390, HP 375–440 tanpa jarak kiri-kanan); dibatasi 480 biar
+     nggak melar di tablet/laptop (di sana tetap di tengah). */
+  --screen-width: min(100vw, 480px);
+  --content-width: calc(var(--screen-width) - 2 * var(--margin));
+  /* Deret geser (carousel/chip) melebar sampai tepi layar, juga di layar > --screen-width. */
   --bleed: calc(var(--margin) + max(0px, (100vw - var(--screen-width)) / 2));
   --control-h: 54px;
   --control-h-sm: 36px;

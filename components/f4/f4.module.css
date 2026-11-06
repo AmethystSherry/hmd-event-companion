@@ -59,7 +59,9 @@
 }
 
 /* Navbar tamu nempel di bawah layar, di atas bottom sheet (z 50) → tetap kelihatan & bisa ganti
-   sheet. Isi sheet dapat ruang kosong di bawah supaya nggak ketutup navbar. */
+   sheet. Cuma tampil di sheet navbar (`data-nav`, AcaraScreen NAV_SHEETS). Sheet biasa di bawah
+   navbar (Tanya) dapat ruang kosong di bawah supaya isinya nggak ketutup; sheet `aboveNav` (Tamu di
+   sini, Rundown, Info rumah, Kenalan) udah berhenti di atas navbar. */
 .screen .nav {
   position: fixed;
   bottom: calc(env(safe-area-inset-bottom) + 14px);
@@ -70,7 +72,7 @@
   transform: translateX(-50%);
 }
 
-.screen :global([data-sheet])::after {
+.screen[data-nav] :global([data-sheet]:not([data-above-nav]))::after {
   content: "";
   flex: 0 0 64px;
 }
@@ -279,11 +281,9 @@
   gap: 10px;
 }
 
-/* BT05 · sheet tinggi (top 187 di 844). */
-/* Tinggi ikut isi (28 Okt; dulu min-height hampir layar penuh). */
+/* BT05 · tinggi ikut isi (28 Okt). Bentuk & posisi (mengambang di atas navbar) dari Sheet aboveNav. */
 .tamu {
   gap: 14px;
-  border-radius: 28px 28px 0 0;
 }
 
 /* Judul + avatar "Kartu kamu" di pojok kanan (tap = ubah kartu T11). */
@@ -350,14 +350,18 @@
 
 /* BT05b: cari nggak ketemu → sheet ikut isi. */
 
-/* Carousel kartu tamu: geser horizontal, keluar sampai tepi sheet. */
+/* Carousel kartu tamu: geser horizontal, keluar sampai tepi sheet. Cuma sumbu x: overflow-y
+   eksplisit hidden (overflow-x auto bikin y ikut auto → di iOS kartu bisa digeser/mantul ke segala
+   arah), geser vertikal diteruskan ke sheet; mantul kiri/kanan nggak nyambung ke sheet. */
 .carousel {
   display: flex;
   gap: 10px;
-  margin: 0 -20px;
-  padding: 0 20px 4px;
+  margin: 0 calc(-1 * var(--sheet-pad-x, 20px));
+  padding: 0 var(--sheet-pad-x, 20px) 4px;
   overflow-x: auto;
-  scroll-padding: 0 20px;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scroll-padding: 0 var(--sheet-pad-x, 20px);
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
 }

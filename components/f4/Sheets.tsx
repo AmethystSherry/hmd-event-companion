@@ -1,7 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, MagnifyingGlass, MapPin, PencilSimple, WifiHigh } from "@/components/icons";
+import {
+  Copy,
+  HandWaving,
+  MagnifyingGlass,
+  MapPin,
+  PencilSimple,
+  WifiHigh,
+} from "@/components/icons";
 import { Badge, Button, GuestCard, HeroState, ListRow, SearchField, Sheet } from "@/components/ui";
 import { filterGuests, rundownSubtitle, type AcaraView } from "@/lib/acara";
 import { cx } from "@/lib/cx";
@@ -12,7 +19,6 @@ import { initials } from "@/lib/format";
 import { igProfileUrl } from "@/lib/invite";
 import { actualMin, elapsedMs, roomLabel, type SessionView } from "@/lib/rundown";
 import { RankCard } from "@/components/n5/RankCard";
-import type { GuestCardKenalan } from "@/components/ui/GuestCard";
 import type { KenalanView } from "@/lib/kenalan";
 import styles from "./f4.module.css";
 
@@ -21,7 +27,8 @@ import styles from "./f4.module.css";
 
 // "foto" (hasil jepret BT07/BT07b/BT07e) & "galeri" (BT07d) = sheet N4 di components/n4;
 // "tanya" (BT08/BT09/BT08b) = sheet N1 di components/n1; "kartu" (T11/T11e) = sheet N3 di components/n3;
-// "kenalan" (BTk4) & "pemenang" (BTk5) = sheet N5 di components/n5.
+// "kenalan" (BTk4), "kenalan-qr" (BTk2 QR saya / BTk1 Scan QR / BTk3 selfie) & "pemenang" (BTk5)
+// = sheet N5 di components/n5.
 export type SheetKind =
   | "detail"
   | "pembicara"
@@ -33,6 +40,7 @@ export type SheetKind =
   | "tanya"
   | "rumah"
   | "kenalan"
+  | "kenalan-qr"
   | "pemenang";
 
 const STATE_BADGE = {
@@ -133,7 +141,7 @@ export function RundownSheet({
   onPick: (id: string) => void;
 }) {
   return (
-    <Sheet open onClose={onClose} title="Rundown acara" className={styles.sheet}>
+    <Sheet open aboveNav onClose={onClose} title="Rundown acara" className={styles.sheet}>
       <p aria-hidden className={cx("t-card-title", styles.sheetTitle)}>
         Rundown acara
       </p>
@@ -165,39 +173,38 @@ export function TamuSheet({
   onEdit,
   initialQuery = "",
   kenalan,
-  kenalanHref,
-  onKenal,
+  onKenalan,
 }: {
   view: AcaraView;
   me: AcaraView["me"]; // kartu kamu (bisa versi baru setelah T11 sebelum data server masuk)
   onClose: () => void;
   onEdit: () => void; // "Ubah" → T11 (N3, ?sheet=kartu)
   initialQuery?: string; // /dev/states/n3 BT05b
-  // N5 · BT05k: kartu peringkat + tombol Kenalan/Kenal di kartu tamu (null = fitur belum kebuka).
+  // N5 · BT05k: kartu peringkat + satu tombol Kenalan di header (null = fitur belum kebuka).
   kenalan?: KenalanView | null;
-  kenalanHref?: string; // /t/{token}/kenalan (BTk1)
-  onKenal?: (guestId: string, name: string) => void; // "✓ Kenal" → toast K6
+  onKenalan?: () => void; // → sheet Kenalan (BTk2 QR saya / BTk1 Scan QR)
 }) {
   const [q, setQ] = useState(initialQuery);
   const list = filterGuests(view.guests, q);
   const searching = !!q.trim();
   const showKenalan = !!kenalan && (kenalan.open || !!kenalan.winner);
-  const kenalanOf = (g: AcaraView["guests"][number]): GuestCardKenalan | undefined => {
-    if (!showKenalan || !kenalan) return undefined;
-    if (kenalan.kenal[g.id]) return { state: "kenal", onPress: () => onKenal?.(g.id, g.name) };
-    if (!kenalan.open || !g.here || !kenalanHref) return { state: "bisa", disabled: true };
-    return { state: "bisa", href: kenalanHref };
-  };
+  // Papan ditutup (pemenang diumumin) → tombol Kenalan hilang dari kartu peringkat.
+  const kenalanLive = !!kenalan?.open && !!onKenalan;
+  // (6 Nov, Figma BT05k 5358:10227) N5 kebuka → judul "Yuk Kenalan" + ajakan 1 baris.
+  const othersHere = view.guests.filter((g) => g.here).length;
+  const title = showKenalan ? "Yuk Kenalan" : "Tamu di sini";
   return (
-    <Sheet open onClose={onClose} title="Tamu di sini" className={cx(styles.sheet, styles.tamu)}>
+    <Sheet open aboveNav onClose={onClose} title={title} className={cx(styles.sheet, styles.tamu)}>
       {/* (28 Okt) Kartu kamu → avatar di pojok kanan atas; tap = ubah kartu (T11). */}
       <div className={styles.tamuHead}>
         <div className={styles.sheetHead}>
           <p aria-hidden className="t-card-title">
-            Tamu di sini
+            {title}
           </p>
           <p className="t-label c-label-2">
-            {view.total} tamu · {view.hereCount} udah di sini
+            {kenalanLive && othersHere > 0
+              ? `${othersHere} orang udah di sini. Sapa satu, yuk!`
+              : `${view.total} tamu · ${view.hereCount} udah di sini`}
           </p>
         </div>
         <button
@@ -214,8 +221,20 @@ export function TamuSheet({
           </span>
         </button>
       </div>
-      {/* N5 · BT05k: disembunyikan saat cari (sama kayak kartu kamu N3). */}
-      {showKenalan && kenalan && !searching && <RankCard view={kenalan} />}
+      {/* N5 · BT05k: disembunyikan saat cari (sama kayak kartu kamu N3). Tombol Kenalan (→ sheet
+          Kenalan) di dalam kartu peringkat, Secondary Large (Figma 5358:10360). */}
+      {showKenalan && kenalan && !searching && (
+        <RankCard
+          view={kenalan}
+          action={
+            kenalanLive ? (
+              <Button variant="secondary" icon={<HandWaving />} onClick={onKenalan}>
+                Kenalan
+              </Button>
+            ) : undefined
+          }
+        />
+      )}
       <SearchField
         label="Cari tamu"
         value={q}
@@ -241,7 +260,6 @@ export function TamuSheet({
               role={g.role}
               askAbout={g.askAbout}
               here={g.here}
-              kenalan={kenalanOf(g)}
             />
           ))}
         </div>
@@ -275,7 +293,7 @@ export function RumahSheet({
     if (house?.wifiPassword) onCopied(await copyText(house.wifiPassword));
   };
   return (
-    <Sheet open onClose={onClose} title="Info rumah" className={styles.sheet}>
+    <Sheet open aboveNav onClose={onClose} title="Info rumah" className={styles.sheet}>
       <div className={styles.sheetHead}>
         <p aria-hidden className="t-card-title">
           Info rumah

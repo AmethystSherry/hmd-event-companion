@@ -14,7 +14,7 @@ import {
 import { cx } from "@/lib/cx";
 import styles from "./HadiahFloat.module.css";
 
-// N5 · HMD/Hadiah · float (Figma 5306:9848): kotak --accent 64 + ikon + badge hitam jumlah + pil
+// N5 · HMD/Hadiah · float (Figma 5306:9848): kotak hijau 64 + ikon + badge oranye jumlah + pil
 // label putih. Tamu = Gift "Hadiah" (badge kenalanmu, BT03h), panitia = Trophy "Peringkat" (badge
 // pasang kenalan, BP02k). Nempel di layar (fixed) & bisa digeser: tahan + geser > 6 px = drag,
 // dilepas → nempel ke sisi kiri/kanan terdekat (margin 16), y dibatasi `top` .. atas elemen

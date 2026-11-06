@@ -150,7 +150,7 @@ components/n4/            KolaseApp (kamera BT06/BT06b) · useCamera · capture 
                           usePhotoOutbox (kirim + antrean) · NempelSheet (BT07/b/c/e) · GaleriSheet (BT07d)
 components/n1/            TanyaSheet (BT08/BT09/BT08b) · Pertanyaan (P10/P10c)
 components/n3/            KartuSheet (T11/T11e + gagal simpan) · InterestChips (chip minat + tambah di tempat)
-components/n5/            KenalanApp (BTk1/BTk2/BTk3) · Sheets (KenalanSheet BTk4, PemenangSheet BTk5) ·
+components/n5/            KenalanQrSheet (BTk2/BTk1 sheet + BTk3 selfie) · Sheets (KenalanSheet BTk4, PemenangSheet BTk5) ·
                           RankCard (BT05k) · PapanKenalan (P14/P14b) · Podium (P14) · KenalanStamp (BTk4)
 components/f3/            FotoMasuk (P13: masonry bingkai, filter sesi, hapus + Dialog, unduh ZIP)
 components/f4/            AcaraScreen (BT20–24/BT03/S01, sheet lewat ?sheet=) · Sheets (BT22/BT21p/BT04/BT05) ·
@@ -593,9 +593,13 @@ Keputusan 25 Okt (default "Keputusan & asumsi" F3-F4-deliverables, kecuali K3/K8
   bulat Tanya di kanan (redup + aria-disabled kalau Talkshow belum jalan) + bar gelap ikon Tamu · Rundown.
   Galeri = `PhotoStack` (maks 3 thumbnail miring bertumpuk, terbaru di atas, badge merah jumlah fotomu termasuk
   yang antre) di kiri FAB kamera; tanpa foto → satu kartu garis putus + ikon gambar, tanpa badge (galeri tetap bisa dibuka).
-  Navbar nempel di bawah layar (fixed, tengah, hug selebar isi; z 55 di atas Sheet z 50, di luar panel). Tab yang sheet-nya kebuka = pil
-  `--tabbar-active` + nama menu (Kartu dari BT05 = Tamu); tap tab aktif = tutup, tab lain = ganti sheet
-  (replaceState). Sheet di layar acara dapat ruang 64 di bawah (`[data-sheet]::after`). Tombol bulat tetap hitam.
+  Navbar nempel di bawah layar (fixed, tengah, hug selebar isi; z 55 di atas Sheet z 50, di luar panel). (6 Nov) Navbar
+  cuma tampil di layar acara & sheet navbar (`NAV_SHEETS`: Tamu/Kenalan, Rundown, Info rumah, Tanya); sheet lain
+  (detail sesi, pembicara, foto, galeri, Kartu kamu, BTk4, BTk5) tanpa navbar. Tab yang sheet-nya kebuka = pil
+  `--tabbar-active` + nama menu (Kenalan dari BT05 = Tamu); tap tab aktif = tutup, tab lain = ganti sheet
+  (replaceState). Sheet biasa selagi navbar tampil (Tanya) dapat ruang 64 di bawah (`[data-nav] [data-sheet]::after`).
+  Tombol bulat tetap hitam. Lebar layar: `--screen-width = min(100vw, 480px)` (6 Nov) → HP selebar apa pun
+  terisi penuh tanpa jarak kiri-kanan; `--content-width` = layar − 2 × margin.
 - (28 Okt) **Ilustrasi bergerak**: `public/figma/*.mp4` (1080×1920, 10 dtk loop, 2,4–4,5 MB) pasangan tiap
   webp (BT02, F3 open-space/talkshow/office-tour/closing/break/weak-signal, T01a, T01; closing juga di BT12).
   `ArtVideo` (components/ui) di atas <img> yang sama: posisi dari `lib/artVideo` (s, y diukur dari frame
@@ -699,8 +703,8 @@ Keputusan 5 Nov (default K1–K18 N5-deliverables + usulan T3/T9/T10, disetujui)
    qr-sendiri · pemilik belum check-in · udah-kenalan. `StoreError` punya `meta` opsional. Hapus tamu/event & H+30
    ikut menghapus kenalan (purge mengembalikan `kenalan/{id}` buat hapus file). Store dev `__hmdStoreN5`.
 3. **Peringkat** (lib/kenalan `kenalanRanking`): +1 buat dua-duanya; jumlah turun, seri → kenalan terakhir lebih awal
-   (duluan sampai) di atas, lalu nama → nomor unik. `kenalanView` (count, rank, of = tamu check-in, top, kenal
-   {id → jam}, latest, winner + isMe, open) · `kenalanBoard` (P14: rows, pairs, joined = ≥ 1 kenalan, tie) ·
+   (duluan sampai) di atas, lalu nama → nomor unik. `kenalanView` (count, rank, of = tamu check-in, top,
+   latest, winner + isMe, open) · `kenalanBoard` (P14: rows, pairs, joined = ≥ 1 kenalan, tie) ·
    `kenalanIntro` (BTk4, "kenalan ke-n"). Tanpa WA/token. (6 Nov) `kenalanView.ladder` = semua {rank, count} tanpa
    nama; `rankProgress` (murni + tes): fill = kenalanku ÷ teratas, milestone = tamu tepat di atasku · #2 · #1 (cuma
    di atasku; jumlah sama dibuang, maks 3), `next.need` = kenalan orang di atas − kenalanku + 1 (seri kalah).
@@ -719,18 +723,22 @@ Keputusan 5 Nov (default K1–K18 N5-deliverables + usulan T3/T9/T10, disetujui)
 7. **BT05k**: `RankCard` di TamuSheet (disembunyikan saat cari; K14 "–" + "Belum ada kenalan"). v2 (Figma 5324:9823):
    latar `--rank-card-fill` + bayangan/highlight, lingkaran #rank cincin `--medal-gold-soft` 4 + Sparkle Fill 16, baris 2
    "{n} kenalan · kenalan terbanyak dapat hadiah", track 10 + titik milestone 14 + label "#r · n" (geser proporsional,
-   label < 18% dari label sebelumnya disembunyikan, "Kamu · n" di kiri), pil putih "🔥 {k} kenalan lagi buat naik ke
-   #{r}" / #1 "Kamu di puncak! Pertahanin, ya." / 0 kenalan "1 kenalan buat masuk papan" (TODO copy) / pemenang udah
-   diumumin → pil hilang. `GuestCard` prop
-   `kenalan` → "Kenalan" (→ `/kenalan?dari=tamu`, redup kalau tamu belum datang / papan tutup) / "Kenal" (toast K6
-   gelap) + tombol ikon IG. Tanpa prop = "Buka IG" lama.
-8. **/t/[token]/kenalan** (`KenalanApp`): guard check-in · closed → selesai · papan nggak kebuka → acara. Tab
-   `Segmented look="tabs"` (HMD/Tabs · Kenalan), `?tab=qr` replaceState. Scan = `Viewfinder` F2 (prop hint/label/
-   className/children) → `cek` (QR sama diabaikan 2,5 dtk) → error TopToast. K8: kamera ditolak → "Coba lagi" +
-   "Pakai kamera HP" (`QrScanner.scanImage`). BTk3 = kamera depan N4 (`useCamera`/`captureVideo`, kelas n4), tanpa
-   pratinjau (K4): jepret → kirim ≤ 10 dtk → `acara?sheet=kenalan&id=`; 5xx/offline/timeout → selfie tetap + "Coba
-   lagi" (id sama) + TopToast di bawah toolbar; 4xx → balik ke scan + toast. Back: `dari=tamu` → history.back. BTk2:
-   `LiveRefresh` 2 dtk, `latest` baru (bukan hasil scan sendiri) → replace ke BTk4.
+   label < 18% dari label sebelumnya disembunyikan, "Kamu · n" di kiri). (6 Nov, Figma BT05k 5358:10227) N5 kebuka
+   → judul sheet "Yuk Kenalan" + subjudul "{n} orang udah di sini. Sapa satu, yuk!" (n = tamu lain yang udah masuk;
+   papan tutup / 0 → "{total} tamu · {hadir} udah di sini"); pil "🔥 … lagi buat naik" diganti tombol "Kenalan"
+   Secondary Large di dalam `RankCard` (`action`, → sheet Kenalan; papan tutup → tombol hilang). `GuestCard` rata
+   kiri, tanpa tombol, seluruh kartu = link IG (tab baru). "✓ Kenal" + toast K6 dihapus. Sheet navbar (Tamu di sini, Rundown, Info rumah) + sheet Kenalan =
+   `Sheet aboveNav` (Figma 5356:9816): inset 8, radius 28, berhenti 16 px di atas navbar; panel `data-above-nav`
+   tanpa spacer navbar 64.
+8. **Sheet Kenalan** (6 Nov, dulu halaman `/t/[token]/kenalan`, route dihapus): `?sheet=kenalan-qr` di layar acara,
+   `KenalanQrSheet` (components/n5), cuma kalau papan kebuka (`kenalanQr` dari server: QR `TicketQr` + tanggal
+   polaroid). Tab `Segmented look="tabs"`: **QR saya dulu (default)**, lalu Scan QR. Dari BT05k = pushState
+   (`fromTamu`, tutup → BT05k); BTk4 "Scan QR lain" → sheet tab Scan QR. Scan = `Viewfinder` F2 → `cek` (QR sama
+   diabaikan 2,5 dtk) → error TopToast. K8: kamera ditolak → "Coba lagi" + "Pakai kamera HP" (`QrScanner.scanImage`).
+   BTk3 = layar penuh di atas sheet (`.selfieLayer` z 60), kamera depan N4, tanpa pratinjau (K4): jepret → kirim
+   ≤ 10 dtk → `onSent` → BTk4 (`?sheet=kenalan&id=`, router.refresh); 5xx/offline/timeout → selfie tetap + "Coba
+   lagi" (id sama) + TopToast; 4xx → balik ke scan + toast. HP pemilik QR: AcaraScreen buka BTk4 sendiri juga selagi
+   sheet Kenalan kebuka (bukan saat selfie, `onSelfieChange`).
 9. **BTk4/BTk5** (components/n5/Sheets, `?sheet=kenalan&id=` / `?sheet=pemenang`): BTk4 dari server (`kenalanIntro`)
    atau `latest`; tombol "Balik ke acara" + "Scan QR lain" (T3). v2 (6 Nov): caption "{aku} 🤝 {teman}" (BTk3 tetap
    "×" — cek desain), stempel `KenalanStamp` (72, `--success-text`, garis putus putih, Check Bold + "KENALAN", −12°)
@@ -770,7 +778,7 @@ Keputusan 5 Nov (default K1–K18 N5-deliverables + usulan T3/T9/T10, disetujui)
   Button, IconButton, PinPad (P01), Countdown (T03), NumberedRow (T01/PE04), Dropzone (P04k),
   Toggle, Segmented, Badge, Pill/Chip/AddChip,
   Card/CardLabel/InnerBox, StatTile (+`highlight`), ListRow/Avatar, Banner/TextAction, HeroState (+`size="sm"`), Field, Toast
-  (undo ring), Sheet (bawah / `floating`), TabBar, Ticket (+`torn`)/TicketStub, LogoMark,
+  (undo ring), Sheet (bawah / `floating` / `aboveNav`), TabBar, Ticket (+`torn`)/TicketStub, LogoMark,
   Screen/ScreenHeader/Skeleton, SearchField, Dialog (konfirmasi tengah layar, BP03/BP01b),
   StarRating (T14), Masonry + PhotoPin (T15; `frame` + `action` P13), Chip `look="card"` (P13), BarList (P11), SwipeRow (P04s/
   PE04s, panel hapus `--danger-fill`), TopToast (S01,
@@ -790,7 +798,10 @@ Keputusan 5 Nov (default K1–K18 N5-deliverables + usulan T3/T9/T10, disetujui)
   - Disabled sementara opacity 0,35 + `aria-disabled` (Figma belum punya State=Disabled; T02c, PE03).
 - `Sheet` (28 Okt): geser ke bawah buat nutup kalau dismissible (isi di paling atas + gerak awal vertikal,
   lepas > 96 px / cepat → tutup, selain itu balik); panel `overflow-x: hidden` — cuma carousel di dalamnya
-  (mis. kartu tamu BT05) yang geser horizontal.
+  (mis. kartu tamu BT05) yang geser horizontal. (6 Nov) Tutup selalu beranimasi (kebalikan buka: panel turun
+  280 ms + dim pudar) dari jalur mana pun — pemanggil boleh tetap `{cond && <Sheet open …>}` atau `open={false}`:
+  saat lepas dari DOM, salinan statis inert dianimasikan keluar di parent yang sama (ganti sheet = tanpa dim dobel;
+  reduced motion = langsung hilang).
 - `IconButton` = khusus tombol back/close 44 di toolbar (gaya secondary, varian `glass` di kamera).
 - `Screen`: `withBack` (konten mulai 8px), `bottom` + `bottomHeight` (1 tombol 54, 2 tombol 118,
   +caption 28) → fade scroll-edge otomatis di atas aksi bawah.

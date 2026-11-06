@@ -15,6 +15,7 @@
 }
 
 .panel {
+  --sheet-pad-x: 20px; /* dipakai deret geser di dalam (carousel) buat melebar sampai tepi panel */
   position: relative;
   display: flex;
   flex-direction: column;
@@ -26,7 +27,7 @@
   overflow-x: hidden; /* cuma deret di dalam (mis. carousel kartu tamu) yang boleh geser horizontal */
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 10px 20px calc(env(safe-area-inset-bottom) + 24px);
+  padding: 10px var(--sheet-pad-x) calc(env(safe-area-inset-bottom) + 24px);
   border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
   background: var(--card);
   outline: none;
@@ -53,6 +54,37 @@
   }
 }
 
+/* Tutup (Sheet.tsx EXIT_MS 280): salinan statis sheet turun keluar layar + dim pudar, kebalikan buka.
+   Mulai dari posisi sekarang (termasuk sisa geser ke bawah). --sheet-exit-gap = jarak panel dari
+   bawah layar (floating / aboveNav) biar benar-benar hilang. */
+.leaving {
+  pointer-events: none;
+}
+
+.leaving .scrim {
+  animation: fade-out 280ms ease-in forwards;
+}
+
+.handoff .scrim {
+  display: none;
+}
+
+.leaving .panel {
+  animation: sheet-out 280ms cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes sheet-out {
+  to {
+    transform: translateY(calc(100% + var(--sheet-exit-gap, 0px)));
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .panel {
     animation: fade-in 150ms ease-out;
@@ -61,7 +93,8 @@
 
 /* P06: sheet mengambang inset 8, radius 40, dim 35%. */
 .floating {
-  padding: 0 8px calc(env(safe-area-inset-bottom) + 8px);
+  --sheet-exit-gap: calc(env(safe-area-inset-bottom) + 8px);
+  padding: 0 8px var(--sheet-exit-gap);
 }
 
 .floating .scrim {
@@ -77,4 +110,20 @@
 /* N4 BT07/BT07d: backdrop 45% (Figma rgba(16,16,16,.45)). */
 .strong .scrim {
   background: rgba(16, 16, 16, 0.45);
+}
+
+/* Sheet navbar tamu (Figma 5356:9816): inset 8, radius 28 semua sudut, padding 12/16/16, bawah
+   panel 16 px di atas navbar. Ruang navbar = 14 (jarak bawah, f4 .nav) + 57 (tinggi TabBar) + 16. */
+.aboveNav {
+  --guest-nav-space: calc(env(safe-area-inset-bottom) + 87px);
+  --sheet-exit-gap: var(--guest-nav-space);
+  padding: 0 8px var(--guest-nav-space);
+}
+
+.aboveNav .panel {
+  --sheet-pad-x: 16px;
+  max-width: calc(var(--screen-width) - 16px);
+  max-height: calc(100dvh - var(--guest-nav-space) - 48px);
+  padding: 12px var(--sheet-pad-x) 16px;
+  border-radius: 28px;
 }

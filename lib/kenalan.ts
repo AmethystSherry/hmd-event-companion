@@ -129,7 +129,6 @@ export type KenalanView = {
   rank: number | null; // null = belum punya kenalan
   of: number; // "dari 18" = tamu udah check-in (T7)
   top: { firstName: string; count: number } | null;
-  kenal: Record<string, string>; // guestId teman → jam kenalan (ISO), buat "✓ Kenal" + toast K6
   latest: KenalanIntro | null; // kenalan terbaru yang melibatkan aku (BTk2 → BTk4)
   winner: (KenalanWinnerView & { isMe: boolean }) | null;
   ladder: { rank: number; count: number }[]; // (6 Nov) semua peringkat tanpa nama → milestone BT05k
@@ -176,8 +175,6 @@ export function kenalanView(store: DataStore, guestId: string): KenalanView | nu
   const mine = introsOf(store, e.id, me.id);
   const rows = kenalanRanking(store.listIntroductions(e.id), store.listGuests(e.id));
   const row = rows.find((r) => r.guestId === me.id);
-  const kenal: Record<string, string> = {};
-  for (const i of mine) kenal[i.a === me.id ? i.b : i.a] = i.createdAt;
   const last = mine[mine.length - 1];
   const w = winnerView(store, e);
   return {
@@ -187,7 +184,6 @@ export function kenalanView(store: DataStore, guestId: string): KenalanView | nu
     rank: row?.rank ?? null,
     of: checkedInIds(store, e.id).size,
     top: rows[0] ? { firstName: rows[0].firstName, count: rows[0].count } : null,
-    kenal,
     latest: last ? toIntro(store, me, last, mine.length) : null,
     winner: w ? { ...w, isMe: w.guestId === me.id } : null,
     ladder: rows.map((r) => ({ rank: r.rank, count: r.count })),
@@ -195,13 +191,11 @@ export function kenalanView(store: DataStore, guestId: string): KenalanView | nu
 }
 
 // (6 Nov) BT05k progress: fill = kenalanku ÷ teratas; milestone = tamu tepat di atasku, #2, #1 (dobel /
-// posisi sama dibuang, maks 3); `need` = kenalan lagi buat naik satu peringkat. Seri kalah sama yang
-// duluan sampai (no. 3), jadi harus lewat: kenalan orang di atas − kenalanku + 1.
+// posisi sama dibuang, maks 3).
 export type RankMilestone = { rank: number; count: number; pct: number };
 export type RankProgress = {
   pct: number; // 0–100
   milestones: RankMilestone[]; // urut kiri → kanan
-  next: { rank: number; need: number } | null; // null = aku #1
 };
 
 export function rankProgress(v: Pick<KenalanView, "count" | "rank" | "ladder">): RankProgress {
@@ -216,17 +210,7 @@ export function rankProgress(v: Pick<KenalanView, "count" | "rank" | "ladder">):
     milestones.push({ rank, count: row.count, pct: pctOf(row.count) });
   }
   milestones.sort((a, b) => a.pct - b.pct || b.rank - a.rank);
-  const target = v.ladder.find((x) => x.rank === above);
-  return {
-    pct: pctOf(v.count),
-    milestones: milestones.slice(-3),
-    next:
-      v.rank === 1
-        ? null
-        : target
-          ? { rank: target.rank, need: Math.max(1, target.count - v.count + 1) }
-          : { rank: 1, need: 1 }, // papan masih kosong
-  };
+  return { pct: pctOf(v.count), milestones: milestones.slice(-3) };
 }
 
 // BTk4 · satu kenalan milik tamu ini (null = bukan pasangannya / nggak ada).

@@ -198,14 +198,13 @@ describe("peringkat & seri (K10)", () => {
     expect(kenalanRanking(more, guests).map((r) => r.guestId)).toEqual(["B", "C", "A", "D"]); // B & C sampai 3 bareng (14.10) → nama
   });
 
-  it("view: of = tamu check-in, top, kenal, latest, kenalanIntro", () => {
+  it("view: of = tamu check-in, top, latest, kenalanIntro", () => {
     const { store, a, b, c } = setup();
     store.addIntroduction(a.id, b.id, { id: uuid(1) }, t("14:00"));
     store.addIntroduction(c.id, a.id, { id: uuid(2) }, t("14:10"));
     const v = kenalanView(store, a.id)!;
     expect(v).toMatchObject({ open: true, inside: true, count: 2, rank: 1, of: 4 });
     expect(v.top).toMatchObject({ count: 2 });
-    expect(Object.keys(v.kenal).sort()).toEqual([b.id, c.id].sort());
     expect(v.latest).toMatchObject({ id: uuid(2), no: 2, friendId: c.id, scannedByMe: false });
     expect(kenalanIntro(store, b.id, uuid(1))).toMatchObject({ no: 1, friendId: a.id });
     expect(kenalanIntro(store, b.id, uuid(2))).toBeNull(); // bukan pasangannya
@@ -273,11 +272,11 @@ describe("selfie terpisah dari foto kolase & hapus", () => {
   });
 });
 
-describe("rankProgress (BT05k milestone & pil, 6 Nov)", () => {
+describe("rankProgress (BT05k milestone, 6 Nov)", () => {
   // Figma: Dimas 12 · Sekar 7 · #3 5 · Bima 4 · Rara 3 (#5).
   const ladder = [12, 7, 5, 4, 3, 2].map((count, i) => ({ rank: i + 1, count }));
 
-  it("milestone = tepat di atasku, #2, #1; pil butuh lewat (seri kalah)", () => {
+  it("milestone = tepat di atasku, #2, #1", () => {
     const p = rankProgress({ count: 3, rank: 5, ladder });
     expect(p.milestones.map((m) => [m.rank, m.count])).toEqual([
       [4, 4],
@@ -285,14 +284,11 @@ describe("rankProgress (BT05k milestone & pil, 6 Nov)", () => {
       [1, 12],
     ]);
     expect(p.pct).toBeCloseTo(25);
-    expect(p.next).toEqual({ rank: 4, need: 2 }); // 4 − 3 + 1
   });
 
-  it("#2 → milestone cuma #1; #1 → tanpa milestone & next null", () => {
+  it("#2 → milestone cuma #1; #1 → tanpa milestone", () => {
     expect(rankProgress({ count: 7, rank: 2, ladder }).milestones.map((m) => m.rank)).toEqual([1]);
-    expect(rankProgress({ count: 7, rank: 2, ladder }).next).toEqual({ rank: 1, need: 6 });
-    const top = rankProgress({ count: 12, rank: 1, ladder });
-    expect(top).toMatchObject({ pct: 100, milestones: [], next: null });
+    expect(rankProgress({ count: 12, rank: 1, ladder })).toEqual({ pct: 100, milestones: [] });
   });
 
   it("posisi sama (jumlah sama) dibuang, yang peringkatnya lebih tinggi menang", () => {
@@ -302,12 +298,10 @@ describe("rankProgress (BT05k milestone & pil, 6 Nov)", () => {
     ]);
   });
 
-  it("0 kenalan: milestone dari tamu terakhir; papan kosong → butuh 1", () => {
-    expect(rankProgress({ count: 0, rank: null, ladder }).next).toEqual({ rank: 6, need: 3 });
-    expect(rankProgress({ count: 0, rank: null, ladder: [] })).toEqual({
-      pct: 0,
-      milestones: [],
-      next: { rank: 1, need: 1 },
-    });
+  it("0 kenalan: milestone dari tamu terakhir; papan kosong → kosong", () => {
+    expect(rankProgress({ count: 0, rank: null, ladder }).milestones.map((m) => m.rank)).toEqual([
+      6, 2, 1,
+    ]);
+    expect(rankProgress({ count: 0, rank: null, ladder: [] })).toEqual({ pct: 0, milestones: [] });
   });
 });

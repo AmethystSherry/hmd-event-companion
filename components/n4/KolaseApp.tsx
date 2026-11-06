@@ -74,7 +74,9 @@ export function KolaseApp({
     captured ?? (preview?.review ? { url: preview.review, cap: null, file: null } : null);
   const video = useRef<HTMLVideoElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
-  const sheetHref = (id: string) => `/t/${token}/acara?sheet=foto&id=${id}`;
+  // Pratinjau /dev/states: token palsu → layar contoh BT07 (sheet foto masuk kolase).
+  const sheetHref = (id: string) =>
+    preview ? "/dev/states/n4/BT07" : `/t/${token}/acara?sheet=foto&id=${id}`;
 
   // Webview Instagram/Facebook: getUserMedia sering nggak jalan → langsung kamera bawaan HP.
   const inApp = useSyncExternalStore(

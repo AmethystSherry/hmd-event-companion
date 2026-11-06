@@ -157,17 +157,6 @@
   }
 }
 
-.rankPill {
-  position: relative;
-  padding: 6px 12px;
-  border-radius: var(--radius-pill);
-  background: #ffffff;
-  color: var(--accent-text);
-  font-size: 13px;
-  line-height: 18px;
-  font-weight: 500;
-}
-
 /* ---- BTk4 / BTk5 · stat 3 kolom di kotak --card-2 ---- */
 .stats {
   display: grid;
@@ -213,15 +202,49 @@
   margin: 12px 0 12px;
 }
 
-/* ---- BTk1 / BTk2 · layar Kenalan ---- */
-.head {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+/* ---- BTk1 / BTk2 · sheet Kenalan (mengambang di atas navbar, Sheet aboveNav) ---- */
+.qrSheet {
+  align-items: stretch;
+  gap: 14px;
 }
 
-.tabs {
-  margin-top: 12px;
+.qrSheet > :first-child {
+  align-self: center;
+}
+
+.title {
+  margin: 0;
+}
+
+/* Tab QR saya & Scan QR ditumpuk di satu sel → tinggi sama (yang tertinggi); kartu info nempel di
+   bawah panel biar posisinya juga sama di kedua tab. */
+.tabBody {
+  display: grid;
+}
+
+.tabPanel {
+  display: flex;
+  grid-area: 1 / 1;
+  flex-direction: column;
+  gap: 14px;
+  visibility: hidden;
+}
+
+.tabPanel[data-active] {
+  visibility: visible;
+}
+
+.tabPanel > .info {
+  margin-top: auto;
+}
+
+/* BTk3 selfie: layar penuh di atas layar acara, sheet & navbar tamu (z 55). */
+.selfieLayer {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  overflow-y: auto;
+  background: #101010; /* sama dengan kamera N4, gelap tetap */
 }
 
 .info {
@@ -252,12 +275,15 @@
   gap: 2px;
 }
 
-/* BTk2 kartu QR (accent, radius 24, padding 20) */
+/* BTk2 kartu QR (accent, radius 24, padding 20). Tinggi = kotak Scan QR (rasio 358/440, .scanBox);
+   isi di tengah. Kalau isinya lebih tinggi, kartu ikut memanjang. */
 .qrCard {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 18px;
+  aspect-ratio: 358 / 440;
   padding: 20px;
   border-radius: 24px;
   background: var(--accent);
@@ -376,12 +402,6 @@
   justify-content: center;
   background: rgba(0, 0, 0, 0.45);
   color: #ffffff;
-}
-
-.toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
 }
 
 /* Viewfinder F2 dengan rasio BTk1 (358×440, radius 24). Dobel kelas = menang dari .viewfinder F2. */

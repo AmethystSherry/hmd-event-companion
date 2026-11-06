@@ -238,7 +238,10 @@ export function GaleriSheet({
           })}
           {!full && (
             <li>
-              <Link href={`/t/${token}/foto`} className={s.addTile}>
+              <Link
+                href={preview ? "/dev/states/n4/BT06" : `/t/${token}/foto`}
+                className={s.addTile}
+              >
                 <Camera size={28} />
                 <span className="t-label">Foto lagi</span>
               </Link>

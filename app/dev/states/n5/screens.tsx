@@ -1,10 +1,9 @@
 import type { ComponentProps, ReactNode } from "react";
 import { AcaraScreen } from "@/components/f4/AcaraScreen";
-import { KenalanApp, type KenalanPreview } from "@/components/n5/KenalanApp";
+import type { KenalanPreview, KenalanTab } from "@/components/n5/KenalanQrSheet";
 import { PapanKenalanScreen } from "@/components/n5/PapanKenalan";
 import { TicketQr } from "@/components/TicketQr";
 import { acaraView } from "@/lib/acara";
-import { cardOf } from "@/lib/card";
 import { HMD_ID } from "@/lib/data/seed";
 import type { DataStore } from "@/lib/data/store";
 import { firstName } from "@/lib/format";
@@ -15,7 +14,7 @@ import { demoStore, jeda1, kontrol } from "../f4/screens";
 import { KENALAN_DUMMY, kenalanDummy } from "./data";
 
 // Registri layar N5 (N5-deliverables.md "Daftar layar", Figma section 5305:9340) untuk
-// /dev/states/n5/[code]. Komponen sama dengan route asli (AcaraScreen + sheet, KenalanApp), data
+// /dev/states/n5/[code]. Komponen sama dengan route asli (AcaraScreen + sheet), data
 // contoh di memori (20 tamu, 18 udah masuk, Rara = pemilik HP #014, papan Dimas 12 · Sekar 7 ·
 // Rara 4), tanpa server: jam beku, tanpa kamera & jaringan.
 
@@ -95,6 +94,12 @@ function acara(
       serverNow={at(NOW)}
       kenalan={kenalan}
       kenalanIntro={intro}
+      kenalanQr={{
+        qr: (
+          <TicketQr payload={signKenalan("dev-preview-only", guest.id)} label="QR kenalan kamu" />
+        ),
+        date: "8.11.26",
+      }}
       preview={{
         offline: false,
         ...preview,
@@ -104,27 +109,9 @@ function acara(
   );
 }
 
-function kenalanApp(tab: "scan" | "qr", preview: KenalanPreview = {}) {
-  const { store, guest } = demo({});
-  const view = kenalanView(store, guest.id)!;
-  return (
-    <KenalanApp
-      token="demo-token"
-      me={{
-        name: guest.name,
-        firstName: firstName(guest.name),
-        ig: guest.ig,
-        role: cardOf(guest).role,
-        keyNo: guest.keyNo,
-      }}
-      view={view}
-      qr={<TicketQr payload={signKenalan("dev-preview-only", guest.id)} label="QR kenalan kamu" />}
-      date="8.11.26"
-      initialTab={tab}
-      fromTamu
-      preview={preview}
-    />
-  );
+// Sheet Kenalan (BTk2 QR saya default / BTk1 Scan QR / BTk3 selfie) di atas layar acara.
+function kenalanQr(tab: KenalanTab, kenalanQrPreview: KenalanPreview = {}) {
+  return acara({}, { sheet: "kenalan-qr", kenalanQr: { tab, ...kenalanQrPreview } });
 }
 
 function papan(opts: Opts, confirm?: boolean) {
@@ -192,62 +179,53 @@ export const SCREENS: ScreenDef[] = [
     render: () => acara({ winner: true }, { sheet: "tamu" }),
   },
   {
-    code: "BT05k-kenal",
-    name: "Tap “Kenal” → toast (K6)",
-    kind: "Kasus",
+    code: "BTk2",
+    name: "Kenalan · tab QR saya (tab pertama)",
+    kind: "Utama",
     lane: "Tamu",
-    render: () =>
-      acara({}, { sheet: "tamu", kenalToast: "Kamu udah kenalan sama Dimas jam 12.59." }),
+    render: () => kenalanQr("qr"),
   },
   {
     code: "BTk1",
     name: "Kenalan · tab Scan QR",
     kind: "Utama",
     lane: "Tamu",
-    render: () => kenalanApp("scan"),
+    render: () => kenalanQr("scan"),
   },
   {
     code: "BTk1-tiket",
     name: "Scan QR tiket (K1)",
     kind: "Kasus",
     lane: "Tamu",
-    render: () =>
-      kenalanApp("scan", { toast: "Ini QR tiket. Minta temanmu buka tab QR saya, ya." }),
+    render: () => kenalanQr("scan", { toast: "Ini QR tiket. Minta temanmu buka tab QR saya, ya." }),
   },
   {
     code: "BTk1-sendiri",
     name: "Scan QR sendiri (K5)",
     kind: "Kasus",
     lane: "Tamu",
-    render: () => kenalanApp("scan", { toast: "Itu QR kamu sendiri. Scan QR temanmu, ya." }),
+    render: () => kenalanQr("scan", { toast: "Itu QR kamu sendiri. Scan QR temanmu, ya." }),
   },
   {
     code: "BTk1-kamera",
     name: "Kamera scan ditolak (K8)",
     kind: "Gagal",
     lane: "Tamu",
-    render: () => kenalanApp("scan", { scanError: true }),
-  },
-  {
-    code: "BTk2",
-    name: "Kenalan · tab QR saya",
-    kind: "Utama",
-    lane: "Tamu",
-    render: () => kenalanApp("qr"),
+    render: () => kenalanQr("scan", { scanError: true }),
   },
   {
     code: "BTk3",
     name: "Selfie bukti kenalan",
     kind: "Utama",
     lane: "Tamu",
-    render: () => kenalanApp("scan", { step: "selfie", friend: dimas }),
+    render: () => kenalanQr("scan", { step: "selfie", friend: dimas }),
   },
   {
     code: "BTk3-gagal",
     name: "Selfie belum kekirim",
     kind: "Gagal",
     lane: "Tamu",
-    render: () => kenalanApp("scan", { step: "gagal", friend: dimas }),
+    render: () => kenalanQr("scan", { step: "gagal", friend: dimas }),
   },
   {
     code: "BTk4",

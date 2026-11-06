@@ -1,17 +1,17 @@
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { Gift, Sparkle } from "@/components/icons";
 import { cx } from "@/lib/cx";
 import { rankProgress, type KenalanView } from "@/lib/kenalan";
 import s from "./n5.module.css";
 
-// N5 · BT05k kartu peringkat di sheet Tamu di sini (Figma 5324:9823, update 6 Nov): "#5" di lingkaran
-// putih bercincin emas + Sparkle, "Kamu peringkat #5 dari 18" / "{n} kenalan · kenalan terbanyak dapat
-// hadiah", progress (fill = kenalanku ÷ teratas) dengan titik milestone (tepat di atasku, #2, #1) +
-// label "#r · n", lalu pil "🔥 {k} kenalan lagi buat naik ke #{r}". Angka k ikut aturan seri
-// (`rankProgress`, lib/kenalan). Label milestone yang terlalu dekat disembunyikan (titik tetap).
+// N5 · BT05k kartu peringkat di sheet Yuk Kenalan (Figma 5324:9823, update 6 Nov; 5358:10340): "#5" di
+// lingkaran putih bercincin emas + Sparkle, "Kamu peringkat #5 dari 18" / "{n} kenalan · kenalan
+// terbanyak dapat hadiah", progress (fill = kenalanku ÷ teratas) dengan titik milestone (tepat di atasku,
+// #2, #1) + label "#r · n", lalu `action` (tombol Kenalan, ganti pil "🔥 … lagi buat naik"). Label
+// milestone yang terlalu dekat disembunyikan (titik tetap).
 const LABEL_GAP = 18; // % lebar bar, ±57 px di kartu 350
 
-export function RankCard({ view }: { view: KenalanView }) {
+export function RankCard({ view, action }: { view: KenalanView; action?: ReactNode }) {
   const { count, rank, of, winner } = view;
   const p = rankProgress(view);
   // Label "Kamu · n" di kiri; label milestone yang terlalu dekat dengan label sebelumnya disembunyikan.
@@ -22,13 +22,6 @@ export function RankCard({ view }: { view: KenalanView }) {
         : { last: acc.last, show: [...acc.show, false] },
     { last: 0, show: [] },
   ).show;
-  const pill = winner
-    ? null
-    : count === 0
-      ? "1 kenalan buat masuk papan" // TODO copy
-      : !p.next
-        ? "Kamu di puncak! Pertahanin, ya." // TODO copy
-        : `${p.next.need} kenalan lagi buat naik ke #${p.next.rank}`;
   return (
     <section className={s.rank} aria-label="Peringkat kenalan">
       <Gift aria-hidden className={s.rankMotif} />
@@ -82,7 +75,7 @@ export function RankCard({ view }: { view: KenalanView }) {
           ))}
         </div>
       </div>
-      {pill && <p className={s.rankPill}>🔥 {pill}</p>}
+      {action}
     </section>
   );
 }
