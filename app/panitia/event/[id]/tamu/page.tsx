@@ -5,6 +5,7 @@ import { GuestManager } from "@/components/f1/GuestManager";
 import { LiveRefresh } from "@/components/LiveRefresh";
 import { Screen, Skeleton } from "@/components/ui";
 import { getStore } from "@/lib/data";
+import { eventDmTemplate } from "@/lib/invite";
 import { addDays, dateMedium } from "@/lib/format";
 import { requireCrew } from "@/lib/server/access";
 import { serverNow } from "@/lib/server/clock";
@@ -81,7 +82,7 @@ async function View({
         eventId={id}
         reminderDateLabel={dateMedium(addDays(event.date, -1))}
         templateFromCsv={templateFromCsv(event)}
-        dmTemplate={event.dmTemplate}
+        dmTemplate={eventDmTemplate(event.dmTemplate)}
         guests={guests.map((g) => toGuestRow(g, event, origin, now))}
         stats={store.stats(id)}
         actions={actions}

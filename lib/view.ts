@@ -4,7 +4,7 @@ import { formatWa } from "./csv";
 import type { Event, Guest } from "./data/types";
 import type { BadgeTone } from "@/components/ui/Badge";
 import { dateLong, dayMonth, eventPhase } from "./format";
-import { DEFAULT_DM_TEMPLATE, guestLink } from "./invite";
+import { DEFAULT_DM_TEMPLATE, eventDmTemplate, guestLink } from "./invite";
 
 // Ubah data store jadi props layar F1 (dipakai route panitia & /dev/states/f1).
 
@@ -65,7 +65,7 @@ export function toGuestRow(g: Guest, event: Event, origin: string, now: Date): G
     rsvp: g.rsvp,
     reminderSent: !!g.reminderSentAt,
     source: g.source,
-    dmTemplate: g.dmTemplate ?? event.dmTemplate,
+    dmTemplate: g.dmTemplate ?? eventDmTemplate(event.dmTemplate),
     link: guestLink(origin, g.token),
     reminderLink: guestLink(origin, g.token, true),
   };
@@ -75,5 +75,5 @@ export function toGuestRow(g: Guest, event: Event, origin: string, now: Date): G
 export const eventCountLabel = (n: number) => `${n} event`;
 
 export function templateFromCsv(event: Event): boolean {
-  return !!event.csvImportedAt && event.dmTemplate !== DEFAULT_DM_TEMPLATE;
+  return !!event.csvImportedAt && eventDmTemplate(event.dmTemplate) !== DEFAULT_DM_TEMPLATE;
 }
