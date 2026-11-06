@@ -1,5 +1,5 @@
 import { getStore, mutateStore } from "@/lib/data";
-import { kenalanFileId, type KenalanPostResponse } from "@/lib/kenalan";
+import { kenalanFileId, kenalanIntro, kenalanView, type KenalanPostResponse } from "@/lib/kenalan";
 import { isJpeg, isPhotoId, SERVER_MAX_PHOTO_BYTES, SERVER_MAX_THUMB_BYTES } from "@/lib/photo";
 import { guestFromToken } from "@/lib/server/access";
 import { serverNow } from "@/lib/server/clock";
@@ -71,7 +71,13 @@ export async function POST(req: Request, ctx: RouteContext<"/api/t/[token]/kenal
   const at = (await serverNow()).toISOString();
   try {
     await mutateStore((s) => s.addIntroduction(guest.id, parsed.guestId, { id }, at));
-    return reply({ ok: true, id });
+    const fresh = await getStore();
+    return reply({
+      ok: true,
+      id,
+      intro: kenalanIntro(fresh, guest.id, id),
+      view: kenalanView(fresh, guest.id),
+    });
   } catch (err) {
     // Kalah balapan (mis. dua HP saling scan barengan → "udah-kenalan") → file yatim dihapus.
     if (!known) await deletePhotoFiles(guest.eventId, kenalanFileId(id)).catch(() => {});

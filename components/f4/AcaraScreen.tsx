@@ -35,7 +35,7 @@ import {
   type KenalanTab,
 } from "@/components/n5/KenalanQrSheet";
 import { KenalanSheet, LeaderboardSheet, PemenangSheet } from "@/components/n5/Sheets";
-import type { KenalanIntro, KenalanView } from "@/lib/kenalan";
+import type { KenalanIntro, KenalanSent, KenalanView } from "@/lib/kenalan";
 import { usePhotoOutbox } from "@/components/n4/usePhotoOutbox";
 import {
   ArtVideo,
@@ -175,7 +175,7 @@ export function AcaraScreen({
   otherQuestions = [],
   serverNow,
   initialSheet,
-  kenalan = null,
+  kenalan: serverKenalan = null,
   kenalanIntro = null,
   kenalanQr = null,
   preview,
@@ -311,18 +311,25 @@ export function AcaraScreen({
     url.searchParams.delete("id");
     history.replaceState(history.state, "", url);
   }, [preview]);
-  // Navbar (tetap kelihatan di atas sheet): tab yang kebuka → tutup; sheet lain kebuka → ganti
-  // sheet di entri riwayat yang sama (back HP tetap langsung balik ke layar acara).
+  // Ganti sheet di entri riwayat yang sama (back HP tetap langsung balik ke layar acara).
+  const swap = useCallback(
+    (kind: SheetKind) => {
+      setSheet({ kind });
+      if (preview) return;
+      const url = new URL(window.location.href);
+      url.searchParams.set("sheet", kind);
+      url.searchParams.delete("sesi");
+      url.searchParams.delete("id");
+      history.replaceState({ ...history.state, hmdFromTamu: false }, "", url);
+    },
+    [preview],
+  );
+  // Navbar (tetap kelihatan di atas sheet): tab yang kebuka → tutup; sheet lain kebuka → ganti.
   const toggle = (kind: SheetKind) => {
     const current = sheet && TAMU_SUB[sheet.kind] ? "tamu" : sheet?.kind;
     if (current === kind) return close();
-    if (!sheet || preview) return open(kind);
-    setSheet({ kind });
-    const url = new URL(window.location.href);
-    url.searchParams.set("sheet", kind);
-    url.searchParams.delete("sesi");
-    url.searchParams.delete("id");
-    history.replaceState({ ...history.state, hmdFromTamu: false }, "", url);
+    if (!sheet) return open(kind);
+    swap(kind);
   };
 
   // N4 · antrean foto (BT07b): satu pengirim untuk layar ini, foto terkirim → data server baru.
@@ -407,6 +414,12 @@ export function AcaraScreen({
     view.sessions.find((s) => s.id === id) ?? active ?? next ?? null;
 
   // ---- N5 · Kenalan & hadiah ----
+  // Selfie baru terkirim: respons kirim (kenalan + papan terbaru) dipakai sampai data server nyusul.
+  const [sent, setSent] = useState<KenalanSent | null>(null);
+  const kenalan =
+    sent?.view && (!serverKenalan || sent.view.count > serverKenalan.count)
+      ? sent.view
+      : serverKenalan;
   const panelRef = useRef<HTMLElement>(null);
   const kenalanOn = !!kenalan && kenalan.inside && (kenalan.open || !!kenalan.winner);
   const introId = sheet?.kind === "kenalan" ? sheet.photoId : undefined;
@@ -415,7 +428,9 @@ export function AcaraScreen({
       ? kenalanIntro
       : introId && kenalan?.latest?.id === introId
         ? kenalan.latest
-        : null;
+        : introId && sent?.intro?.id === introId
+          ? sent.intro
+          : null;
   const winnerAt = kenalan?.winner?.announcedAt ?? null;
   // Kenalan baru di mana HP ini pemilik QR-nya (bukan yang scan) → BTk4 kebuka sendiri (T10).
   const latestOther = kenalan?.latest && !kenalan.latest.scannedByMe ? kenalan.latest.id : null;
@@ -459,29 +474,45 @@ export function AcaraScreen({
   }, [preview]);
   // BTk3 selfie lagi jalan → BTk4/BTk5 jangan kebuka sendiri (nimpa kamera).
   const [selfieOn, setSelfieOn] = useState(false);
-  // BTk5 sekali per HP begitu panitia umumkan (rev → refresh), lalu BTk4 buat pemilik QR (T10) —
-  // juga selagi sheet Kenalan kebuka (QR saya lagi ditunjukin ke teman).
-  const autoOk = !sheet || (sheet.kind === "kenalan-qr" && !selfieOn);
+  // BTk5 sekali per HP begitu panitia umumkan (rev → refresh): prioritas, nimpa sheet apa pun yang
+  // lagi kebuka (ganti di entri riwayat yang sama), kecuali kamera selfie. BTk4 buat pemilik QR (T10)
+  // cuma kalau nggak ada sheet / sheet Kenalan kebuka (QR saya lagi ditunjukin ke teman).
+  const sheetOpen = !!sheet;
+  const introOk = !sheet || (sheet.kind === "kenalan-qr" && !selfieOn);
   useEffect(() => {
-    if (preview || !autoOk || (!winnerAt && !latestOther)) return;
+    if (preview || selfieOn || (!winnerAt && !latestOther)) return;
     const t = setTimeout(() => {
       if (winnerAt && recall(seenWinnerKey(token)) !== winnerAt) {
         remember(seenWinnerKey(token), winnerAt);
-        open("pemenang");
-      } else if (latestOther && recall(seenIntroKey(token)) !== latestOther) {
+        if (sheetOpen) swap("pemenang");
+        else open("pemenang");
+      } else if (introOk && latestOther && recall(seenIntroKey(token)) !== latestOther) {
         remember(seenIntroKey(token), latestOther);
         openKenalan(latestOther);
       }
     }, 600);
     return () => clearTimeout(t);
-  }, [preview, autoOk, winnerAt, latestOther, token, open, openKenalan]);
-  // Selfie terkirim → BTk4 di entri riwayat yang sama; data kenalan baru diambil ulang.
-  const showIntro = (id: string) => {
-    setSheet({ kind: "kenalan", photoId: id });
+  }, [
+    preview,
+    selfieOn,
+    sheetOpen,
+    introOk,
+    winnerAt,
+    latestOther,
+    token,
+    open,
+    swap,
+    openKenalan,
+  ]);
+  // Selfie terkirim → BTk4 langsung (data dari respons kirim) di entri riwayat yang sama; data
+  // server diambil ulang di belakang.
+  const showIntro = (s: KenalanSent) => {
+    setSent(s);
+    setSheet({ kind: "kenalan", photoId: s.id });
     if (preview) return;
     const url = new URL(window.location.href);
     url.searchParams.set("sheet", "kenalan");
-    url.searchParams.set("id", id);
+    url.searchParams.set("id", s.id);
     history.replaceState(history.state, "", url);
     router.refresh();
   };

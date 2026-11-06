@@ -299,6 +299,30 @@
   background: #101010; /* sama dengan kamera N4, gelap tetap */
 }
 
+/* (6 Nov) Arahan di atas polaroid selfie: judul putih + 1–2 baris abu terang (kamera gelap tetap). */
+.selfieIntro {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 328px;
+  text-align: center;
+}
+
+.selfieIntro p {
+  margin: 0;
+}
+
+.selfieIntro p + p {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Layar pendek (iPhone SE / toolbar browser): judul aja, biar tombol jepret nggak kepotong. */
+@media (max-height: 700px) {
+  .selfieIntro p + p {
+    display: none;
+  }
+}
+
 .info {
   display: flex;
   align-items: center;

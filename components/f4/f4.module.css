@@ -287,12 +287,19 @@
   gap: 10px;
 }
 
-/* BT05 · tinggi ikut isi (28 Okt). Bentuk & posisi (mengambang di atas navbar) dari Sheet aboveNav. */
+/* BT05 · tinggi ikut isi (28 Okt). Bentuk & posisi (mengambang di atas navbar) dari Sheet aboveNav.
+   (6 Nov) Isi nggak boleh menyusut (kartu peringkat & tombolnya kepotong di layar pendek) → panel yang
+   digulir. */
 .tamu {
   gap: 14px;
 }
 
-/* BT05k kartu peringkat: [Kenalan (isi lebar)] [ikon Leaderboard 54] (Figma 6 Nov). */
+.tamu > * {
+  flex-shrink: 0;
+}
+
+/* BT05k kartu peringkat: [Kenalan (isi lebar)] [ikon Leaderboard 54] (Figma 6 Nov); papan tutup →
+   cuma [Leaderboard] selebar kartu. */
 .rankActions {
   position: relative;
   display: flex;
@@ -300,9 +307,17 @@
   width: 100%;
 }
 
-.rankActions > :first-child:not(:last-child) {
+.rankActions > :first-child {
   flex: 1;
   min-width: 0;
+}
+
+/* (6 Nov) Pojok kanan atas BT05: ikon cari + avatar "Kartu kamu". */
+.tamuTools {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
 }
 
 /* Judul + avatar "Kartu kamu" di pojok kanan (tap = ubah kartu T11). */

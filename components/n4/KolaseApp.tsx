@@ -225,7 +225,7 @@ export function KolaseApp({
           setSelfie(null);
           show(text);
         }}
-        onSent={(id) =>
+        onSent={({ id }) =>
           router.replace(
             preview ? "/dev/states/n5/BTk4" : `/t/${token}/acara?sheet=kenalan&id=${id}`,
           )

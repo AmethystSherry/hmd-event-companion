@@ -7,7 +7,7 @@ import n4 from "@/components/n4/n4.module.css";
 import { useCamera, type CameraStatus } from "@/components/n4/useCamera";
 import { Button, IconButton, Pill, Polaroid, Toast, TopToast } from "@/components/ui";
 import { cx } from "@/lib/cx";
-import type { KenalanPostResponse } from "@/lib/kenalan";
+import type { KenalanPostResponse, KenalanSent } from "@/lib/kenalan";
 import { isInAppBrowser, newPhotoId } from "@/lib/photo";
 import s from "./n5.module.css";
 
@@ -49,7 +49,7 @@ export function KenalanSelfie({
   date: string;
   onCancel: () => void;
   onRejected: (text: string) => void;
-  onSent: (introId: string) => void;
+  onSent: (sent: KenalanSent) => void;
   preview?: KenalanSelfiePreview; // /dev/states: tanpa kamera & jaringan
 }) {
   const video = useRef<HTMLVideoElement>(null);
@@ -101,7 +101,7 @@ export function KenalanSelfie({
       const body = (await res.json().catch(() => null)) as KenalanPostResponse | null;
       if (body?.ok) {
         setLeaving(true);
-        onSent(id);
+        onSent({ id: body.id, intro: body.intro ?? null, view: body.view ?? null });
         return;
       }
       if (res.status >= 500 || !body) throw new Error(`status ${res.status}`);
@@ -163,6 +163,14 @@ export function KenalanSelfie({
       </header>
 
       <div className={n4.stage}>
+        {/* (6 Nov) Arahan jelas habis scan: kamera langsung kebuka, jadi bilang ini selfie berdua buat
+            bukti kenalan. */}
+        <div className={s.selfieIntro}>
+          <p className="t-card-title">Selfie bareng {friend.firstName}, yuk!</p>
+          <p className="t-label">
+            QR {friend.firstName} udah kebaca. Foto berdua ini jadi bukti kalian udah kenalan.
+          </p>
+        </div>
         <Polaroid
           name={me.firstName}
           caption={`${me.firstName} × ${friend.firstName}`}
@@ -193,11 +201,11 @@ export function KenalanSelfie({
           )}
           {flash > 0 && <span key={flash} aria-hidden className={n4.flash} />}
         </Polaroid>
-        <p className={cx("t-label", n4.hint)}>
-          {inApp
-            ? "Buka di Safari/Chrome biar kamera langsung jalan di sini."
-            : "Selfie berdua buat bukti kenalan. Nggak masuk kolase foto."}
-        </p>
+        {inApp && (
+          <p className={cx("t-label", n4.hint)}>
+            Buka di Safari/Chrome biar kamera langsung jalan di sini.
+          </p>
+        )}
       </div>
 
       {failed ? (

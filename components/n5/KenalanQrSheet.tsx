@@ -5,7 +5,7 @@ import { HandWaving, Info, QrCode } from "@/components/icons";
 import { Segmented, Sheet, TopToast } from "@/components/ui";
 import { cx } from "@/lib/cx";
 import { initials, keyLabel } from "@/lib/format";
-import type { KenalanView } from "@/lib/kenalan";
+import type { KenalanSent, KenalanView } from "@/lib/kenalan";
 import { KenalanScanner } from "./KenalanScanner";
 import {
   KenalanSelfie,
@@ -52,7 +52,7 @@ export function KenalanQrSheet({
   date: string; // "8.11.26"
   initialTab?: KenalanTab;
   onClose: () => void;
-  onSent: (introId: string) => void; // selfie terkirim → BTk4
+  onSent: (sent: KenalanSent) => void; // selfie terkirim → BTk4 (langsung, data dari respons kirim)
   onSelfieChange?: (on: boolean) => void; // BTk3 jalan → AcaraScreen tahan BTk4/BTk5 otomatis
   preview?: KenalanPreview; // /dev/states/n5: tanpa kamera & jaringan
 }) {

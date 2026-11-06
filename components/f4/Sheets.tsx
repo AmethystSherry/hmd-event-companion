@@ -9,8 +9,18 @@ import {
   PencilSimple,
   Ranking,
   WifiHigh,
+  X,
 } from "@/components/icons";
-import { Badge, Button, GuestCard, HeroState, ListRow, SearchField, Sheet } from "@/components/ui";
+import {
+  Badge,
+  Button,
+  GuestCard,
+  HeroState,
+  IconButton,
+  ListRow,
+  SearchField,
+  Sheet,
+} from "@/components/ui";
 import { filterGuests, rundownSubtitle, type AcaraView } from "@/lib/acara";
 import { cx } from "@/lib/cx";
 import { copyText } from "@/lib/clipboard";
@@ -189,6 +199,8 @@ export function TamuSheet({
   onLeaderboard?: () => void; // → sheet Leaderboard (6 Nov)
 }) {
   const [q, setQ] = useState(initialQuery);
+  // (6 Nov) Kolom cari disembunyikan; ikon cari di pojok kanan atas → kolom muncul (fokus) di bawah judul.
+  const [searchOpen, setSearchOpen] = useState(!!initialQuery);
   const list = filterGuests(view.guests, q);
   const searching = !!q.trim();
   const showKenalan = !!kenalan && (kenalan.open || !!kenalan.winner);
@@ -211,34 +223,53 @@ export function TamuSheet({
               : `${view.total} tamu · ${view.hereCount} udah di sini`}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={onEdit}
-          className={styles.meButton}
-          aria-label={`Kartu kamu, ${me.name}. Ubah`}
-        >
-          <span aria-hidden className={styles.meAvatar}>
-            {initials(me.name)}
-          </span>
-          <span aria-hidden className={styles.meEdit}>
-            <PencilSimple size={11} weight="bold" />
-          </span>
-        </button>
+        <div className={styles.tamuTools}>
+          <IconButton
+            label={searchOpen ? "Tutup cari" : "Cari tamu"}
+            icon={searchOpen ? <X size={20} /> : <MagnifyingGlass size={20} />}
+            aria-expanded={searchOpen}
+            onClick={() => {
+              if (searchOpen) setQ("");
+              setSearchOpen(!searchOpen);
+            }}
+          />
+          <button
+            type="button"
+            onClick={onEdit}
+            className={styles.meButton}
+            aria-label={`Kartu kamu, ${me.name}. Ubah`}
+          >
+            <span aria-hidden className={styles.meAvatar}>
+              {initials(me.name)}
+            </span>
+            <span aria-hidden className={styles.meEdit}>
+              <PencilSimple size={11} weight="bold" />
+            </span>
+          </button>
+        </div>
       </div>
-      {/* N5 · BT05k: disembunyikan saat cari (sama kayak kartu kamu N3). Di kartu peringkat: tombol
+      {searchOpen && (
+        <SearchField
+          label="Cari tamu"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Cari nama atau @instagram"
+          className={styles.search}
+          autoFocus={!initialQuery}
+        />
+      )}
+      {/* N5 · BT05k: disembunyikan selama mode cari (sama kayak kartu kamu N3). Di kartu peringkat: tombol
           Kenalan (→ sheet Kenalan, Secondary Large, Figma 5358:10360) + tombol ikon Leaderboard (→ sheet
-          Leaderboard, tetap ada setelah papan tutup). */}
-      {showKenalan && kenalan && !searching && (
+          Leaderboard). (6 Nov) Papan tutup (pemenang diumumin) → cuma tombol "Leaderboard" selebar kartu. */}
+      {showKenalan && kenalan && !searchOpen && (
         <RankCard
           view={kenalan}
           action={
-            kenalanLive || onLeaderboard ? (
+            kenalanLive ? (
               <div className={styles.rankActions}>
-                {kenalanLive && (
-                  <Button variant="secondary" icon={<HandWaving />} onClick={onKenalan}>
-                    Kenalan
-                  </Button>
-                )}
+                <Button variant="secondary" icon={<HandWaving />} onClick={onKenalan}>
+                  Kenalan
+                </Button>
                 {onLeaderboard && (
                   <Button
                     variant="secondary"
@@ -249,17 +280,16 @@ export function TamuSheet({
                   />
                 )}
               </div>
+            ) : onLeaderboard ? (
+              <div className={styles.rankActions}>
+                <Button variant="secondary" icon={<Ranking />} onClick={onLeaderboard}>
+                  Leaderboard
+                </Button>
+              </div>
             ) : undefined
           }
         />
       )}
-      <SearchField
-        label="Cari tamu"
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
-        placeholder="Cari nama atau @instagram"
-        className={styles.search}
-      />
 
       {/* (6 Nov) Label "Semua tamu · n" dihapus; jumlah hasil cuma tampil selagi cari. */}
       {searching && list.length > 0 && (
@@ -267,7 +297,12 @@ export function TamuSheet({
           <span className="t-label-emph">Hasil · {list.length}</span>
         </div>
       )}
-      {list.length > 0 ? (
+      {/* (6 Nov) Mode cari belum ngetik → langsung state kosong (ajakan cari), bukan daftar semua tamu. */}
+      {searchOpen && !searching ? (
+        <HeroState size="sm" icon={<MagnifyingGlass />} title="Cari teman di sini">
+          Ketik nama atau @instagram-nya.
+        </HeroState>
+      ) : list.length > 0 ? (
         <div className={styles.carousel}>
           {list.map((g) => (
             <GuestCard

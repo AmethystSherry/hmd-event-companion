@@ -43,38 +43,41 @@ export function RankCard({ view, action }: { view: KenalanView; action?: ReactNo
           </p>
         </div>
       </div>
-      <div className={s.rankProgress}>
-        <div
-          className={s.track}
-          role="progressbar"
-          aria-label="Point-mu dibanding teratas"
-          aria-valuemin={0}
-          aria-valuemax={view.rows[0]?.points ?? 0}
-          aria-valuenow={points}
-        >
-          <span className={s.fill} style={{ width: `${p.pct}%` }} />
-          {p.milestones.map((m) => (
-            <span
-              key={m.rank}
-              aria-hidden
-              className={s.milestone}
-              style={{ "--at": `${m.pct}%` } as CSSProperties}
-            />
-          ))}
+      {/* (6 Nov) Pemenang udah diumumin → progress & labelnya hilang (balapan selesai). */}
+      {!winner && (
+        <div className={s.rankProgress}>
+          <div
+            className={s.track}
+            role="progressbar"
+            aria-label="Point-mu dibanding teratas"
+            aria-valuemin={0}
+            aria-valuemax={view.rows[0]?.points ?? 0}
+            aria-valuenow={points}
+          >
+            <span className={s.fill} style={{ width: `${p.pct}%` }} />
+            {p.milestones.map((m) => (
+              <span
+                key={m.rank}
+                aria-hidden
+                className={s.milestone}
+                style={{ "--at": `${m.pct}%` } as CSSProperties}
+              />
+            ))}
+          </div>
+          <div className={s.rankMeta} aria-hidden>
+            <span>Kamu · {points}</span>
+            {p.milestones.map((m, i) => (
+              <span
+                key={m.rank}
+                className={cx(s.milestoneLabel, !labels[i] && s.hidden)}
+                style={{ "--at": `${m.pct}%` } as CSSProperties}
+              >
+                #{m.rank} · {m.points}
+              </span>
+            ))}
+          </div>
         </div>
-        <div className={s.rankMeta} aria-hidden>
-          <span>Kamu · {points}</span>
-          {p.milestones.map((m, i) => (
-            <span
-              key={m.rank}
-              className={cx(s.milestoneLabel, !labels[i] && s.hidden)}
-              style={{ "--at": `${m.pct}%` } as CSSProperties}
-            >
-              #{m.rank} · {m.points}
-            </span>
-          ))}
-        </div>
-      </div>
+      )}
       {action}
     </section>
   );

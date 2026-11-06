@@ -297,5 +297,9 @@ export type KenalanCekResponse =
   | { ok: true; friend: { id: string; name: string; firstName: string } }
   | { ok: false; error: KenalanError; message: string };
 
+// (6 Nov) Sukses = kenalan yang baru tercatat + papan terbaru, biar BTk4 langsung kebuka tanpa nunggu
+// router.refresh (data server nyusul di belakang).
+export type KenalanSent = { id: string; intro: KenalanIntro | null; view: KenalanView | null };
+
 export type KenalanPostResponse =
-  { ok: true; id: string } | { ok: false; error: KenalanError; message: string };
+  ({ ok: true } & KenalanSent) | { ok: false; error: KenalanError; message: string };

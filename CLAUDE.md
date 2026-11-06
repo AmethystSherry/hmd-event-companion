@@ -539,7 +539,11 @@ Keputusan 25 Okt (default "Keputusan & asumsi" F3-F4-deliverables, kecuali K3/K8
 8. **K8 · BT05 Tamu di sini**: cuma tamu RSVP hadir **atau** udah check-in. Data ke HP tamu: nama, IG,
    `Guest.card {role, askAbout ≤ 3}`, udah datang + jam datang — **tanpa WA, token, nomor kunci**
    (kecuali kartu sendiri). Urut: baru datang di depan, belum datang paling belakang (nama). Cari =
-   filter lokal nama/@ig. "Ubah" → sheet T11 (N3). Kartu = `cardOf(guest)`; diisi tamu lewat T11
+   filter lokal nama/@ig; (6 Nov) kolom cari disembunyikan → `IconButton` cari (MagnifyingGlass, jadi X "Tutup
+   cari" = kosongkan + sembunyi) di pojok kanan atas sebelah avatar (`.tamuTools`), kolom muncul (autofocus) di
+   bawah judul; selama mode cari kartu peringkat disembunyikan dan sebelum ngetik langsung HeroState "Cari teman
+   di sini" / "Ketik nama atau @instagram-nya." (bukan daftar semua tamu). Isi sheet `flex-shrink: 0` (kartu
+   peringkat nggak kepotong; panel yang digulir). "Ubah" → sheet T11 (N3). Kartu = `cardOf(guest)`; diisi tamu lewat T11
    (`saveGuestCard`) / T02 (`setRsvp`), `setGuestCard` apa adanya cuma dari /dev/states.
 9. BT22 durasi: jalan "60 mnt · udah jalan 12 mnt", selesai "Selesai · 62 mnt", belum "45 mnt";
    deskripsi kosong → topik. BT04 subjudul: Selesai · "Lagi jalan · {ruang}" · "Berikutnya ·
@@ -737,7 +741,8 @@ Keputusan 5 Nov (default K1–K18 N5-deliverables + usulan T3/T9/T10, disetujui)
    label < 18% dari label sebelumnya disembunyikan, "Kamu · n" di kiri). (6 Nov, Figma BT05k 5358:10227) N5 kebuka
    → judul sheet "Yuk Kenalan" + subjudul "{n} orang udah di sini. Sapa satu, yuk!" (n = tamu lain yang udah masuk;
    papan tutup / 0 → "{total} tamu · {hadir} udah di sini"); pil "🔥 … lagi buat naik" diganti tombol "Kenalan"
-   Secondary Large di dalam `RankCard` (`action`, → sheet Kenalan; papan tutup → tombol hilang). `GuestCard` rata
+   Secondary Large di dalam `RankCard` (`action`, → sheet Kenalan). (6 Nov) Papan tutup (pemenang diumumin) →
+   progress & label hilang, aksi = satu tombol "Leaderboard" (ikon Ranking) selebar kartu. `GuestCard` rata
    kiri, tanpa tombol, seluruh kartu = link IG (tab baru). "✓ Kenal" + toast K6 dihapus. Sheet navbar (Tamu di sini, Rundown, Info rumah) + sheet Kenalan =
    `Sheet aboveNav` (Figma 5356:9816): inset 8, radius 28, berhenti 16 px di atas navbar; panel `data-above-nav`
    tanpa spacer navbar 64.
@@ -747,8 +752,11 @@ Keputusan 5 Nov (default K1–K18 N5-deliverables + usulan T3/T9/T10, disetujui)
    (`fromTamu`, tutup → BT05k); BTk4 "Scan QR lain" → sheet tab Scan QR. Scan = `KenalanScanner` (components/n5:
    `Viewfinder` F2 → `cek`, QR sama diabaikan 2,5 dtk → pesan ke pemanggil; K8: kamera ditolak → "Coba lagi" +
    "Pakai kamera HP" `QrScanner.scanImage`). BTk3 = `KenalanSelfie` (components/n5) layar penuh di atas sheet
-   (`.selfieLayer` z 60), kamera depan N4, tanpa pratinjau (K4): jepret → kirim ≤ 10 dtk → `onSent` → BTk4
-   (`?sheet=kenalan&id=`, router.refresh); 5xx/offline/timeout → selfie tetap + "Coba lagi" (id sama) + TopToast;
+   (`.selfieLayer` z 60), kamera depan N4, tanpa pratinjau (K4), (6 Nov) judul arahan di atas polaroid "Selfie
+   bareng {teman}, yuk!" + "QR {teman} udah kebaca. Foto berdua ini jadi bukti kalian udah kenalan." (< 700 tinggi:
+   judul aja): jepret → kirim ≤ 10 dtk → respons `{ok, id, intro, view}` (`KenalanSent`) → `onSent` → BTk4
+   **langsung** (AcaraScreen pakai `sent` sampai data server nyusul; `?sheet=kenalan&id=`, router.refresh di
+   belakang); 5xx/offline/timeout → selfie tetap + "Coba lagi" (id sama) + TopToast;
    4xx → balik ke scan + toast. HP pemilik QR: AcaraScreen buka BTk4 sendiri juga selagi sheet Kenalan kebuka
    (bukan saat selfie, `onSelfieChange`). Muat tanpa scroll di layar pendek (iPhone 11 + toolbar browser): kotak
    kamera / kartu QR `flex-shrink` + plat QR ikut tinggi kartu (container query); < 640 tinggi → kartu info & chip
@@ -764,7 +772,8 @@ Keputusan 5 Nov (default K1–K18 N5-deliverables + usulan T3/T9/T10, disetujui)
    lewat slot baru `Polaroid stamp` (N4 nggak berubah), stat Peringkat · Kenalan kamu · Teratas. BTk5: ilustrasi
    `/figma/n5-trophy.webp` (5330:9842, 150, lingkaran ikut gambar, 10 KB) + stat 2 kolom Peringkat kamu · Kenalan kamu. T10: `latest` dari HP lain yang belum dilihat → BTk4
    kebuka sendiri (localStorage `hmd-kenalan-dilihat:{token}`). BTk5 sekali per HP (`hmd-kenalan-pemenang:{token}` =
-   announcedAt), K11 versi pemenang. T9: BT12 juga menampilkan BTk5 sekali (sebelum buku tamu otomatis).
+   announcedAt), K11 versi pemenang; (6 Nov) **prioritas**: nimpa sheet apa pun yang lagi kebuka (`swap`, entri
+   riwayat sama), kecuali kamera selfie BTk3. T9: BT12 juga menampilkan BTk5 sekali (sebelum buku tamu otomatis).
 10. **Panitia**: BP02k = `HadiahFloat` Trophy "Peringkat" (badge pasang, K15) di `KontrolScreen` prop `kenalan` (null
    kalau belum mulai / ditutup), awal kanan y656, `bottom` 108 (di atas Scan tiket), → P14. **P14**
    (`/panitia/event/[id]/kenalan`, `PapanKenalan`, LiveRefresh 2 dtk, pola P10). Seri di #1 → caption (TODO copy).
@@ -776,7 +785,7 @@ Keputusan 5 Nov (default K1–K18 N5-deliverables + usulan T3/T9/T10, disetujui)
    TopToast "HP … udah umumin pemenang duluan." K12: kosong → HeroState + tombol redup; udah diumumin → Banner success
    + tanpa tombol.
 11. **Leaderboard tamu** (6 Nov, Figma "BT05k · Tamu di sini · leaderboard"): tombol ikon `Ranking` di kartu peringkat
-   BT05k (sebelah Kenalan; tetap ada setelah papan tutup) → `?sheet=peringkat` (`LeaderboardSheet`, aboveNav, dari
+   BT05k (sebelah Kenalan; papan tutup → tombol "Leaderboard" selebar kartu) → `?sheet=peringkat` (`LeaderboardSheet`, aboveNav, dari
    BT05k = pushState, tutup → BT05k, navbar Tamu aktif): judul "Leaderboard" + tombol primary sm "Kenalan"
    (HandWaving) di kanan atas selama papan buka → sheet Kenalan di tempat (`leaderboardToKenalan`, replaceState,
    tutup = balik ke asal Leaderboard), ajakan "Point terbanyak dapat
